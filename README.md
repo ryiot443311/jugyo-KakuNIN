@@ -1,3 +1,10 @@
+![GitHub contributors](https://img.shields.io/github/contributors/ryiot443311/jugyo-KakuNIN)
+![GitHub watchers](https://img.shields.io/github/watchers/ryiot443311/jugyo-KakuNIN)
+![GitHub Repo stars](https://img.shields.io/github/stars/ryiot443311/jugyo-KakuNIN)
+
+
+
+
 # 授業出欠管理アプリ (Attendance Tracker)
 
 大学生向けのシンプルで高機能な授業・出欠管理アプリケーションです。
