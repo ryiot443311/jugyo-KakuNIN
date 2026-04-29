@@ -1,7 +1,9 @@
+![GitHub Release](https://img.shields.io/github/v/release/:user/:repo)
+![GitHub License](https://img.shields.io/github/license/ryiot443311/jugyo-KakuNIN)
 ![GitHub contributors](https://img.shields.io/github/contributors/ryiot443311/jugyo-KakuNIN)
+
 ![GitHub watchers](https://img.shields.io/github/watchers/ryiot443311/jugyo-KakuNIN)
 ![GitHub Repo stars](https://img.shields.io/github/stars/ryiot443311/jugyo-KakuNIN)
-
 
 
 
