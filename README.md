@@ -1,4 +1,4 @@
-![GitHub Release](https://img.shields.io/github/v/release/:user/:repo)
+![GitHub Release](https://img.shields.io/github/v/release/ryiot443311/jugyo-KakuNIN)
 ![GitHub License](https://img.shields.io/github/license/ryiot443311/jugyo-KakuNIN)
 ![GitHub contributors](https://img.shields.io/github/contributors/ryiot443311/jugyo-KakuNIN)
 
