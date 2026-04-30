@@ -5,23 +5,14 @@ function App() {
   const days = ['日', '月', '火', '水', '木', '金', '土'];
   const now = new Date();
 
-  // いただいた日程に基づいてクォーターを正確に判定する関数
   const getQuarterByDate = (dateObj) => {
     const m = dateObj.getMonth() + 1;
     const d = dateObj.getDate();
-    const md = m * 100 + d; // 例: 4月27日 -> 427, 11月20日 -> 1120
-
-    // 指定された期間内の判定
-    if (md >= 413 && md <= 603) return 1; // 1Q: 4/13 〜 6/3
-    if (md >= 608 && md <= 724) return 2; // 2Q: 6/8 〜 7/24
-    if (md >= 924 && md <= 1111) return 3; // 3Q: 9/24 〜 11/11
-    if (md >= 1120 || md <= 125) return 4; // 4Q: 11/20 〜 1/25 (年またぎ)
-
-    // 期間外（休校・テスト期間など）の場合は直近のクォーターを返す
-    if (md > 125 && md < 413) return 1;
-    if (md > 603 && md < 608) return 2;
-    if (md > 724 && md < 924) return 3;
-    if (md > 1111 && md < 1120) return 4;
+    const md = m * 100 + d;
+    if (md >= 413 && md <= 603) return 1;
+    if (md >= 608 && md <= 724) return 2;
+    if (md >= 924 && md <= 1111) return 3;
+    if (md >= 1120 || md <= 125) return 4;
     return 1;
   };
 
@@ -35,6 +26,8 @@ function App() {
   const [editModalLog, setEditModalLog] = useState(null);
   const [editPendingStatus, setEditPendingStatus] = useState(null);
   const [expandedSections, setExpandedSections] = useState({});
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [selectedCourseForDetail, setSelectedCourseForDetail] = useState(null);
 
   const getWeekOfMonth = (date) => {
     const firstDayOfMonth = new Date(date.getFullYear(), date.getMonth(), 1).getDay();
@@ -96,6 +89,11 @@ function App() {
     return logs.find(log => log.courseId === courseId && log.date === targetDateStr);
   };
 
+  const openDetail = (course) => {
+    setSelectedCourseForDetail(course);
+    setShowDetailModal(true);
+  };
+
   const groupedLogs = logs.reduce((acc, log) => {
     const dateObj = new Date(log.date);
     const month = dateObj.getMonth() + 1;
@@ -109,7 +107,7 @@ function App() {
   }, {});
 
   const sortedMonths = Object.keys(groupedLogs).sort((a, b) => b - a);
-  const totalRecords = logs.length;
+  const totalRecords = logs.filter(l => l.status !== '休講').length;
   const totalPresent = logs.filter(l => l.status === '出席').length;
   const totalLate = logs.filter(l => l.status === '遅刻').length;
   const totalAbsent = logs.filter(l => l.status === '欠席').length;
@@ -126,13 +124,13 @@ function App() {
     });
     const scheduleStr = Object.entries(periodGroups).map(([p, dArr]) => `${dArr.join('・')}曜 ${p}限`).join(' / ');
     const subjectLogs = logs.filter(l => relatedCourseIds.includes(l.courseId));
-    const tTotal = subjectLogs.length;
+    const tTotal = subjectLogs.filter(l => l.status !== '休講').length;
     const tPresent = subjectLogs.filter(l => l.status === '出席').length;
     const tLate = subjectLogs.filter(l => l.status === '遅刻').length;
     const tAbsent = subjectLogs.filter(l => l.status === '欠席').length;
     const tRate = tTotal === 0 ? 0 : Math.round(((tPresent + tLate) / tTotal) * 100);
     return { id: name, name, scheduleStr, total: tTotal, present: tPresent, late: tLate, absent: tAbsent, rate: tRate };
-  }).filter(c => c.total > 0);
+  }).filter(c => (c.total > 0 || logs.some(l => relatedCourseIds.includes(l.courseId) && l.status === '休講')));
 
   const toggleAccordion = (key) => {
     setExpandedSections(prev => ({ ...prev, [key]: prev[key] === undefined ? false : !prev[key] }));
@@ -146,7 +144,7 @@ function App() {
           <div style={{ fontSize: '0.75rem', color: '#1d4ed8', fontWeight: 'bold' }}>
             {courseInfo ? `${courseInfo.period}時限 (${PERIODS[courseInfo.period].start}〜${PERIODS[courseInfo.period].end})` : ''}
           </div>
-          <div style={{ padding: '2px 8px', borderRadius: '4px', fontWeight: 'bold', fontSize: '0.75rem', background: log.status === '出席' ? '#dcfce7' : log.status === '遅刻' ? '#fef3c7' : '#fee2e2', color: log.status === '出席' ? '#16a34a' : log.status === '遅刻' ? '#d97706' : '#dc2626' }}>{log.status}</div>
+          <div style={{ padding: '2px 8px', borderRadius: '4px', fontWeight: 'bold', fontSize: '0.75rem', background: log.status === '出席' ? '#dcfce7' : log.status === '遅刻' ? '#fef3c7' : log.status === '休講' ? '#f1f5f9' : '#fee2e2', color: log.status === '出席' ? '#16a34a' : log.status === '遅刻' ? '#d97706' : log.status === '休講' ? '#64748b' : '#dc2626' }}>{log.status}</div>
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div>
@@ -177,6 +175,27 @@ function App() {
         </div>
       )}
 
+      {showDetailModal && selectedCourseForDetail && (
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1100 }}>
+          <div style={{ backgroundColor: 'white', width: '85%', maxWidth: '400px', padding: '25px', borderRadius: '15px' }}>
+            <h3 style={{ margin: '0 0 15px 0', fontSize: '1.2rem', color: '#1e293b' }}>授業詳細</h3>
+            <div style={{ background: '#f8fafc', padding: '15px', borderRadius: '10px', marginBottom: '20px', fontSize: '0.9rem', color: '#475569', lineHeight: '1.6' }}>
+              <p style={{margin:0}}><b>科目:</b> {selectedCourseForDetail.name}</p>
+              <p style={{margin:0}}><b>担当:</b> {selectedCourseForDetail.teacher}</p>
+              <p style={{margin:0}}><b>教室:</b> {selectedCourseForDetail.room}</p>
+            </div>
+            
+            {getLogForClassDate(selectedCourseForDetail.id, selectedDay) ? (
+              <button onClick={() => { setShowDetailModal(false); openEditModal(getLogForClassDate(selectedCourseForDetail.id, selectedDay)); }} style={{ width: '100%', padding: '12px', background: '#f1f5f9', color: '#1e293b', border: '1px solid #e2e8f0', borderRadius: '8px', fontWeight: 'bold', marginBottom: '10px' }}>この授業の記録を修正</button>
+            ) : (
+              <button onClick={() => { setShowDetailModal(false); requestRecord(selectedCourseForDetail.id, '休講', getQuarterByDate(new Date(getClassDateStr(selectedDay)))); }} style={{ width: '100%', padding: '12px', background: '#f1f5f9', color: '#1e293b', border: '1px solid #e2e8f0', borderRadius: '8px', fontWeight: 'bold', marginBottom: '10px' }}>この授業を休講として記録</button>
+            )}
+            
+            <button onClick={() => setShowDetailModal(false)} style={{ width: '100%', padding: '12px', background: 'transparent', color: '#64748b', border: 'none', fontWeight: 'bold' }}>閉じる</button>
+          </div>
+        </div>
+      )}
+
       {editModalLog && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 }}>
           <div style={{ backgroundColor: 'white', width: '85%', maxWidth: '400px', padding: '25px', borderRadius: '15px', textAlign: 'center' }}>
@@ -185,19 +204,22 @@ function App() {
               <div style={{ background: '#f1f5f9', padding: '15px', borderRadius: '8px' }}>
                 <p style={{ fontSize: '0.9rem', fontWeight: 'bold', marginBottom: '15px' }}>【 {editPendingStatus} 】に変更しますか？</p>
                 <div style={{ display: 'flex', gap: '10px' }}>
-                  <button onClick={() => setEditPendingStatus(null)} style={{ flex: 1, padding: '10px', background: 'white', border: '1px solid #cbd5e1', borderRadius: '6px' }}>戻る</button>
-                  <button onClick={executeEdit} style={{ flex: 1, padding: '10px', background: '#dc2626', color: 'white', border: 'none', borderRadius: '6px' }}>確定</button>
+                  <button onClick={() => setEditPendingStatus(null)} style={{ flex: 1, padding: '10px', background: 'white', border: '1px solid #cbd5e1', borderRadius: '6px', color: '#475569', fontWeight: 'bold' }}>戻る</button>
+                  <button onClick={executeEdit} style={{ flex: 1, padding: '10px', background: editPendingStatus === '出席' ? '#22c55e' : editPendingStatus === '遅刻' ? '#f59e0b' : editPendingStatus === '休講' ? '#94a3b8' : '#ef4444', color: 'white', border: 'none', borderRadius: '6px', fontWeight: 'bold' }}>確定</button>
                 </div>
               </div>
             ) : (
               <div>
                 <p style={{ fontSize: '0.85rem', color: '#64748b', marginBottom: '15px' }}>{editModalLog.date} の状態を変更</p>
                 <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
-                  {['出席', '遅刻', '欠席'].filter(s => s !== editModalLog.status).map(status => (
-                    <button key={status} onClick={() => setEditPendingStatus(status)} style={{ flex: 1, padding: '12px', background: '#e2e8f0', border: 'none', borderRadius: '8px', fontWeight: 'bold' }}>{status}</button>
-                  ))}
+                  {['出席', '遅刻', '欠席', '休講'].filter(s => s !== editModalLog.status).map(status => {
+                    const bgColors = { '出席': '#22c55e', '遅刻': '#f59e0b', '欠席': '#ef4444', '休講': '#94a3b8' };
+                    return (
+                      <button key={status} onClick={() => setEditPendingStatus(status)} style={{ flex: 1, padding: '12px', background: bgColors[status], color: 'white', border: 'none', borderRadius: '8px', fontWeight: 'bold' }}>{status}</button>
+                    );
+                  })}
                 </div>
-                <button onClick={closeEditModal} style={{ background: 'none', border: 'none', color: '#64748b' }}>キャンセル</button>
+                <button onClick={closeEditModal} style={{ background: 'none', border: 'none', color: '#64748b', fontWeight: 'bold' }}>キャンセル</button>
               </div>
             )}
           </div>
@@ -232,21 +254,20 @@ function App() {
             const targetDateQuarter = getQuarterByDate(new Date(classDateStr));
             const isSameQuarter = selectedQuarter === targetDateQuarter;
             const todayLog = getLogForClassDate(course.id, selectedDay);
-            
             return (
-              <div key={course.id} style={{ background: 'white', padding: '18px', borderRadius: '12px', marginTop: '15px', border: '1px solid #e2e8f0', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
+              <div key={course.id} style={{ background: 'white', padding: '18px', borderRadius: '12px', marginTop: '15px', border: '1px solid #e2e8f0', boxShadow: '0 2px 4px rgba(0,0,0,0.05)', position: 'relative' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', fontWeight: 'bold', color: '#64748b' }}>
                   <span>{course.room}</span>
-                  <span>{course.period}時限 ({PERIODS[course.period].start}〜{PERIODS[course.period].end})</span>
+                  <div style={{display:'flex', alignItems:'center', gap:'10px'}}>
+                    <span>{course.period}時限 ({PERIODS[course.period].start}〜{PERIODS[course.period].end})</span>
+                    <button onClick={() => openDetail(course)} style={{background:'none', border:'none', color:'#94a3b8', fontSize:'1rem', padding:'0 5px'}}>⋯</button>
+                  </div>
                 </div>
                 <h3 style={{ margin: '10px 0', fontSize: '1.1rem', color: '#1e293b' }}>{course.name}</h3>
-                
                 {!isSameQuarter ? (
-                  <div style={{ padding: '10px', background: '#f8fafc', borderRadius: '8px', textAlign: 'center', fontWeight: 'bold', color: '#94a3b8', border: '1px dashed #cbd5e1' }}>
-                    期間外（現在は第{targetDateQuarter}Qです）
-                  </div>
+                  <div style={{ padding: '10px', background: '#f8fafc', borderRadius: '8px', textAlign: 'center', fontWeight: 'bold', color: '#94a3b8', border: '1px dashed #cbd5e1' }}>期間外</div>
                 ) : todayLog ? (
-                  <div style={{ padding: '10px', background: '#f1f5f9', borderRadius: '8px', textAlign: 'center', fontWeight: 'bold', color: '#16a34a' }}>{todayLog.status} 記録済み</div>
+                  <div style={{ padding: '10px', background: '#f1f5f9', borderRadius: '8px', textAlign: 'center', fontWeight: 'bold', color: todayLog.status === '出席' ? '#16a34a' : todayLog.status === '遅刻' ? '#d97706' : '#64748b' }}>{todayLog.status} 記録済み</div>
                 ) : (
                   <div style={{ display: 'flex', gap: '8px' }}>
                     {['出席', '遅刻', '欠席'].map(status => (
@@ -324,7 +345,9 @@ function App() {
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontWeight: 'bold', fontSize: '0.95rem' }}>{stat.name}</div>
-                  <div style={{ fontWeight: 'bold', color: stat.rate >= 80 ? '#16a34a' : '#dc2626' }}>{stat.rate}%</div>
+                  <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{stat.scheduleStr}</div>
+                </div>
+                <div style={{ fontWeight: 'bold', color: stat.rate >= 80 ? '#16a34a' : '#dc2626' }}>{stat.rate}%</div>
               </div>
               <div style={{ height: '6px', background: '#e2e8f0', borderRadius: '3px', overflow: 'hidden' }}>
                 <div style={{ width: `${stat.rate}%`, height: '100%', background: '#22c55e' }}></div>
