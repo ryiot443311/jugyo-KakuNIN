@@ -69,8 +69,8 @@ export const MY_COURSES = [
                              // ※通年や前学期通しの場合は [1, 2] のように配列にします
     dayOfWeek: 1,            // 曜日 (1:月, 2:火, 3:水, 4:木, 5:金, 6:土, 0:日)
     period: 1,               // 時限 (1限目なら 1)
-    campus: "津田沼",          // キャンパス名
-    room: "37-601",          // 教室番号
+    campus: "東京",          // キャンパス名
+    room: "3-601",          // 教室番号
     teacher: "山田 太郎"        // 担当教員
   },
   // ... 自分の授業をどんどん追加！
@@ -97,8 +97,8 @@ export const PERIODS = {
 
 ```javascript
 export const CAMPUS_BUILDINGS = {
-  "津田沼": [
-    { name: "37号館", number: "37", floor: "6階", facilities: "教室" },
+  "東京": [
+    { name: "3号館", number: "3", floor: "6階", facilities: "教室" },
     // ... キャンパス情報を追加
   ],
   // ... 複数のキャンパスに対応
@@ -156,4 +156,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ---
 
 **作成者**: ryiot443311  
-**最終更新**: 2026-04-29
+**最終更新**: 2026-06-28
