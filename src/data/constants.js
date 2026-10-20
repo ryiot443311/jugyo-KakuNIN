@@ -13,13 +13,22 @@ export const MY_COURSES = [
   { id: 'sat-2', name: '体育実技', quarter: [3, 4], dayOfWeek: 6, period: 2, campus: 'south', room: '体育館', teacher: '田中 三郎' },
 ];
 
-// 時限ごとの時間
+// 時限ごとの時間（大学の時間割に合わせて書き換えてください）
 export const PERIODS = {
   1: { start: '09:00', end: '10:30' },
   2: { start: '10:40', end: '12:10' },
   3: { start: '13:00', end: '14:30' },
   4: { start: '14:40', end: '16:10' },
   5: { start: '16:20', end: '17:50' },
+};
+
+// クォーターの期間（'MM-DD'、大学の学年暦に合わせて書き換えてください）
+// 年をまたぐ期間は start を end より後の日付にします（例: 第4Q の 11-01〜01-31）
+export const QUARTERS = {
+  1: { start: '04-01', end: '05-31' },
+  2: { start: '06-01', end: '07-31' },
+  3: { start: '09-01', end: '10-31' },
+  4: { start: '11-01', end: '01-31' },
 };
 
 // キャンパス一覧（マップ画面の切り替えボタン）
