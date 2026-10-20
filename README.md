@@ -75,7 +75,7 @@ export const MY_COURSES = [
                              // ※通年や前学期通しの場合は [1, 2] のように配列にします
     dayOfWeek: 1,            // 曜日 (1:月, 2:火, 3:水, 4:木, 5:金, 6:土, 0:日)
     period: 1,               // 時限 (1限目なら 1)
-    campus: "north",     // キャンパスID (CAMPUSES の id)
+    campus: "north",         // キャンパスID (CAMPUSES の id)
     room: "3-601",          // 教室番号
     teacher: "山田 太郎"        // 担当教員
   },
