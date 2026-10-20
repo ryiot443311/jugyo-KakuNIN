@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { MY_COURSES, PERIODS, CAMPUS_BUILDINGS } from './data/constants';
+import { useState, useEffect, useMemo, useCallback } from 'react';
+import { MY_COURSES, PERIODS, CAMPUSES, CAMPUS_BUILDINGS } from './data/constants';
 
 const days = ['日', '月', '火', '水', '木', '金', '土'];
 const getQuarterByDate = (dateObj) => {
@@ -11,6 +11,8 @@ const getQuarterByDate = (dateObj) => {
   if (md >= 1120 || (md >= 101 && md <= 125)) return 4;
   return 0;
 };
+// 'YYYY-MM-DD' をローカル時刻の Date に変換（new Date('YYYY-MM-DD') は UTC 扱いになるため）
+const parseDateStr = (str) => { const [y, m, d] = str.split('-').map(Number); return new Date(y, m - 1, d); };
 const getWeekOfMonth = (date) => Math.ceil((date.getDate() + new Date(date.getFullYear(), date.getMonth(), 1).getDay()) / 7);
 
 function App() {
@@ -23,7 +25,8 @@ function App() {
   const [selectedQuarter, setSelectedQuarter] = useState(getQuarterByDate(now) === 0 ? 3 : getQuarterByDate(now));
   const [logs, setLogs] = useState([]);
   const [courseMemos, setCourseMemos] = useState({});
-  const [mapCampus, setMapCampus] = useState('tsudanuma');
+  const [mapCampus, setMapCampus] = useState(CAMPUSES[0]?.id);
+  const [mapImgError, setMapImgError] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [pendingRecord, setPendingRecord] = useState(null);
   const [editModalLog, setEditModalLog] = useState(null);
@@ -47,9 +50,9 @@ useEffect(() => {
 
   useEffect(() => {
     try { const saved = localStorage.getItem('attendance_logs'); if (saved) setLogs(JSON.parse(saved) || []); } 
-    catch (e) { localStorage.removeItem('attendance_logs'); }
+    catch { localStorage.removeItem('attendance_logs'); }
     try { const savedMemos = localStorage.getItem('course_memos'); if (savedMemos) setCourseMemos(JSON.parse(savedMemos) || {}); }
-    catch (e) { localStorage.removeItem('course_memos'); }
+    catch { localStorage.removeItem('course_memos'); }
   }, []);
 
   const saveMemo = useCallback((courseId, text) => {
@@ -87,12 +90,13 @@ const requestRecord = useCallback((courseId, status, quarter) => { setPendingRec
 
   const getLogForClassDate = useCallback((courseId, targetDay) => logs.find(log => log.courseId === courseId && log.date === getClassDateStr(targetDay)), [logs, getClassDateStr]);
 
+  // 年をまたいでも正しく並ぶよう 'YYYY-MM' をキーにする
   const groupedLogs = useMemo(() => logs.reduce((acc, log) => {
-    const d = new Date(log.date); const m = d.getMonth() + 1; const w = getWeekOfMonth(d);
+    const d = parseDateStr(log.date); const m = log.date.slice(0, 7); const w = getWeekOfMonth(d);
     if (!acc[m]) acc[m] = {}; if (!acc[m][w]) acc[m][w] = {}; if (!acc[m][w][log.date]) acc[m][w][log.date] = [];
     acc[m][w][log.date].push({ ...log, dayName: days[d.getDay()] }); return acc;
   }, {}), [logs]);
-  const sortedMonths = useMemo(() => Object.keys(groupedLogs).sort((a, b) => b - a), [groupedLogs]);
+  const sortedMonths = useMemo(() => Object.keys(groupedLogs).sort((a, b) => b.localeCompare(a)), [groupedLogs]);
 
   const quarterLogs = useMemo(() => logs.filter(l => l.quarter === selectedQuarter), [logs, selectedQuarter]);
   const totalRecords = useMemo(() => quarterLogs.filter(l => l.status !== '休講').length, [quarterLogs]);
@@ -109,7 +113,7 @@ const requestRecord = useCallback((courseId, status, quarter) => { setPendingRec
     }).filter(c => c.total > 0 || c.hasCanceled);
   }, [quarterCourses, quarterLogs]);
 
-const toggleAccordion = useCallback((key) => setExpandedSections(prev => ({ ...prev, [key]: prev[key] === undefined ? false : !prev[key] })), []);
+const toggleAccordion = useCallback((key, defaultOpen) => setExpandedSections(prev => ({ ...prev, [key]: !(prev[key] ?? defaultOpen) })), []);
 
   const bgColors = { '出席': '#22c55e', '遅刻': '#f59e0b', '欠席': '#ef4444', '休講': '#94a3b8' };
   const renderLogCard = (log) => {
@@ -154,7 +158,7 @@ const toggleAccordion = useCallback((key) => setExpandedSections(prev => ({ ...p
               <p style={{margin: 0}}><b>担当:</b> {selectedCourseForDetail.teacher}</p>
             </div>
 
-            div style={{ marginBottom: '20px' }}>
+            <div style={{ marginBottom: '20px' }}>
               <p style={{ margin: '0 0 5px 0', fontWeight: 'bold', fontSize: '0.85rem', color: '#64748b' }}>メモ (自動保存)</p>
               <textarea 
                 value={tempMemo} onChange={(e) => setTempMemo(e.target.value)} onBlur={() => saveMemo(selectedCourseForDetail.id, tempMemo)}
@@ -164,7 +168,7 @@ const toggleAccordion = useCallback((key) => setExpandedSections(prev => ({ ...p
             </div>
 
             {(() => {
-              const tgtQ = getQuarterByDate(new Date(getClassDateStr(selectedDay)));
+              const tgtQ = getQuarterByDate(parseDateStr(getClassDateStr(selectedDay)));
               const isSame = (selectedQuarter === tgtQ) && (tgtQ !== 0);
               const log = getLogForClassDate(selectedCourseForDetail.id, selectedDay);
               
@@ -235,7 +239,7 @@ const toggleAccordion = useCallback((key) => setExpandedSections(prev => ({ ...p
             const dayCourses = MY_COURSES.filter(c => c.dayOfWeek === selectedDay && (!c.quarter || c.quarter === selectedQuarter || (Array.isArray(c.quarter) && c.quarter.includes(selectedQuarter)))).sort((a, b) => a.period - b.period);
             if (dayCourses.length === 0) return <div style={{ padding: '40px 10px', textAlign: 'center', color: '#94a3b8', fontWeight: 'bold', background: 'white', borderRadius: '12px', border: '1px dashed #cbd5e1', marginTop: '15px' }}>本日の授業なし</div>;
             
-            const tgtQ = getQuarterByDate(new Date(getClassDateStr(selectedDay)));
+            const tgtQ = getQuarterByDate(parseDateStr(getClassDateStr(selectedDay)));
             const isSameQuarter = (selectedQuarter === tgtQ) && (tgtQ !== 0);
 
             return dayCourses.map(course => {
@@ -272,13 +276,13 @@ const toggleAccordion = useCallback((key) => setExpandedSections(prev => ({ ...p
 
       {currentView === 'weekly' && (
         <div style={{ overflowX: 'auto', background: 'white', padding: '10px', borderRadius: '12px' }}>
-          <table style={{ width: '100%', minWidth: '450px', borderCollapse: 'collapse' }}>
-            <thead><tr><th style={{width: '30px'}}></th>{days.slice(1,6).map(d => <th key={d} style={{padding: '8px', color: '#64748b'}}>{d}</th>)}</tr></thead>
+          <table style={{ width: '100%', minWidth: '520px', borderCollapse: 'collapse' }}>
+            <thead><tr><th style={{width: '30px'}}></th>{days.slice(1,7).map(d => <th key={d} style={{padding: '8px', color: '#64748b'}}>{d}</th>)}</tr></thead>
             <tbody>
               {Object.keys(PERIODS).map(p => (
                 <tr key={p}>
                   <td style={{ textAlign: 'center', color: '#94a3b8', fontWeight: 'bold' }}>{p}</td>
-                  {days.slice(1,6).map((_, i) => (
+                  {days.slice(1,7).map((_, i) => (
                     <td key={i} style={{ padding: '4px', border: '1px solid #f1f5f9', verticalAlign: 'top' }}>
                       {quarterCourses.filter(c => c.dayOfWeek === i + 1 && c.period === Number(p)).map(course => {
                         const hasMemo = courseMemos[course.id] && courseMemos[course.id].trim() !== '';
@@ -305,8 +309,8 @@ const toggleAccordion = useCallback((key) => setExpandedSections(prev => ({ ...p
             const mKey = `m-${month}`; const isMOpen = expandedSections[mKey] !== false;
             return (
               <div key={month} style={{ marginBottom: '15px', background: 'white', borderRadius: '12px', border: '1px solid #e2e8f0', overflow: 'hidden' }}>
-                <div onClick={() => toggleAccordion(mKey)} style={{ padding: '12px 15px', background: '#f8fafc', display: 'flex', justifyContent: 'space-between', fontWeight: 'bold' }}>
-                  <h3 style={{ margin: 0, fontSize: '1rem' }}>{month}月</h3>
+                <div onClick={() => toggleAccordion(mKey, true)} style={{ padding: '12px 15px', background: '#f8fafc', display: 'flex', justifyContent: 'space-between', fontWeight: 'bold' }}>
+                  <h3 style={{ margin: 0, fontSize: '1rem' }}>{month.slice(0, 4)}年{Number(month.slice(5))}月</h3>
                   <span style={{ transform: isMOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}>▼</span>
                 </div>
                 {isMOpen && (
@@ -315,18 +319,18 @@ const toggleAccordion = useCallback((key) => setExpandedSections(prev => ({ ...p
                       const wKey = `w-${month}-${week}`; const isWOpen = expandedSections[wKey] !== false;
                       return (
                         <div key={week} style={{ marginBottom: '10px', border: '1px solid #f1f5f9', borderRadius: '8px' }}>
-                          <div onClick={() => toggleAccordion(wKey)} style={{ padding: '8px 12px', background: '#f1f5f9', display: 'flex', justifyContent: 'space-between', fontWeight: 'bold' }}>
+                          <div onClick={() => toggleAccordion(wKey, true)} style={{ padding: '8px 12px', background: '#f1f5f9', display: 'flex', justifyContent: 'space-between', fontWeight: 'bold' }}>
                             <span>第{week}週</span>
                             <span style={{ transform: isWOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}>▼</span>
                           </div>
                           {isWOpen && (
                             <div style={{ padding: '10px' }}>
-                              {Object.keys(groupedLogs[month][week]).sort((a, b) => new Date(a) - new Date(b)).map(date => {
+                              {Object.keys(groupedLogs[month][week]).sort().map(date => {
                                 const dKey = `d-${date}`; const isDOpen = expandedSections[dKey] === true;
                                 const dayLogs = groupedLogs[month][week][date];
                                 return (
                                   <div key={date} style={{ marginBottom: '8px' }}>
-                                    <div onClick={() => toggleAccordion(dKey)} style={{ padding: '5px 10px', borderBottom: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', color: '#64748b', fontWeight: 'bold' }}>
+                                    <div onClick={() => toggleAccordion(dKey, false)} style={{ padding: '5px 10px', borderBottom: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', color: '#64748b', fontWeight: 'bold' }}>
                                       <span>{date} ({dayLogs[0].dayName})</span>
                                       <span style={{ transform: isDOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}>▼</span>
                                     </div>
@@ -358,7 +362,7 @@ const toggleAccordion = useCallback((key) => setExpandedSections(prev => ({ ...p
             </div>
           </div>
           {courseAnalytics.map(stat => (
-            <div key={stat.id} style={{ background: 'white', padding: '15px', borderRadius: '12px', marginBottom: '10px', border: '1px solid #e2e8f0' }}>
+            <div key={stat.name} style={{ background: 'white', padding: '15px', borderRadius: '12px', marginBottom: '10px', border: '1px solid #e2e8f0' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontWeight: 'bold', fontSize: '0.95rem' }}>{stat.name}</div>
@@ -377,13 +381,19 @@ const toggleAccordion = useCallback((key) => setExpandedSections(prev => ({ ...p
             {currentView === 'map' && (
         <div style={{ paddingBottom: '30px' }}>
           <div style={{ display: 'flex', gap: '10px', marginBottom: '15px' }}>
-            {['tsudanuma', 'mimomi'].map(c => (
-              <button key={c} onClick={() => setMapCampus(c)} style={{ flex: 1, padding: '12px', background: mapCampus === c ? '#1d4ed8' : '#f1f5f9', color: mapCampus === c ? '#fff' : '#64748b', border: 'none', borderRadius: '8px', fontWeight: 'bold' }}>{c === 'tsudanuma' ? '津田沼キャンパス' : '実籾キャンパス'}</button>
+            {CAMPUSES.map(c => (
+              <button key={c.id} onClick={() => { setMapCampus(c.id); setMapImgError(false); }} style={{ flex: 1, padding: '12px', background: mapCampus === c.id ? '#1d4ed8' : '#f1f5f9', color: mapCampus === c.id ? '#fff' : '#64748b', border: 'none', borderRadius: '8px', fontWeight: 'bold' }}>{c.name}</button>
             ))}
           </div>
-          <div style={{ background: 'white', padding: '10px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
-            <img src={mapCampus === 'tsudanuma' ? '/tsudanuma_campus-map_img_02_sp.jpg' : '/mimomi_campus-map_img_02_sp.jpg'} alt="マップ" style={{ width: '100%', borderRadius: '8px' }} />
-          </div>
+          {(() => {
+            const mapImage = CAMPUSES.find(c => c.id === mapCampus)?.mapImage;
+            if (!mapImage || mapImgError) return <div style={{ padding: '30px 10px', textAlign: 'center', color: '#94a3b8', background: 'white', borderRadius: '12px', border: '1px dashed #cbd5e1', fontSize: '0.85rem' }}>マップ画像がありません（public/ に画像を配置してください）</div>;
+            return (
+              <div style={{ background: 'white', padding: '10px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+                <img src={mapImage} alt="マップ" onError={() => setMapImgError(true)} style={{ width: '100%', borderRadius: '8px' }} />
+              </div>
+            );
+          })()}
           <div style={{ marginTop: '15px' }}>
             {CAMPUS_BUILDINGS[mapCampus]?.map(b => (
               <div key={b.id} style={{ marginBottom: '10px', padding: '15px', background: 'white', borderRadius: '8px', border: '1px solid #e2e8f0' }}>

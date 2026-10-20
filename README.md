@@ -72,7 +72,7 @@ export const MY_COURSES = [
                              // ※通年や前学期通しの場合は [1, 2] のように配列にします
     dayOfWeek: 1,            // 曜日 (1:月, 2:火, 3:水, 4:木, 5:金, 6:土, 0:日)
     period: 1,               // 時限 (1限目なら 1)
-    campus: "東京",          // キャンパス名
+    campus: "tsudanuma",     // キャンパスID (CAMPUSES の id)
     room: "3-601",          // 教室番号
     teacher: "山田 太郎"        // 担当教員
   },
@@ -91,18 +91,22 @@ export const PERIODS = {
   // ... 大学のシラバスに合わせて変更してください
 };
 ```
-### 3. マップと施設情報 (CAMPUS_BUILDINGS)
+### 3. マップと施設情報 (CAMPUSES / CAMPUS_BUILDINGS)
 ​所属する大学のキャンパス情報に変更できます。
 ```JavaScript
-export const CAMPUS_BUILDINGS = {
-  "東京": [
-    { name: "3号館", number: "3", floor: "6階", facilities: "教室" },
-    // ... キャンパス情報を追加
-  ],
+export const CAMPUSES = [
+  { id: "tsudanuma", name: "津田沼キャンパス", mapImage: "/tsudanuma_map.jpg" }, // 画像がなければ null
   // ... 複数のキャンパスに対応
+];
+
+export const CAMPUS_BUILDINGS = {
+  tsudanuma: [ // キーは CAMPUSES の id
+    { id: "tsu-3", name: "3号館", description: "講義室・PC教室" },
+    // ... 建物情報を追加
+  ],
 };
 ```
-📌 マップ画像を使用する場合: public/ ディレクトリにお手持ちのマップ画像（.jpg や .png）を配置し、src/App.jsx 内の <img src="..."> のパスを変更してください。
+📌 マップ画像を使用する場合: public/ ディレクトリにマップ画像（.jpg や .png）を配置し、CAMPUSES の mapImage にパスを指定してください。画像がない場合は「マップ画像がありません」と表示されます。
 
 
 ## ​📦 ビルド・デプロイ
