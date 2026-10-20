@@ -1,3 +1,5 @@
+import { QUARTERS } from '../data/constants';
+
 export const DAYS = ['日', '月', '火', '水', '木', '金', '土'];
 
 // Date を 'YYYY-MM-DD' に変換
@@ -11,13 +13,18 @@ export const addDays = (dateStr, n) => { const d = parseDateStr(dateStr); d.setD
 // dateStr を含む週（日曜始まり）の、指定曜日の日付
 export const getDateOfWeekday = (dateStr, dayOfWeek) => addDays(dateStr, dayOfWeek - parseDateStr(dateStr).getDay());
 
+// 'MM-DD' を月日の数値に変換（例: '04-01' → 401）
+const toMonthDay = (mmdd) => Number(mmdd.replace('-', ''));
+
+// 日付が属するクォーター（どの期間にも入らなければ 0）
 export const getQuarterByDate = (dateObj) => {
   if (!dateObj || isNaN(dateObj)) return 0;
   const md = (dateObj.getMonth() + 1) * 100 + dateObj.getDate();
-  if (md >= 401 && md <= 531) return 1;
-  if (md >= 601 && md <= 731) return 2;
-  if (md >= 901 && md <= 1031) return 3;
-  if (md >= 1101 || (md >= 101 && md <= 131)) return 4;
+  for (const [quarter, { start, end }] of Object.entries(QUARTERS)) {
+    const s = toMonthDay(start); const e = toMonthDay(end);
+    const inRange = s <= e ? (md >= s && md <= e) : (md >= s || md <= e); // 年をまたぐ期間に対応
+    if (inRange) return Number(quarter);
+  }
   return 0;
 };
 

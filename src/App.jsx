@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { MY_COURSES } from './data/constants';
+import { MY_COURSES, QUARTERS } from './data/constants';
 import { isCourseInQuarter } from './data/status';
 import { parseDateStr, getQuarterByDate, getWeekOfMonth, getDateOfWeekday } from './utils/date';
 import { useLocalStorageState } from './hooks/useLocalStorageState';
@@ -116,7 +116,7 @@ function App() {
       </div>
 
       <div className="quarter-row">
-        {[1, 2, 3, 4].map(q => (
+        {Object.keys(QUARTERS).map(Number).map(q => (
           <button key={q} onClick={() => setSelectedQuarter(q)} className={`quarter-btn${selectedQuarter === q ? ' is-active' : ''}`}>第{q}Q</button>
         ))}
       </div>
