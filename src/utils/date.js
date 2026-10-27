@@ -31,4 +31,7 @@ export const getQuarterByDate = (dateObj, quarters = QUARTERS) => {
   return 0;
 };
 
+// 4月始まりの年度（1〜3月は前の年の年度）。'YYYY-MM-DD' を受け取る
+export const getFiscalYear = (dateStr) => { const [y, m] = dateStr.split('-').map(Number); return m >= 4 ? y : y - 1; };
+
 export const getWeekOfMonth = (date) => Math.ceil((date.getDate() + new Date(date.getFullYear(), date.getMonth(), 1).getDay()) / 7);

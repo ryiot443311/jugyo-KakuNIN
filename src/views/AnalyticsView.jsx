@@ -9,7 +9,7 @@ const calcRate = (logs) => {
   return total === 0 ? 0 : Math.round(((countBy(logs, '出席') + countBy(logs, '遅刻')) / total) * 100);
 };
 
-export default function AnalyticsView({ quarterLogs, quarterCourses, selectedQuarter }) {
+export default function AnalyticsView({ quarterLogs, quarterCourses, selectedQuarter, years, year, onYearChange }) {
   const courseAnalytics = useMemo(() => {
     return [...new Set(quarterCourses.map(c => c.name))].map(name => {
       const rIds = quarterCourses.filter(c => c.name === name).map(c => c.id);
@@ -22,9 +22,17 @@ export default function AnalyticsView({ quarterLogs, quarterCourses, selectedQua
 
   return (
     <div className="mb-20">
+      {years.length > 1 && (
+        <div className="row align-center gap-10 mb-10">
+          <label className="small muted" htmlFor="analytics-year">年度</label>
+          <select id="analytics-year" className="input grow" value={year} onChange={(e) => onYearChange(Number(e.target.value))}>
+            {years.map(y => <option key={y} value={y}>{y}年度</option>)}
+          </select>
+        </div>
+      )}
       <div className="summary">
         <div>
-          <p className="summary-label">出席率 (第{selectedQuarter}Q)</p>
+          <p className="summary-label">出席率 ({year}年度 第{selectedQuarter}Q)</p>
           <p className="summary-rate">{calcRate(quarterLogs)}%</p>
         </div>
         <div className="summary-counts">
