@@ -2,6 +2,7 @@ import { useState } from 'react';
 import Modal from '../Modal';
 import { parseBackup } from '../../data/backup';
 import { downloadBackup } from '../../utils/download';
+import SettingsGroup from './SettingsGroup';
 
 const PART_LABELS = {
   appData: '授業・キャンパス情報', settings: '設定', campusImages: 'マップ画像',
@@ -27,7 +28,7 @@ export default function DataSection({ getBackup, onImportBackup }) {
   };
 
   return (
-    <section className="card section">
+    <SettingsGroup title="データ">
       {pendingImport && (
         <Modal>
           <p className="center strong">次のデータを読み込み、現在の内容を置き換えます。</p>
@@ -39,7 +40,6 @@ export default function DataSection({ getBackup, onImportBackup }) {
         </Modal>
       )}
 
-      <h3 className="section-title">データ</h3>
       <div className="row gap-6">
         <button type="button" onClick={exportBackup} className="btn btn-soft grow">バックアップを書き出す</button>
         <label className="btn btn-soft grow row align-center" style={{ justifyContent: 'center' }}>
@@ -49,6 +49,6 @@ export default function DataSection({ getBackup, onImportBackup }) {
       </div>
       {message && <p className="small danger-text mt-8" role="alert">{message}</p>}
       <p className="tiny muted mt-8">授業・キャンパス情報、設定、マップ画像、出席記録、メモを JSON で保存・復元できます。</p>
-    </section>
+    </SettingsGroup>
   );
 }

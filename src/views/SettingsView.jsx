@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { THEMES, MAX_DAYS } from '../data/settings';
+import SettingsGroup from '../components/settings/SettingsGroup';
 import CoursesSection from '../components/settings/CoursesSection';
 import CampusSection from '../components/settings/CampusSection';
 import DataSection from '../components/settings/DataSection';
@@ -44,17 +45,17 @@ export default function SettingsView({ settings, onChange, appData, onChangeData
 
   return (
     <div className="mb-20">
-      <section className="card section">
-        <h3 className="section-title">テーマ</h3>
+      <SettingsGroup title="テーマ">
         <div className="row gap-6">
           {THEMES.map(t => (
             <button key={t.id} type="button" aria-pressed={settings.theme === t.id} onClick={() => onChange({ theme: t.id })} className={`btn grow ${settings.theme === t.id ? 'btn-primary' : 'btn-soft'}`}>{t.label}</button>
           ))}
         </div>
-      </section>
+      </SettingsGroup>
 
-      <section className="card section">
-        <h3 className="section-title">クォーターの期間</h3>
+      <CoursesSection courses={appData.courses} hiddenCourses={settings.hiddenCourses} onToggle={toggleCourse} onEdit={onEditCourse} onAdd={onAddCourse} />
+      <CampusSection campuses={appData.campuses} buildings={appData.buildings} images={campusImages} onChangeData={onChangeData} onChangeImages={onChangeImages} />
+      <SettingsGroup title="クォーターの期間">
         {Object.entries(settings.quarters).map(([q, range]) => (
           <div key={q} className="row align-center gap-6 range-row">
             <span className="range-label">第{q}Q</span>
@@ -63,10 +64,9 @@ export default function SettingsView({ settings, onChange, appData, onChangeData
           </div>
         ))}
         <p className="tiny muted">年をまたぐ期間は、開始を終了より後の日付にします（例: 11月1日〜1月31日）。</p>
-      </section>
+      </SettingsGroup>
 
-      <section className="card section">
-        <h3 className="section-title">時限の時間</h3>
+      <SettingsGroup title="時限の時間">
         {Object.entries(settings.periods).map(([p, time]) => (
           <div key={p} className="row align-center gap-6 range-row">
             <span className="range-label">{p}限</span>
@@ -75,10 +75,8 @@ export default function SettingsView({ settings, onChange, appData, onChangeData
             <input type="time" aria-label={`${p}限の終了`} value={time.end} onChange={(e) => e.target.value && setPeriod(p, { end: e.target.value })} className="input grow" />
           </div>
         ))}
-      </section>
+      </SettingsGroup>
 
-      <CoursesSection courses={appData.courses} hiddenCourses={settings.hiddenCourses} onToggle={toggleCourse} onEdit={onEditCourse} onAdd={onAddCourse} />
-      <CampusSection campuses={appData.campuses} buildings={appData.buildings} images={campusImages} onChangeData={onChangeData} onChangeImages={onChangeImages} />
       <DataSection getBackup={getBackup} onImportBackup={onImportBackup} />
       <DangerSection logCount={logCount} onResetLogs={onResetLogs} getBackup={getBackup} />
     </div>

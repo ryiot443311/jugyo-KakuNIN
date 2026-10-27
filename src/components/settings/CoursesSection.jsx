@@ -1,10 +1,10 @@
 import { DAYS } from '../../utils/date';
 import { quarterLabel } from '../../data/status';
+import SettingsGroup from './SettingsGroup';
 
 export default function CoursesSection({ courses, hiddenCourses, onToggle, onEdit, onAdd }) {
   return (
-    <section className="card section">
-      <h3 className="section-title">授業</h3>
+    <SettingsGroup title="授業">
       {courses.length === 0 && <p className="small muted">授業がまだありません。</p>}
       {courses.map(c => (
         <div key={c.id} className="row align-center course-row">
@@ -20,6 +20,6 @@ export default function CoursesSection({ courses, hiddenCourses, onToggle, onEdi
       ))}
       <button type="button" onClick={() => onAdd()} className="btn btn-accent block mt-10">＋ 授業を追加</button>
       <p className="tiny muted mt-10">チェックを外した授業は、日別・週間・分析に表示されません（記録は残ります）。</p>
-    </section>
+    </SettingsGroup>
   );
 }

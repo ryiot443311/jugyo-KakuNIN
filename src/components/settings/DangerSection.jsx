@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import Modal from '../Modal';
+import SettingsGroup from './SettingsGroup';
 import { downloadBackup } from '../../utils/download';
 
 const CONFIRM_WORD = '削除';
@@ -12,7 +13,7 @@ export default function DangerSection({ logCount, onResetLogs, getBackup }) {
   const close = () => { setConfirming(false); setTyped(''); };
 
   return (
-    <section className="card section danger-zone">
+    <SettingsGroup title="危険な項目" className="danger-zone">
       {confirming && (
         <Modal>
           <h3 className="modal-title danger-text">出席記録の全削除</h3>
@@ -27,11 +28,8 @@ export default function DangerSection({ logCount, onResetLogs, getBackup }) {
         </Modal>
       )}
 
-      <details>
-        <summary className="section-title danger-text">危険な項目</summary>
-        <p className="small muted mb-10">ここの操作は元に戻せません。実行前にバックアップの書き出しをおすすめします。</p>
-        <button type="button" onClick={() => setConfirming(true)} disabled={logCount === 0} className="btn btn-danger block">出席記録をすべて削除（{logCount}件）</button>
-      </details>
-    </section>
+      <p className="small muted mb-10">ここの操作は元に戻せません。実行前にバックアップの書き出しをおすすめします。</p>
+      <button type="button" onClick={() => setConfirming(true)} disabled={logCount === 0} className="btn btn-danger block">出席記録をすべて削除（{logCount}件）</button>
+    </SettingsGroup>
   );
 }
