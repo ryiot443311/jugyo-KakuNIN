@@ -41,7 +41,7 @@ export default function DailyView({ selectedDate, today, selectedQuarter, course
       ) : dayCourses.map(course => {
         const log = getLog(course.id);
         const memo = courseMemos[course.id];
-        const dateMemo = dateMemos[dateMemoKey(selectedDate, course.id)];
+        const dateMemo = dateMemos[dateMemoKey(course.id, selectedDate)];
         const period = periods[course.period];
         const isNow = course.id === nowId;
         const isNext = course.id === nextId;
@@ -58,7 +58,7 @@ export default function DailyView({ selectedDate, today, selectedQuarter, course
             </div>
             <h3 className="course-name">{course.name}</h3>
             {hasText(memo) && <div className="memo">{memo}</div>}
-            {hasText(dateMemo) && <div className="memo memo-dated">{dateMemo}</div>}
+            {hasText(dateMemo) && <div className="memo memo-dated"><b>この日:</b> {dateMemo}</div>}
             {recordState.status !== 'ok' ? (
               <RecordNotice status={recordState.status} />
             ) : log ? (

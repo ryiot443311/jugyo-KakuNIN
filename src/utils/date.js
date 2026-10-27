@@ -31,4 +31,22 @@ export const getQuarterByDate = (dateObj, quarters = QUARTERS) => {
   return 0;
 };
 
+// 4月始まりの年度（1〜3月は前の年の年度）。'YYYY-MM-DD' を受け取る
+export const getFiscalYear = (dateStr) => { const [y, m] = dateStr.split('-').map(Number); return m >= 4 ? y : y - 1; };
+
+// 期間内ならそのクォーター、休み期間なら次に始まるクォーター
+export const getNearestQuarter = (dateObj, quarters = QUARTERS) => {
+  const q = getQuarterByDate(dateObj, quarters);
+  if (q !== 0) return q;
+  const ord = (dateObj.getMonth() + 1) * 31 + dateObj.getDate();
+  let best = Number(Object.keys(quarters)[0]);
+  let bestDelta = Infinity;
+  for (const [quarter, { start }] of Object.entries(quarters)) {
+    const [sm, sd] = start.split('-').map(Number);
+    const delta = (sm * 31 + sd - ord + 372) % 372;
+    if (delta < bestDelta) { bestDelta = delta; best = Number(quarter); }
+  }
+  return best;
+};
+
 export const getWeekOfMonth = (date) => Math.ceil((date.getDate() + new Date(date.getFullYear(), date.getMonth(), 1).getDay()) / 7);

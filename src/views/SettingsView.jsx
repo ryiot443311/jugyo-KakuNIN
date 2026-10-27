@@ -5,6 +5,7 @@ import CoursesSection from '../components/settings/CoursesSection';
 import CampusSection from '../components/settings/CampusSection';
 import DataSection from '../components/settings/DataSection';
 import DangerSection from '../components/settings/DangerSection';
+import CsvSection from '../components/settings/CsvSection';
 
 const pad = (n) => String(n).padStart(2, '0');
 
@@ -36,7 +37,7 @@ function MonthDayInput({ value, label, onChange }) {
   );
 }
 
-export default function SettingsView({ settings, onChange, appData, onChangeData, campusImages, onChangeImages, logCount, onResetLogs, onAddCourse, onEditCourse, getBackup, onImportBackup }) {
+export default function SettingsView({ settings, onChange, appData, onChangeData, campusImages, onChangeImages, logs, logCount, onResetLogs, onAddCourse, onEditCourse, getBackup, onImportBackup }) {
   const setQuarter = (q, patch) => onChange({ quarters: { ...settings.quarters, [q]: { ...settings.quarters[q], ...patch } } });
   const setPeriod = (p, patch) => onChange({ periods: { ...settings.periods, [p]: { ...settings.periods[p], ...patch } } });
   const toggleCourse = (id) => onChange({
@@ -55,6 +56,14 @@ export default function SettingsView({ settings, onChange, appData, onChangeData
 
       <CoursesSection courses={appData.courses} hiddenCourses={settings.hiddenCourses} onToggle={toggleCourse} onEdit={onEditCourse} onAdd={onAddCourse} />
       <CampusSection campuses={appData.campuses} buildings={appData.buildings} images={campusImages} onChangeData={onChangeData} onChangeImages={onChangeImages} />
+      <SettingsGroup title="出席率の基準">
+        <div className="row gap-10 align-center">
+          <NumInput value={settings.threshold} min={1} max={100} label="出席率の基準" onCommit={(threshold) => onChange({ threshold })} />
+          <span>% 以上</span>
+        </div>
+        <p className="small muted mt-8">分析画面の警告と「あと何回欠席できるか」の計算に使います。</p>
+      </SettingsGroup>
+
       <SettingsGroup title="クォーターの期間">
         {Object.entries(settings.quarters).map(([q, range]) => (
           <div key={q} className="row align-center gap-6 range-row">
@@ -77,6 +86,7 @@ export default function SettingsView({ settings, onChange, appData, onChangeData
         ))}
       </SettingsGroup>
 
+      <CsvSection logs={logs} courses={appData.courses} />
       <DataSection getBackup={getBackup} onImportBackup={onImportBackup} />
       <DangerSection logCount={logCount} onResetLogs={onResetLogs} getBackup={getBackup} />
     </div>

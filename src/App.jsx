@@ -2,15 +2,18 @@ import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { QUARTERS } from './data/constants';
 import { isCourseInQuarter } from './data/status';
 import { SETTINGS_KEY, resolveSettings } from './data/settings';
-import { DATA_KEY, IMAGES_KEY, resolveAppData } from './data/appData';
+import { COURSES_KEY, CAMPUSES_KEY, BUILDINGS_KEY, IMAGES_KEY, resolveAppData } from './data/appData';
+import { sanitizeLogs, sanitizeMemos } from './data/sanitize';
 import { buildBackup } from './data/backup';
-import { parseDateStr, getQuarterByDate, getWeekOfMonth, getDateOfWeekday } from './utils/date';
+import { parseDateStr, getQuarterByDate, getNearestQuarter, getWeekOfMonth, getDateOfWeekday, getFiscalYear } from './utils/date';
+import { buildCourseAnalytics, calcRate, countStatuses } from './utils/stats';
 import { dateMemoKey } from './utils/memo';
 import { applyTheme } from './utils/theme';
 import { useLocalStorageState, useSaveFailed } from './hooks/useLocalStorageState';
 import { useToday } from './hooks/useToday';
 import { useNowMinutes } from './hooks/useNowMinutes';
 import ConfirmRecordModal from './components/ConfirmRecordModal';
+import UndoToast from './components/UndoToast';
 import CourseDetailModal from './components/CourseDetailModal';
 import EditLogModal from './components/EditLogModal';
 import CourseFormModal from './components/CourseFormModal';
@@ -21,6 +24,8 @@ import AnalyticsView from './views/AnalyticsView';
 import MapView from './views/MapView';
 import SettingsView from './views/SettingsView';
 import './App.css';
+
+const UNDO_MS = 6000; // 記録後に「元に戻す」を出しておく時間
 
 const VIEWS = [
   { id: 'home', label: '日別' },
@@ -41,9 +46,19 @@ function App() {
   const updateSettings = useCallback((patch) => setSavedSettings({ ...settings, ...patch }), [settings, setSavedSettings]);
   useEffect(() => { applyTheme(settings.theme); }, [settings.theme]);
 
-  const [savedData, setSavedData] = useLocalStorageState(DATA_KEY, {});
-  const appData = useMemo(() => resolveAppData(savedData), [savedData]);
-  const updateData = useCallback((patch) => setSavedData({ ...appData, ...patch }), [appData, setSavedData]);
+  // 授業・キャンパス・施設は別々のキーで保存する（courses・campus_buildings は以前のバージョンと同じ形式）
+  const [savedCourses, setSavedCourses] = useLocalStorageState(COURSES_KEY, null);
+  const [savedCampuses, setSavedCampuses] = useLocalStorageState(CAMPUSES_KEY, null);
+  const [savedBuildings, setSavedBuildings] = useLocalStorageState(BUILDINGS_KEY, null);
+  const appData = useMemo(
+    () => resolveAppData({ courses: savedCourses, campuses: savedCampuses, buildings: savedBuildings }),
+    [savedCourses, savedCampuses, savedBuildings],
+  );
+  const updateData = useCallback((patch) => {
+    if (patch.courses) setSavedCourses(patch.courses);
+    if (patch.campuses) setSavedCampuses(patch.campuses);
+    if (patch.buildings) setSavedBuildings(patch.buildings);
+  }, [setSavedCourses, setSavedCampuses, setSavedBuildings]);
   const [campusImages, setCampusImages] = useLocalStorageState(IMAGES_KEY, {});
 
   const saveFailed = useSaveFailed();
@@ -51,11 +66,13 @@ function App() {
 
   const [currentView, setCurrentView] = useState('home');
   const [selectedDate, setSelectedDate] = useState(today);
-  const [selectedQuarter, setSelectedQuarter] = useState(() => getQuarterByDate(parseDateStr(today), settings.quarters) || 3);
-  const [logs, setLogs] = useLocalStorageState('attendance_logs', []);
-  const [courseMemos, setCourseMemos] = useLocalStorageState('course_memos', {});
-  const [dateMemos, setDateMemos] = useLocalStorageState('date_memos', {});
+  const [selectedQuarter, setSelectedQuarter] = useState(() => getNearestQuarter(parseDateStr(today), settings.quarters));
+  const [logs, setLogs] = useLocalStorageState('attendance_logs', [], sanitizeLogs);
+  const [courseMemos, setCourseMemos] = useLocalStorageState('course_memos', {}, sanitizeMemos);
+  const [dateMemos, setDateMemos] = useLocalStorageState('dated_memos', {}, sanitizeMemos);
   const [pendingRecord, setPendingRecord] = useState(null);
+  const [undo, setUndo] = useState(null); // { logId, text }
+  const [analyticsYear, setAnalyticsYear] = useState(() => getFiscalYear(today));
   const [editLog, setEditLog] = useState(null);
   const [detailCourse, setDetailCourse] = useState(null);
   const [courseForm, setCourseForm] = useState(null); // { course, preset }
@@ -91,7 +108,7 @@ function App() {
 
   // 空のメモはキーごと消す
   const saveDateMemo = useCallback((courseId, text) => setDateMemos(prev => {
-    const key = dateMemoKey(selectedDate, courseId);
+    const key = dateMemoKey(courseId, selectedDate);
     const next = { ...prev };
     if (text.trim() === '') delete next[key]; else next[key] = text;
     return next;
@@ -103,8 +120,21 @@ function App() {
     const rd = new Date(); const timeStr = `${String(rd.getHours()).padStart(2, '0')}:${String(rd.getMinutes()).padStart(2, '0')}`;
     const newLog = { id: Date.now().toString(), courseId: pendingRecord.courseId, date: pendingRecord.date, recordedAt: `${pendingRecord.date} ${timeStr}`, status: pendingRecord.status, quarter: pendingRecord.quarter };
     setLogs(prev => [...prev, newLog]);
+    setUndo({ logId: newLog.id, text: `「${appData.courses.find(c => c.id === newLog.courseId)?.name ?? '授業'}」を${newLog.status}で記録しました` });
     setPendingRecord(null);
-  }, [pendingRecord, setLogs]);
+  }, [pendingRecord, appData.courses, setLogs]);
+
+  // 記録後しばらくしたら「元に戻す」を消す
+  useEffect(() => {
+    if (!undo) return undefined;
+    const timer = setTimeout(() => setUndo(null), UNDO_MS);
+    return () => clearTimeout(timer);
+  }, [undo]);
+
+  const undoRecord = useCallback(() => {
+    setLogs(prev => prev.filter(l => l.id !== undo.logId));
+    setUndo(null);
+  }, [undo, setLogs]);
 
   const changeLogStatus = useCallback((status) => {
     setLogs(prev => prev.map(l => l.id === editLog.id ? { ...l, status } : l));
@@ -129,16 +159,21 @@ function App() {
     setCourseForm(null);
   }, [appData.courses, updateData]);
 
-  const getBackup = () => buildBackup({ appData, settings, campusImages, logs, courseMemos, dateMemos });
+  const getBackup = () => JSON.stringify(buildBackup({
+    logs, courseMemos, datedMemos: dateMemos, courses: appData.courses, settings,
+    campuses: appData.campuses, campusBuildings: appData.buildings, campusImages,
+  }), null, 2);
 
   // バックアップに含まれていた項目だけを置き換える
   const importBackup = (backup) => {
-    if (backup.appData) setSavedData(backup.appData);
-    if (backup.settings) setSavedSettings(backup.settings);
+    if (backup.courses) setSavedCourses(backup.courses);
+    if (backup.campuses) setSavedCampuses(backup.campuses);
+    if (backup.campusBuildings) setSavedBuildings(backup.campusBuildings);
     if (backup.campusImages) setCampusImages(backup.campusImages);
+    if (backup.settings) setSavedSettings(backup.settings);
     if (backup.logs) setLogs(backup.logs);
     if (backup.courseMemos) setCourseMemos(backup.courseMemos);
-    if (backup.dateMemos) setDateMemos(backup.dateMemos);
+    if (backup.datedMemos) setDateMemos(backup.datedMemos);
   };
 
   const toggleAccordion = useCallback((key, defaultOpen) => setExpandedSections(prev => ({ ...prev, [key]: !(prev[key] ?? defaultOpen) })), []);
@@ -146,10 +181,16 @@ function App() {
   // 設定で非表示にした授業は日別・週間・分析から外す（履歴には記録が残る）
   const courses = useMemo(() => appData.courses.filter(c => !settings.hiddenCourses.includes(c.id)), [appData.courses, settings.hiddenCourses]);
   const quarterCourses = useMemo(() => courses.filter(c => isCourseInQuarter(c, selectedQuarter)), [courses, selectedQuarter]);
+  // 分析の年度の選択肢（記録のある年度と今年度）。選択中の年度が無くなったら新しい年度に寄せる
+  const fiscalYears = useMemo(() => [...new Set([getFiscalYear(today), ...logs.map(l => getFiscalYear(l.date))])].sort((a, b) => b - a), [logs, today]);
+  const year = fiscalYears.includes(analyticsYear) ? analyticsYear : fiscalYears[0];
   const quarterLogs = useMemo(() => {
     const ids = new Set(courses.map(c => c.id));
-    return logs.filter(l => l.quarter === selectedQuarter && ids.has(l.courseId));
-  }, [logs, courses, selectedQuarter]);
+    return logs.filter(l => l.quarter === selectedQuarter && ids.has(l.courseId) && getFiscalYear(l.date) === year);
+  }, [logs, courses, selectedQuarter, year]);
+  const statusCounts = useMemo(() => countStatuses(quarterLogs), [quarterLogs]);
+  const overallRate = calcRate(statusCounts['出席'], statusCounts['遅刻'], statusCounts['欠席']);
+  const courseAnalytics = useMemo(() => buildCourseAnalytics(quarterCourses, quarterLogs, settings.threshold), [quarterCourses, quarterLogs, settings.threshold]);
 
   return (
     <div className="app">
@@ -160,7 +201,7 @@ function App() {
           course={detailCourse}
           date={selectedDate}
           memo={courseMemos[detailCourse.id]}
-          dateMemo={dateMemos[dateMemoKey(selectedDate, detailCourse.id)]}
+          dateMemo={dateMemos[dateMemoKey(detailCourse.id, selectedDate)]}
           recordState={recordState}
           log={getLog(detailCourse.id)}
           onSaveMemo={(text) => saveMemo(detailCourse.id, text)}
@@ -220,17 +261,24 @@ function App() {
         <WeeklyView today={today} periods={settings.periods} quarterCourses={quarterCourses} courseMemos={courseMemos} onOpenDetail={(course) => { setSelectedDate(getDateOfWeekday(today, course.dayOfWeek)); setDetailCourse(course); }} onAddCourse={openAddCourse} />
       )}
       {currentView === 'history' && <HistoryView logs={logs} courses={appData.courses} expandedSections={expandedSections} onToggle={toggleAccordion} onEditLog={setEditLog} />}
-      {currentView === 'analytics' && <AnalyticsView quarterLogs={quarterLogs} quarterCourses={quarterCourses} selectedQuarter={selectedQuarter} />}
+      {currentView === 'analytics' && (
+        <AnalyticsView
+          selectedQuarter={selectedQuarter} statusCounts={statusCounts} overallRate={overallRate} courseAnalytics={courseAnalytics}
+          threshold={settings.threshold} years={fiscalYears} year={year} onYearChange={setAnalyticsYear}
+        />
+      )}
       {currentView === 'map' && <MapView campuses={appData.campuses} buildings={appData.buildings} campusImages={campusImages} />}
       {currentView === 'settings' && (
         <SettingsView
           settings={settings} onChange={updateSettings}
           appData={appData} onChangeData={updateData} campusImages={campusImages} onChangeImages={setCampusImages}
           onAddCourse={() => openAddCourse()} onEditCourse={(course) => setCourseForm({ course })}
-          logCount={logs.length} onResetLogs={() => setLogs([])}
+          logs={logs} logCount={logs.length} onResetLogs={() => setLogs([])}
           getBackup={getBackup} onImportBackup={importBackup}
         />
       )}
+
+      {undo && <UndoToast text={undo.text} onUndo={undoRecord} />}
     </div>
   );
 }

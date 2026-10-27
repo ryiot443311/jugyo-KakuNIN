@@ -1,3 +1,6 @@
 node_modules
 dist
 *.local
+# 実データ（時間割・マップ画像）は公開しない
+src/data/constants.local.js
+public/local/
