@@ -4,10 +4,10 @@ import LogCard from '../components/LogCard';
 
 function AccordionHeader({ onClick, isOpen, className, children }) {
   return (
-    <div onClick={onClick} className={className}>
+    <button type="button" onClick={onClick} aria-expanded={isOpen} className={`acc-head ${className}`}>
       {children}
-      <span className={`chevron${isOpen ? ' is-open' : ''}`}>▼</span>
-    </div>
+      <span className={`arrow${isOpen ? ' is-open' : ''}`}>▼</span>
+    </button>
   );
 }
 
@@ -20,37 +20,37 @@ export default function HistoryView({ logs, expandedSections, onToggle, onEditLo
   }, {}), [logs]);
   const sortedMonths = useMemo(() => Object.keys(groupedLogs).sort((a, b) => b.localeCompare(a)), [groupedLogs]);
 
-  if (sortedMonths.length === 0) return <div className="empty-state">記録はまだありません</div>;
+  if (sortedMonths.length === 0) return <div className="empty">記録はまだありません</div>;
 
   return (
-    <div className="view-bottom">
+    <div className="mb-20">
       {sortedMonths.map(month => {
         const mKey = `m-${month}`; const isMOpen = expandedSections[mKey] !== false;
         return (
-          <div key={month} className="history-month">
-            <AccordionHeader onClick={() => onToggle(mKey, true)} isOpen={isMOpen} className="history-month-head">
-              <h3>{month.slice(0, 4)}年{Number(month.slice(5))}月</h3>
+          <div key={month} className="card accordion">
+            <AccordionHeader onClick={() => onToggle(mKey, true)} isOpen={isMOpen} className="acc-month">
+              <span>{month.slice(0, 4)}年{Number(month.slice(5))}月</span>
             </AccordionHeader>
             {isMOpen && (
-              <div className="history-body">
+              <div className="acc-body">
                 {Object.keys(groupedLogs[month]).sort((a, b) => b - a).map(week => {
                   const wKey = `w-${month}-${week}`; const isWOpen = expandedSections[wKey] !== false;
                   return (
-                    <div key={week} className="history-week">
-                      <AccordionHeader onClick={() => onToggle(wKey, true)} isOpen={isWOpen} className="history-week-head">
+                    <div key={week} className="acc-week">
+                      <AccordionHeader onClick={() => onToggle(wKey, true)} isOpen={isWOpen} className="acc-weekhead">
                         <span>第{week}週</span>
                       </AccordionHeader>
                       {isWOpen && (
-                        <div className="history-body">
+                        <div className="acc-body">
                           {Object.keys(groupedLogs[month][week]).sort().map(date => {
                             const dKey = `d-${date}`; const isDOpen = expandedSections[dKey] === true;
                             const dayLogs = groupedLogs[month][week][date];
                             return (
-                              <div key={date} className="history-day">
-                                <AccordionHeader onClick={() => onToggle(dKey, false)} isOpen={isDOpen} className="history-day-head">
+                              <div key={date} className="acc-day">
+                                <AccordionHeader onClick={() => onToggle(dKey, false)} isOpen={isDOpen} className="acc-dayhead">
                                   <span>{date} ({dayLogs[0].dayName})</span>
                                 </AccordionHeader>
-                                {isDOpen && <div className="history-day-body">{dayLogs.map(log => <LogCard key={log.id} log={log} onEdit={onEditLog} />)}</div>}
+                                {isDOpen && <div className="pt-8">{dayLogs.map(log => <LogCard key={log.id} log={log} onEdit={onEditLog} />)}</div>}
                               </div>
                             );
                           })}

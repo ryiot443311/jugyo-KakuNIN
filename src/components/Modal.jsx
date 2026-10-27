@@ -1,7 +1,7 @@
 export default function Modal({ children }) {
   return (
-    <div className="modal-overlay">
-      <div className="modal">{children}</div>
+    <div className="overlay">
+      <div className="modal" role="dialog" aria-modal="true">{children}</div>
     </div>
   );
 }

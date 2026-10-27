@@ -1,17 +1,64 @@
+/* ===== テーマ（ライト/ダーク） ===== */
+:root {
+  --bg: #f8fafc; --surface: #fff; --surface-2: #f8fafc; --surface-3: #f1f5f9;
+  --border: #e2e8f0; --border-strong: #cbd5e1;
+  --text: #334155; --text-strong: #0f172a; --text-muted: #64748b; --text-faint: #94a3b8;
+  --primary: #1e293b; --on-primary: #fff; --accent: #1d4ed8; --on-accent: #fff;
+  --present: #16a34a; --late: #d97706; --absent: #dc2626; --canceled: #64748b;
+  --danger: #dc2626; --ok: #16a34a;
+  --memo-bg: #fffbeb; --memo-text: #b45309; --memo-dated-bg: #eff6ff; --memo-dated-text: #1d4ed8;
+  --warn-bg: #fef2f2; --warn-border: #fecaca; --overlay: #0009;
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  --bg: #0b1220; --surface: #151e2f; --surface-2: #1b2639; --surface-3: #263349;
+  --border: #2a374d; --border-strong: #3b4a63;
+  --text: #cbd5e1; --text-strong: #f1f5f9; --text-muted: #94a3b8; --text-faint: #7b8aa3;
+  --primary: #e2e8f0; --on-primary: #0f172a; --accent: #60a5fa; --on-accent: #0b1220;
+  --present: #22c55e; --late: #f59e0b; --absent: #f87171; --canceled: #94a3b8;
+  --danger: #f87171; --ok: #4ade80;
+  --memo-bg: #3a2e10; --memo-text: #fbbf24; --memo-dated-bg: #14274a; --memo-dated-text: #93c5fd;
+  --warn-bg: #3b1519; --warn-border: #7f1d1d; --overlay: #000000bf;
+  color-scheme: dark;
+}
+
+/* data-theme 未指定（自動）のときは OS の設定に従う */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    --bg: #0b1220; --surface: #151e2f; --surface-2: #1b2639; --surface-3: #263349;
+    --border: #2a374d; --border-strong: #3b4a63;
+    --text: #cbd5e1; --text-strong: #f1f5f9; --text-muted: #94a3b8; --text-faint: #7b8aa3;
+    --primary: #e2e8f0; --on-primary: #0f172a; --accent: #60a5fa; --on-accent: #0b1220;
+    --present: #22c55e; --late: #f59e0b; --absent: #f87171; --canceled: #94a3b8;
+    --danger: #f87171; --ok: #4ade80;
+    --memo-bg: #3a2e10; --memo-text: #fbbf24; --memo-dated-bg: #14274a; --memo-dated-text: #93c5fd;
+    --warn-bg: #3b1519; --warn-border: #7f1d1d; --overlay: #000000bf;
+    color-scheme: dark;
+  }
+}
+
+/* ===== ベース ===== */
+* { box-sizing: border-box; }
+
 body {
   margin: 0;
-  padding: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  background-color: #fdfdfd;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-* {
-  box-sizing: border-box;
-}
-
-button {
-  cursor: pointer;
+  background: var(--bg);
+  color: var(--text);
+  font: 16px / 1.5 system-ui, -apple-system, "Segoe UI", "Hiragino Sans", "Noto Sans JP", sans-serif;
   -webkit-tap-highlight-color: transparent; /* スマホでタップした時の青いハイライトを消す */
+}
+
+#root { min-height: 100svh; }
+
+h2, h3, p { margin: 0; }
+
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+button:disabled { cursor: default; opacity: 0.45; }
+
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; }
 }

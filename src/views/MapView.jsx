@@ -7,27 +7,25 @@ export default function MapView() {
   const mapImage = CAMPUSES.find(c => c.id === mapCampus)?.mapImage;
 
   return (
-    <div className="view-bottom">
-      <div className="campus-tabs">
+    <div className="mb-20">
+      <div className="row gap-10 mb-15">
         {CAMPUSES.map(c => (
-          <button key={c.id} onClick={() => { setMapCampus(c.id); setMapImgError(false); }} className={`campus-tab${mapCampus === c.id ? ' is-active' : ''}`}>{c.name}</button>
+          <button key={c.id} type="button" onClick={() => { setMapCampus(c.id); setMapImgError(false); }} className={`btn grow ${mapCampus === c.id ? 'btn-accent' : 'btn-soft'}`}>{c.name}</button>
         ))}
       </div>
       {!mapImage || mapImgError ? (
-        <div className="empty-state empty-state--small">マップ画像がありません（public/ に画像を配置してください）</div>
+        <div className="empty small">マップ画像がありません（public/ に画像を配置してください）</div>
       ) : (
-        <div className="map-frame">
+        <div className="card section">
           <img src={mapImage} alt="マップ" onError={() => setMapImgError(true)} className="map-img" />
         </div>
       )}
-      <div className="building-list">
-        {CAMPUS_BUILDINGS[mapCampus]?.map(b => (
-          <div key={b.id} className="building-card">
-            <div className="building-name">{b.name}</div>
-            <div className="building-desc">{b.description}</div>
-          </div>
-        ))}
-      </div>
+      {CAMPUS_BUILDINGS[mapCampus]?.map(b => (
+        <div key={b.id} className="card building">
+          <div className="strong accent mb-6">{b.name}</div>
+          <div className="small muted">{b.description}</div>
+        </div>
+      ))}
     </div>
   );
 }

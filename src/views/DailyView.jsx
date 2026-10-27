@@ -1,53 +1,68 @@
-import { MY_COURSES, PERIODS } from '../data/constants';
-import { STATUS_COLORS, isCourseInQuarter } from '../data/status';
-import { DAYS, addDays, getDateOfWeekday, parseDateStr } from '../utils/date';
+import { DAYS, addDays, getDateOfWeekday, parseDateStr, toMinutes } from '../utils/date';
+import { isCourseInQuarter, statusTextClass } from '../data/status';
+import { dateMemoKey, hasText } from '../utils/memo';
 import StatusButtons from '../components/StatusButtons';
 import RecordNotice from '../components/RecordNotice';
 
-export default function DailyView({ selectedDate, today, selectedQuarter, courseMemos, recordState, getLog, onSelectDate, onOpenDetail, onRecord }) {
+export default function DailyView({ selectedDate, today, selectedQuarter, courses, periods, nowMin, courseMemos, dateMemos, recordState, getLog, onSelectDate, onOpenDetail, onRecord }) {
   const weekStart = getDateOfWeekday(selectedDate, 0);
-  const selectedDay = parseDateStr(selectedDate).getDay();
-  const dayCourses = MY_COURSES.filter(c => c.dayOfWeek === selectedDay && isCourseInQuarter(c, selectedQuarter)).sort((a, b) => a.period - b.period);
+  const selectedDateObj = parseDateStr(selectedDate);
+  const selectedDay = selectedDateObj.getDay();
+  const isToday = selectedDate === today;
+  const dayCourses = courses.filter(c => c.dayOfWeek === selectedDay && isCourseInQuarter(c, selectedQuarter)).sort((a, b) => a.period - b.period);
+
+  // 今日（記録できる状態）のときだけ、授業中・次の授業を強調する。休講の授業は対象外
+  const trackable = isToday && recordState.status === 'ok' ? dayCourses.filter(c => getLog(c.id)?.status !== '休講') : [];
+  const nowId = trackable.find(c => { const p = periods[c.period]; return p && toMinutes(p.start) <= nowMin && nowMin < toMinutes(p.end); })?.id;
+  const nextId = trackable.find(c => { const p = periods[c.period]; return p && toMinutes(p.start) > nowMin; })?.id;
 
   return (
     <div>
-      <div className="week-nav">
-        <button onClick={() => onSelectDate(addDays(selectedDate, -7))} className="week-nav-btn">‹ 前週</button>
-        <input type="date" value={selectedDate} max={today} onChange={(e) => e.target.value && onSelectDate(e.target.value)} className="date-input" />
-        <button onClick={() => onSelectDate(today)} disabled={selectedDate === today} className="week-nav-btn">今日</button>
-        <button onClick={() => onSelectDate(addDays(selectedDate, 7))} disabled={addDays(weekStart, 7) > today} className="week-nav-btn">次週 ›</button>
+      <div className="row gap-6 mb-10">
+        <button type="button" onClick={() => onSelectDate(addDays(selectedDate, -7))} className="btn btn-soft grow">◀ 前の週</button>
+        <button type="button" onClick={() => onSelectDate(today)} disabled={isToday} className="btn btn-soft grow">今日</button>
+        <button type="button" onClick={() => onSelectDate(addDays(selectedDate, 7))} className="btn btn-soft grow">次の週 ▶</button>
       </div>
       <div className="day-tabs">
         {DAYS.map((day, index) => {
           const date = addDays(weekStart, index);
           return (
-            <button key={day} onClick={() => onSelectDate(date)} className={`day-tab${selectedDay === index ? ' is-active' : ''}`}>
-              {day}<span className="day-tab-date">{parseDateStr(date).getDate()}</span>
-            </button>
+            <button key={day} type="button" onClick={() => onSelectDate(date)} className={`day-tab${selectedDay === index ? ' is-active' : ''}${date === today ? ' is-today' : ''}`}>{day}</button>
           );
         })}
       </div>
+      <div className="date-heading">
+        {selectedDateObj.getMonth() + 1}月{selectedDateObj.getDate()}日（{DAYS[selectedDay]}）
+        {isToday && <span className="badge badge-today">今日</span>}
+      </div>
 
       {dayCourses.length === 0 ? (
-        <div className="empty-state">{selectedDate === today ? '本日' : 'この日'}の授業なし</div>
+        <div className="empty">{isToday ? '本日' : 'この日'}の授業なし</div>
       ) : dayCourses.map(course => {
         const log = getLog(course.id);
         const memo = courseMemos[course.id];
+        const dateMemo = dateMemos[dateMemoKey(selectedDate, course.id)];
+        const period = periods[course.period];
+        const isNow = course.id === nowId;
+        const isNext = course.id === nextId;
         return (
-          <div key={course.id} className="course-card">
-            <div className="course-card-head">
+          <div key={course.id} className={`card course-card${isNow ? ' is-now' : isNext ? ' is-next' : ''}`}>
+            <div className="row between align-center small muted strong">
               <span>{course.room}</span>
-              <div className="course-card-meta">
-                <span>{course.period}時限 ({PERIODS[course.period]?.start || ''}〜{PERIODS[course.period]?.end || ''})</span>
-                {recordState.status !== 'outOfQuarter' && <button onClick={() => onOpenDetail(course)} className="icon-btn">⋯</button>}
+              <div className="row gap-10 align-center">
+                {isNow && <span className="badge badge-now">授業中</span>}
+                {isNext && <span className="badge badge-next">次の授業</span>}
+                <span>{course.period}時限{period && ` (${period.start}〜${period.end})`}</span>
+                {recordState.status !== 'outOfQuarter' && <button type="button" onClick={() => onOpenDetail(course)} className="icon-btn" aria-label="詳細">⋯</button>}
               </div>
             </div>
-            <h3 className="course-card-name">{course.name}</h3>
-            {memo && memo.trim() !== '' && <div className="memo-box">{memo}</div>}
+            <h3 className="course-name">{course.name}</h3>
+            {hasText(memo) && <div className="memo">{memo}</div>}
+            {hasText(dateMemo) && <div className="memo memo-dated">{dateMemo}</div>}
             {recordState.status !== 'ok' ? (
               <RecordNotice status={recordState.status} />
             ) : log ? (
-              <div className="recorded" style={{ color: STATUS_COLORS[log.status] || '#64748b' }}>{log.status} 記録済み</div>
+              <div className={`notice ${statusTextClass(log.status)}`}>{log.status} 記録済み</div>
             ) : (
               <StatusButtons onSelect={(status) => onRecord(course.id, status)} />
             )}
