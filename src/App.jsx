@@ -1,7 +1,9 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { MY_COURSES, QUARTERS } from './data/constants';
+import { QUARTERS } from './data/constants';
 import { isCourseInQuarter } from './data/status';
 import { SETTINGS_KEY, resolveSettings } from './data/settings';
+import { DATA_KEY, IMAGES_KEY, resolveAppData } from './data/appData';
+import { buildBackup } from './data/backup';
 import { parseDateStr, getQuarterByDate, getWeekOfMonth, getDateOfWeekday } from './utils/date';
 import { dateMemoKey } from './utils/memo';
 import { applyTheme } from './utils/theme';
@@ -11,6 +13,7 @@ import { useNowMinutes } from './hooks/useNowMinutes';
 import ConfirmRecordModal from './components/ConfirmRecordModal';
 import CourseDetailModal from './components/CourseDetailModal';
 import EditLogModal from './components/EditLogModal';
+import CourseFormModal from './components/CourseFormModal';
 import DailyView from './views/DailyView';
 import WeeklyView from './views/WeeklyView';
 import HistoryView from './views/HistoryView';
@@ -38,6 +41,11 @@ function App() {
   const updateSettings = useCallback((patch) => setSavedSettings({ ...settings, ...patch }), [settings, setSavedSettings]);
   useEffect(() => { applyTheme(settings.theme); }, [settings.theme]);
 
+  const [savedData, setSavedData] = useLocalStorageState(DATA_KEY, {});
+  const appData = useMemo(() => resolveAppData(savedData), [savedData]);
+  const updateData = useCallback((patch) => setSavedData({ ...appData, ...patch }), [appData, setSavedData]);
+  const [campusImages, setCampusImages] = useLocalStorageState(IMAGES_KEY, {});
+
   const saveFailed = useSaveFailed();
   const [saveErrorDismissed, setSaveErrorDismissed] = useState(false);
 
@@ -50,6 +58,7 @@ function App() {
   const [pendingRecord, setPendingRecord] = useState(null);
   const [editLog, setEditLog] = useState(null);
   const [detailCourse, setDetailCourse] = useState(null);
+  const [courseForm, setCourseForm] = useState(null); // { course, preset }
   const [expandedSections, setExpandedSections] = useState({});
 
   // 今日を表示中に日付が変わったら、表示も新しい今日に合わせる
@@ -107,10 +116,35 @@ function App() {
     setEditLog(null);
   }, [editLog, setLogs]);
 
+  const openAddCourse = useCallback((preset) => setCourseForm({ course: null, preset: { quarters: [selectedQuarter], ...preset } }), [selectedQuarter]);
+
+  const saveCourse = useCallback((course) => {
+    const exists = appData.courses.some(c => c.id === course.id);
+    updateData({ courses: exists ? appData.courses.map(c => (c.id === course.id ? course : c)) : [...appData.courses, course] });
+    setCourseForm(null);
+  }, [appData.courses, updateData]);
+
+  const deleteCourse = useCallback((id) => {
+    updateData({ courses: appData.courses.filter(c => c.id !== id) });
+    setCourseForm(null);
+  }, [appData.courses, updateData]);
+
+  const getBackup = () => buildBackup({ appData, settings, campusImages, logs, courseMemos, dateMemos });
+
+  // バックアップに含まれていた項目だけを置き換える
+  const importBackup = (backup) => {
+    if (backup.appData) setSavedData(backup.appData);
+    if (backup.settings) setSavedSettings(backup.settings);
+    if (backup.campusImages) setCampusImages(backup.campusImages);
+    if (backup.logs) setLogs(backup.logs);
+    if (backup.courseMemos) setCourseMemos(backup.courseMemos);
+    if (backup.dateMemos) setDateMemos(backup.dateMemos);
+  };
+
   const toggleAccordion = useCallback((key, defaultOpen) => setExpandedSections(prev => ({ ...prev, [key]: !(prev[key] ?? defaultOpen) })), []);
 
   // 設定で非表示にした授業は日別・週間・分析から外す（履歴には記録が残る）
-  const courses = useMemo(() => MY_COURSES.filter(c => !settings.hiddenCourses.includes(c.id)), [settings.hiddenCourses]);
+  const courses = useMemo(() => appData.courses.filter(c => !settings.hiddenCourses.includes(c.id)), [appData.courses, settings.hiddenCourses]);
   const quarterCourses = useMemo(() => courses.filter(c => isCourseInQuarter(c, selectedQuarter)), [courses, selectedQuarter]);
   const quarterLogs = useMemo(() => {
     const ids = new Set(courses.map(c => c.id));
@@ -133,7 +167,16 @@ function App() {
           onSaveDateMemo={(text) => saveDateMemo(detailCourse.id, text)}
           onRecord={(status) => { setDetailCourse(null); requestRecord(detailCourse.id, status); }}
           onEditLog={(log) => { setDetailCourse(null); setEditLog(log); }}
+          onEdit={() => { setCourseForm({ course: detailCourse }); setDetailCourse(null); }}
           onClose={() => setDetailCourse(null)}
+        />
+      )}
+
+      {courseForm && (
+        <CourseFormModal
+          course={courseForm.course} preset={courseForm.preset} periods={settings.periods}
+          logCount={courseForm.course ? logs.filter(l => l.courseId === courseForm.course.id).length : 0}
+          onSave={saveCourse} onDelete={deleteCourse} onClose={() => setCourseForm(null)}
         />
       )}
 
@@ -155,28 +198,39 @@ function App() {
         ))}
       </nav>
 
-      <div className="quarters">
-        {Object.keys(QUARTERS).map(Number).map(q => (
-          <button key={q} type="button" onClick={() => setSelectedQuarter(q)} aria-pressed={selectedQuarter === q} className={`quarter${selectedQuarter === q ? ' is-active' : ''}`}>第{q}Q</button>
-        ))}
-      </div>
+      {/* クォーターに関係しないマップ・設定では非表示 */}
+      {currentView !== 'map' && currentView !== 'settings' && (
+        <div className="quarters">
+          {Object.keys(QUARTERS).map(Number).map(q => (
+            <button key={q} type="button" onClick={() => setSelectedQuarter(q)} aria-pressed={selectedQuarter === q} className={`quarter${selectedQuarter === q ? ' is-active' : ''}`}>第{q}Q</button>
+          ))}
+        </div>
+      )}
 
       {currentView === 'home' && (
         <DailyView
           selectedDate={selectedDate} today={today} selectedQuarter={selectedQuarter}
           courses={courses} periods={settings.periods} nowMin={nowMin}
           courseMemos={courseMemos} dateMemos={dateMemos} recordState={recordState} getLog={getLog}
-          onSelectDate={selectDate} onOpenDetail={setDetailCourse} onRecord={requestRecord}
+          onSelectDate={selectDate} onOpenDetail={setDetailCourse} onRecord={requestRecord} onAddCourse={openAddCourse}
         />
       )}
       {currentView === 'weekly' && (
         // 週間表から開いた授業は、今週のその曜日の日付として扱う
-        <WeeklyView today={today} periods={settings.periods} quarterCourses={quarterCourses} courseMemos={courseMemos} onOpenDetail={(course) => { setSelectedDate(getDateOfWeekday(today, course.dayOfWeek)); setDetailCourse(course); }} />
+        <WeeklyView today={today} periods={settings.periods} quarterCourses={quarterCourses} courseMemos={courseMemos} onOpenDetail={(course) => { setSelectedDate(getDateOfWeekday(today, course.dayOfWeek)); setDetailCourse(course); }} onAddCourse={openAddCourse} />
       )}
-      {currentView === 'history' && <HistoryView logs={logs} expandedSections={expandedSections} onToggle={toggleAccordion} onEditLog={setEditLog} />}
+      {currentView === 'history' && <HistoryView logs={logs} courses={appData.courses} expandedSections={expandedSections} onToggle={toggleAccordion} onEditLog={setEditLog} />}
       {currentView === 'analytics' && <AnalyticsView quarterLogs={quarterLogs} quarterCourses={quarterCourses} selectedQuarter={selectedQuarter} />}
-      {currentView === 'map' && <MapView />}
-      {currentView === 'settings' && <SettingsView settings={settings} logCount={logs.length} onChange={updateSettings} onResetLogs={() => setLogs([])} />}
+      {currentView === 'map' && <MapView campuses={appData.campuses} buildings={appData.buildings} campusImages={campusImages} />}
+      {currentView === 'settings' && (
+        <SettingsView
+          settings={settings} onChange={updateSettings}
+          appData={appData} onChangeData={updateData} campusImages={campusImages} onChangeImages={setCampusImages}
+          onAddCourse={() => openAddCourse()} onEditCourse={(course) => setCourseForm({ course })}
+          logCount={logs.length} onResetLogs={() => setLogs([])}
+          getBackup={getBackup} onImportBackup={importBackup}
+        />
+      )}
     </div>
   );
 }

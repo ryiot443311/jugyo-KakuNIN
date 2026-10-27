@@ -1,8 +1,7 @@
-import { MY_COURSES } from '../data/constants';
 import { statusBgClass } from '../data/status';
 
-export default function LogCard({ log, onEdit }) {
-  const courseInfo = MY_COURSES.find(c => c.id === log.courseId);
+export default function LogCard({ log, courses, onEdit }) {
+  const courseInfo = courses.find(c => c.id === log.courseId);
   return (
     <div className="card log-card">
       <div className="row between align-center mb-6">

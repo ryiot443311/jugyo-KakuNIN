@@ -1,8 +1,10 @@
 import { useState } from 'react';
-import { MY_COURSES } from '../data/constants';
 import { THEMES, MAX_DAYS } from '../data/settings';
-import { DAYS } from '../utils/date';
-import Modal from '../components/Modal';
+import SettingsGroup from '../components/settings/SettingsGroup';
+import CoursesSection from '../components/settings/CoursesSection';
+import CampusSection from '../components/settings/CampusSection';
+import DataSection from '../components/settings/DataSection';
+import DangerSection from '../components/settings/DangerSection';
 
 const pad = (n) => String(n).padStart(2, '0');
 
@@ -34,9 +36,7 @@ function MonthDayInput({ value, label, onChange }) {
   );
 }
 
-export default function SettingsView({ settings, logCount, onChange, onResetLogs }) {
-  const [confirmReset, setConfirmReset] = useState(false);
-
+export default function SettingsView({ settings, onChange, appData, onChangeData, campusImages, onChangeImages, logCount, onResetLogs, onAddCourse, onEditCourse, getBackup, onImportBackup }) {
   const setQuarter = (q, patch) => onChange({ quarters: { ...settings.quarters, [q]: { ...settings.quarters[q], ...patch } } });
   const setPeriod = (p, patch) => onChange({ periods: { ...settings.periods, [p]: { ...settings.periods[p], ...patch } } });
   const toggleCourse = (id) => onChange({
@@ -45,27 +45,17 @@ export default function SettingsView({ settings, logCount, onChange, onResetLogs
 
   return (
     <div className="mb-20">
-      {confirmReset && (
-        <Modal>
-          <p className="center strong">出席記録を{logCount}件すべて削除します。<br />この操作は取り消せません。</p>
-          <div className="row gap-10 mt-20">
-            <button type="button" onClick={() => setConfirmReset(false)} className="btn btn-soft grow">キャンセル</button>
-            <button type="button" onClick={() => { onResetLogs(); setConfirmReset(false); }} className="btn btn-danger grow">削除</button>
-          </div>
-        </Modal>
-      )}
-
-      <section className="card section">
-        <h3 className="section-title">テーマ</h3>
+      <SettingsGroup title="テーマ">
         <div className="row gap-6">
           {THEMES.map(t => (
             <button key={t.id} type="button" aria-pressed={settings.theme === t.id} onClick={() => onChange({ theme: t.id })} className={`btn grow ${settings.theme === t.id ? 'btn-primary' : 'btn-soft'}`}>{t.label}</button>
           ))}
         </div>
-      </section>
+      </SettingsGroup>
 
-      <section className="card section">
-        <h3 className="section-title">クォーターの期間</h3>
+      <CoursesSection courses={appData.courses} hiddenCourses={settings.hiddenCourses} onToggle={toggleCourse} onEdit={onEditCourse} onAdd={onAddCourse} />
+      <CampusSection campuses={appData.campuses} buildings={appData.buildings} images={campusImages} onChangeData={onChangeData} onChangeImages={onChangeImages} />
+      <SettingsGroup title="クォーターの期間">
         {Object.entries(settings.quarters).map(([q, range]) => (
           <div key={q} className="row align-center gap-6 range-row">
             <span className="range-label">第{q}Q</span>
@@ -74,10 +64,9 @@ export default function SettingsView({ settings, logCount, onChange, onResetLogs
           </div>
         ))}
         <p className="tiny muted">年をまたぐ期間は、開始を終了より後の日付にします（例: 11月1日〜1月31日）。</p>
-      </section>
+      </SettingsGroup>
 
-      <section className="card section">
-        <h3 className="section-title">時限の時間</h3>
+      <SettingsGroup title="時限の時間">
         {Object.entries(settings.periods).map(([p, time]) => (
           <div key={p} className="row align-center gap-6 range-row">
             <span className="range-label">{p}限</span>
@@ -86,26 +75,10 @@ export default function SettingsView({ settings, logCount, onChange, onResetLogs
             <input type="time" aria-label={`${p}限の終了`} value={time.end} onChange={(e) => e.target.value && setPeriod(p, { end: e.target.value })} className="input grow" />
           </div>
         ))}
-      </section>
+      </SettingsGroup>
 
-      <section className="card section">
-        <h3 className="section-title">授業の表示</h3>
-        {MY_COURSES.map(c => (
-          <div key={c.id} className="row align-center course-row">
-            <label className="check grow">
-              <input type="checkbox" checked={!settings.hiddenCourses.includes(c.id)} onChange={() => toggleCourse(c.id)} />
-              {c.name}
-            </label>
-            <span className="small muted">{DAYS[c.dayOfWeek]}曜 {c.period}限</span>
-          </div>
-        ))}
-        <p className="tiny muted mt-10">チェックを外した授業は、日別・週間・分析に表示されません（記録は残ります）。</p>
-      </section>
-
-      <section className="card section">
-        <h3 className="section-title">データ</h3>
-        <button type="button" onClick={() => setConfirmReset(true)} disabled={logCount === 0} className="btn btn-danger block">出席記録をすべて削除（{logCount}件）</button>
-      </section>
+      <DataSection getBackup={getBackup} onImportBackup={onImportBackup} />
+      <DangerSection logCount={logCount} onResetLogs={onResetLogs} getBackup={getBackup} />
     </div>
   );
 }

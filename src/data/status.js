@@ -8,3 +8,9 @@ export const statusTextClass = (status) => `st-text-${STATUS_KEYS[status]}`;
 
 // quarter 未指定の授業は全クォーターに表示する
 export const isCourseInQuarter = (course, quarter) => !course.quarter || course.quarter === quarter || (Array.isArray(course.quarter) && course.quarter.includes(quarter));
+
+// 授業の開講クォーターの表示用ラベル（未指定・全クォーターは「全Q」）
+export const quarterLabel = (course) => {
+  const qs = [].concat(course.quarter ?? [1, 2, 3, 4]);
+  return qs.length === 4 ? '全Q' : `第${qs.join('・')}Q`;
+};

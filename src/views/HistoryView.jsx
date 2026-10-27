@@ -11,7 +11,7 @@ function AccordionHeader({ onClick, isOpen, className, children }) {
   );
 }
 
-export default function HistoryView({ logs, expandedSections, onToggle, onEditLog }) {
+export default function HistoryView({ logs, courses, expandedSections, onToggle, onEditLog }) {
   // 年をまたいでも正しく並ぶよう 'YYYY-MM' をキーにする
   const groupedLogs = useMemo(() => logs.reduce((acc, log) => {
     const d = parseDateStr(log.date); const m = log.date.slice(0, 7); const w = getWeekOfMonth(d);
@@ -50,7 +50,7 @@ export default function HistoryView({ logs, expandedSections, onToggle, onEditLo
                                 <AccordionHeader onClick={() => onToggle(dKey, false)} isOpen={isDOpen} className="acc-dayhead">
                                   <span>{date} ({dayLogs[0].dayName})</span>
                                 </AccordionHeader>
-                                {isDOpen && <div className="pt-8">{dayLogs.map(log => <LogCard key={log.id} log={log} onEdit={onEditLog} />)}</div>}
+                                {isDOpen && <div className="pt-8">{dayLogs.map(log => <LogCard key={log.id} log={log} courses={courses} onEdit={onEditLog} />)}</div>}
                               </div>
                             );
                           })}
