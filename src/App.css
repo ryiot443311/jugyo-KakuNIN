@@ -80,6 +80,7 @@
 .day-tab { position: relative; flex: 1; padding: 10px 0; border: none; border-radius: 8px; background: none; color: var(--text-muted); font-weight: 700; }
 .day-tab.is-active { background: var(--accent); color: var(--on-accent); }
 .day-tab.is-today::after { content: ""; position: absolute; bottom: 3px; left: 50%; width: 5px; height: 5px; margin-left: -2.5px; border-radius: 50%; background: currentcolor; }
+.swipe-area { min-height: 60vh; touch-action: pan-y; } /* 縦スクロールは通常どおり、横は左右スワイプで日を移動 */
 .date-heading { margin: 14px 2px 0; color: var(--text-strong); font-weight: 700; }
 
 .course-card { position: relative; margin-top: 12px; padding: 18px; }

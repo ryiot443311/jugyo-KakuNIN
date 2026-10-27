@@ -1,10 +1,13 @@
 import { DAYS, addDays, getDateOfWeekday, parseDateStr, toMinutes } from '../utils/date';
 import { isCourseInQuarter, statusTextClass } from '../data/status';
 import { dateMemoKey, hasText } from '../utils/memo';
+import { getAbsenceStreak, STREAK_ALERT } from '../utils/streak';
+import { useSwipe } from '../hooks/useSwipe';
 import StatusButtons from '../components/StatusButtons';
 import RecordNotice from '../components/RecordNotice';
 
-export default function DailyView({ selectedDate, today, selectedQuarter, courses, periods, nowMin, courseMemos, dateMemos, recordState, getLog, onSelectDate, onOpenDetail, onRecord, onAddCourse }) {
+export default function DailyView({ selectedDate, today, selectedQuarter, courses, periods, nowMin, logs, courseMemos, dateMemos, recordState, getLog, onSelectDate, onOpenDetail, onRecord, onAddCourse }) {
+  const swipe = useSwipe((direction) => onSelectDate(addDays(selectedDate, direction))); // 左右スワイプで前後の日へ
   const weekStart = getDateOfWeekday(selectedDate, 0);
   const selectedDateObj = parseDateStr(selectedDate);
   const selectedDay = selectedDateObj.getDay();
@@ -17,7 +20,7 @@ export default function DailyView({ selectedDate, today, selectedQuarter, course
   const nextId = trackable.find(c => { const p = periods[c.period]; return p && toMinutes(p.start) > nowMin; })?.id;
 
   return (
-    <div>
+    <div className="swipe-area" {...swipe}>
       <div className="row gap-6 mb-10">
         <button type="button" onClick={() => onSelectDate(addDays(selectedDate, -7))} className="btn btn-soft grow">◀ 前の週</button>
         <button type="button" onClick={() => onSelectDate(today)} disabled={isToday} className="btn btn-soft grow">今日</button>
@@ -43,6 +46,8 @@ export default function DailyView({ selectedDate, today, selectedQuarter, course
         const memo = courseMemos[course.id];
         const dateMemo = dateMemos[dateMemoKey(course.id, selectedDate)];
         const period = periods[course.period];
+        // 記録する前の授業だけ、これまでの連続欠席を知らせる
+        const streak = !log && recordState.status === 'ok' ? getAbsenceStreak(logs, course.id, selectedDate) : 0;
         const isNow = course.id === nowId;
         const isNext = course.id === nextId;
         return (
@@ -57,6 +62,7 @@ export default function DailyView({ selectedDate, today, selectedQuarter, course
               </div>
             </div>
             <h3 className="course-name">{course.name}</h3>
+            {streak >= STREAK_ALERT && <div className="warning small" role="alert">⚠ 直近{streak}回連続で欠席しています</div>}
             {hasText(memo) && <div className="memo">{memo}</div>}
             {hasText(dateMemo) && <div className="memo memo-dated"><b>この日:</b> {dateMemo}</div>}
             {recordState.status !== 'ok' ? (

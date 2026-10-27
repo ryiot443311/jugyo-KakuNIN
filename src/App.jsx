@@ -251,7 +251,7 @@ function App() {
       {currentView === 'home' && (
         <DailyView
           selectedDate={selectedDate} today={today} selectedQuarter={selectedQuarter}
-          courses={courses} periods={settings.periods} nowMin={nowMin}
+          courses={courses} periods={settings.periods} nowMin={nowMin} logs={logs}
           courseMemos={courseMemos} dateMemos={dateMemos} recordState={recordState} getLog={getLog}
           onSelectDate={selectDate} onOpenDetail={setDetailCourse} onRecord={requestRecord} onAddCourse={openAddCourse}
         />

@@ -1,7 +1,10 @@
 {
   "name": "授業管理アプリ",
   "short_name": "授業管理",
+  "id": "/",
+  "lang": "ja",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#f8fafc",
   "theme_color": "#1e293b",
