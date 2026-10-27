@@ -56,6 +56,14 @@ export default function SettingsView({ settings, onChange, appData, onChangeData
 
       <CoursesSection courses={appData.courses} hiddenCourses={settings.hiddenCourses} onToggle={toggleCourse} onEdit={onEditCourse} onAdd={onAddCourse} />
       <CampusSection campuses={appData.campuses} buildings={appData.buildings} images={campusImages} onChangeData={onChangeData} onChangeImages={onChangeImages} />
+      <SettingsGroup title="出席率の基準">
+        <div className="row gap-10 align-center">
+          <NumInput value={settings.threshold} min={1} max={100} label="出席率の基準" onCommit={(threshold) => onChange({ threshold })} />
+          <span>% 以上</span>
+        </div>
+        <p className="small muted mt-8">分析画面の警告と「あと何回欠席できるか」の計算に使います。</p>
+      </SettingsGroup>
+
       <SettingsGroup title="クォーターの期間">
         {Object.entries(settings.quarters).map(([q, range]) => (
           <div key={q} className="row align-center gap-6 range-row">

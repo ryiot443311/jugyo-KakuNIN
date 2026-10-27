@@ -1,6 +1,9 @@
 import { MY_COURSES, CAMPUSES, CAMPUS_BUILDINGS } from './constants';
 
-export const DATA_KEY = 'app_data';
+// 保存キー。courses・campus_buildings は以前のバージョンと同じ形式（既存データをそのまま読める）
+export const COURSES_KEY = 'courses';
+export const CAMPUSES_KEY = 'campuses';
+export const BUILDINGS_KEY = 'campus_buildings';
 export const IMAGES_KEY = 'campus_images';
 
 export const newId = (prefix) => `${prefix}-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
@@ -30,9 +33,15 @@ const sanitizeCampus = (c) => (isObject(c) && isText(c.id) && isText(c.name) ? {
 
 const sanitizeBuilding = (b) => (isObject(b) && isText(b.id) ? { id: b.id, name: isText(b.name) ? b.name : '', description: isText(b.description) ? b.description : '' } : null);
 
-const sanitizeBuildings = (obj) => Object.fromEntries(
+const sanitizeBuildingsMap = (obj) => Object.fromEntries(
   Object.entries(obj).filter(([, list]) => Array.isArray(list)).map(([campusId, list]) => [campusId, sanitizeList(list, sanitizeBuilding)])
 );
+
+const requireArray = (v) => { if (!Array.isArray(v)) throw new Error('not an array'); return v; };
+const requireObject = (v) => { if (!isObject(v)) throw new Error('not an object'); return v; };
+export const sanitizeCourses = (arr) => sanitizeList(requireArray(arr), sanitizeCourse);
+export const sanitizeCampuses = (arr) => sanitizeList(requireArray(arr), sanitizeCampus);
+export const sanitizeBuildings = (obj) => sanitizeBuildingsMap(requireObject(obj));
 
 // localStorage の授業・キャンパス情報を返す。未保存の項目は constants.js の初期データになる
 export function resolveAppData(saved) {
@@ -40,6 +49,6 @@ export function resolveAppData(saved) {
   return {
     courses: Array.isArray(s.courses) ? sanitizeList(s.courses, sanitizeCourse) : MY_COURSES,
     campuses: Array.isArray(s.campuses) ? sanitizeList(s.campuses, sanitizeCampus) : CAMPUSES,
-    buildings: isObject(s.buildings) ? sanitizeBuildings(s.buildings) : CAMPUS_BUILDINGS,
+    buildings: isObject(s.buildings) ? sanitizeBuildingsMap(s.buildings) : CAMPUS_BUILDINGS,
   };
 }

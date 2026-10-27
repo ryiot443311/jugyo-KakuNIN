@@ -5,8 +5,8 @@ import { downloadBackup } from '../../utils/download';
 import SettingsGroup from './SettingsGroup';
 
 const PART_LABELS = {
-  appData: '授業・キャンパス情報', settings: '設定', campusImages: 'マップ画像',
-  logs: '出席記録', courseMemos: '授業メモ', dateMemos: '日付別メモ',
+  logs: '出席記録', courses: '授業', courseMemos: '授業メモ', datedMemos: '日付別メモ', settings: '設定',
+  campuses: 'キャンパス', campusBuildings: '施設の説明', campusImages: 'マップ画像',
 };
 
 export default function DataSection({ getBackup, onImportBackup }) {
@@ -18,12 +18,8 @@ export default function DataSection({ getBackup, onImportBackup }) {
   const chooseFile = async (e) => {
     const input = e.target; const file = input.files[0];
     if (!file) return;
-    try {
-      setPendingImport(parseBackup(await file.text()));
-      setMessage('');
-    } catch (err) {
-      setMessage(err.message);
-    }
+    const result = parseBackup(await file.text());
+    if (result.ok) { setPendingImport(result); setMessage(''); } else setMessage(`読み込めませんでした: ${result.error}`);
     input.value = '';
   };
 
@@ -32,10 +28,11 @@ export default function DataSection({ getBackup, onImportBackup }) {
       {pendingImport && (
         <Modal>
           <p className="center strong">次のデータを読み込み、現在の内容を置き換えます。</p>
-          <p className="center small muted mt-10">{Object.keys(pendingImport).map(k => PART_LABELS[k]).join('、')}</p>
+          <p className="center small muted mt-10">{Object.keys(pendingImport.data).map(k => PART_LABELS[k]).join('、')}</p>
+          {pendingImport.dropped > 0 && <p className="center small muted mt-8">不正なデータ {pendingImport.dropped} 件は除外します。</p>}
           <div className="row gap-10 mt-20">
             <button type="button" onClick={() => setPendingImport(null)} className="btn btn-soft grow">キャンセル</button>
-            <button type="button" onClick={() => { onImportBackup(pendingImport); setPendingImport(null); }} className="btn btn-primary grow">読み込む</button>
+            <button type="button" onClick={() => { onImportBackup(pendingImport.data); setPendingImport(null); }} className="btn btn-primary grow">読み込む</button>
           </div>
         </Modal>
       )}
