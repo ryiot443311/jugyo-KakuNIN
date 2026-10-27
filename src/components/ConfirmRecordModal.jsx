@@ -1,13 +1,13 @@
 import Modal from './Modal';
-import { STATUS_COLORS } from '../data/status';
+import { statusTextClass } from '../data/status';
 
 export default function ConfirmRecordModal({ record, onConfirm, onCancel }) {
   return (
     <Modal>
-      <p className="modal-message">{record.date} を <span style={{ color: STATUS_COLORS[record.status] }}>{record.status}</span> で記録します。</p>
-      <div className="btn-row btn-row--spaced">
-        <button onClick={onCancel} className="btn btn--secondary">キャンセル</button>
-        <button onClick={onConfirm} className="btn btn--primary">確定</button>
+      <p className="center strong">{record.date} を <span className={statusTextClass(record.status)}>{record.status}</span> で記録します。</p>
+      <div className="row gap-10 mt-20">
+        <button type="button" onClick={onCancel} className="btn btn-soft grow">キャンセル</button>
+        <button type="button" onClick={onConfirm} className="btn btn-primary grow">確定</button>
       </div>
     </Modal>
   );

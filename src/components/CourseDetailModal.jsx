@@ -3,38 +3,46 @@ import Modal from './Modal';
 import StatusButtons from './StatusButtons';
 import RecordNotice from './RecordNotice';
 
-export default function CourseDetailModal({ course, memo, recordState, log, onSaveMemo, onRecord, onEditLog, onClose }) {
+export default function CourseDetailModal({ course, date, memo, dateMemo, recordState, log, onSaveMemo, onSaveDateMemo, onRecord, onEditLog, onClose }) {
   const [tempMemo, setTempMemo] = useState(memo || '');
+  const [tempDateMemo, setTempDateMemo] = useState(dateMemo || '');
 
   return (
     <Modal>
       <h3 className="modal-title">授業詳細</h3>
-      <div className="detail-info">
+      <div className="info-box">
         <p><b>科目:</b> {course.name}</p>
         <p><b>教室:</b> {course.room}</p>
         <p><b>担当:</b> {course.teacher}</p>
       </div>
 
-      <div className="memo-field">
-        <p className="field-label">メモ (自動保存)</p>
-        <textarea
-          value={tempMemo} onChange={(e) => setTempMemo(e.target.value)} onBlur={() => onSaveMemo(tempMemo)}
-          placeholder="課題や持ち物などを入力..."
-          className="memo-textarea"
-        />
-      </div>
+      <label className="field-label" htmlFor="course-memo">メモ (自動保存)</label>
+      <textarea
+        id="course-memo" value={tempMemo} onChange={(e) => setTempMemo(e.target.value)} onBlur={() => onSaveMemo(tempMemo)}
+        placeholder="課題や持ち物などを入力..."
+        className="textarea"
+      />
 
-      {recordState.status !== 'ok' ? (
-        <div className="detail-record"><RecordNotice status={recordState.status} long /></div>
-      ) : log ? (
-        <button onClick={() => onEditLog(log)} className="btn btn--primary btn--block detail-record">記録を修正する</button>
-      ) : (
-        <div className="detail-record">
-          <p className="field-label field-label--center">記録を追加</p>
-          <StatusButtons onSelect={onRecord} />
-        </div>
-      )}
-      <button onClick={() => { onSaveMemo(tempMemo); onClose(); }} className="btn btn--ghost">閉じる</button>
+      <label className="field-label" htmlFor="date-memo">{date} だけのメモ (自動保存)</label>
+      <textarea
+        id="date-memo" value={tempDateMemo} onChange={(e) => setTempDateMemo(e.target.value)} onBlur={() => onSaveDateMemo(tempDateMemo)}
+        placeholder="この日だけの教室変更など..."
+        className="textarea"
+      />
+
+      <div className="mt-20 mb-10">
+        {recordState.status !== 'ok' ? (
+          <RecordNotice status={recordState.status} long />
+        ) : log ? (
+          <button type="button" onClick={() => onEditLog(log)} className="btn btn-primary block">記録を修正する</button>
+        ) : (
+          <>
+            <p className="field-label center">記録を追加</p>
+            <StatusButtons onSelect={onRecord} />
+          </>
+        )}
+      </div>
+      <button type="button" onClick={() => { onSaveMemo(tempMemo); onSaveDateMemo(tempDateMemo); onClose(); }} className="btn btn-ghost block">閉じる</button>
     </Modal>
   );
 }

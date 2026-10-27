@@ -16,11 +16,14 @@ export const getDateOfWeekday = (dateStr, dayOfWeek) => addDays(dateStr, dayOfWe
 // 'MM-DD' を月日の数値に変換（例: '04-01' → 401）
 const toMonthDay = (mmdd) => Number(mmdd.replace('-', ''));
 
+// 'HH:MM' を 0:00 からの経過分に変換
+export const toMinutes = (hhmm) => { const [h, m] = hhmm.split(':').map(Number); return h * 60 + m; };
+
 // 日付が属するクォーター（どの期間にも入らなければ 0）
-export const getQuarterByDate = (dateObj) => {
+export const getQuarterByDate = (dateObj, quarters = QUARTERS) => {
   if (!dateObj || isNaN(dateObj)) return 0;
   const md = (dateObj.getMonth() + 1) * 100 + dateObj.getDate();
-  for (const [quarter, { start, end }] of Object.entries(QUARTERS)) {
+  for (const [quarter, { start, end }] of Object.entries(quarters)) {
     const s = toMonthDay(start); const e = toMonthDay(end);
     const inRange = s <= e ? (md >= s && md <= e) : (md >= s || md <= e); // 年をまたぐ期間に対応
     if (inRange) return Number(quarter);
