@@ -90,7 +90,7 @@ export default function SettingsView({ settings, onChange, appData, onChangeData
       <CsvSection logs={logs} courses={appData.courses} />
       <InstallSection />
       <DataSection getBackup={getBackup} onImportBackup={onImportBackup} />
-      <DangerSection logCount={logCount} onResetLogs={onResetLogs} getBackup={getBackup} />
+      <DangerSection logCount={logCount} onResetLogs={onResetLogs} getBackup={getBackup} campuses={appData.campuses} buildings={appData.buildings} onChangeData={onChangeData} />
     </div>
   );
 }
