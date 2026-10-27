@@ -1,4 +1,7 @@
-export default function AnalyticsView({ selectedQuarter, statusCounts, overallRate, courseAnalytics, threshold, years, year, onYearChange }) {
+import WeeklyTrendChart from '../components/charts/WeeklyTrendChart';
+import AbsenceTendency from '../components/charts/AbsenceTendency';
+
+export default function AnalyticsView({ selectedQuarter, statusCounts, overallRate, courseAnalytics, threshold, years, year, onYearChange, weekly, absenceWeekdays, absenceSlots }) {
   const low = courseAnalytics.filter((c) => !c.ok);
   return (
     <div className="mb-20">
@@ -30,6 +33,20 @@ export default function AnalyticsView({ selectedQuarter, statusCounts, overallRa
       )}
 
       {courseAnalytics.length === 0 && <div className="empty">この期間の記録はまだありません</div>}
+
+      {/* 1週分だけでは推移にならないので、2週以上あるときに表示 */}
+      {weekly.length >= 2 && (
+        <div className="card chart-card">
+          <h3 className="section-title">週ごとの出席率</h3>
+          <WeeklyTrendChart weeks={weekly} threshold={threshold} />
+        </div>
+      )}
+      {courseAnalytics.length > 0 && (
+        <div className="card chart-card">
+          <h3 className="section-title">欠席の傾向</h3>
+          <AbsenceTendency byWeekday={absenceWeekdays} topSlots={absenceSlots} />
+        </div>
+      )}
 
       {courseAnalytics.map((stat) => (
         <div key={stat.name} className="card stat-card">

@@ -6,7 +6,7 @@ import { useSwipe } from '../hooks/useSwipe';
 import StatusButtons from '../components/StatusButtons';
 import RecordNotice from '../components/RecordNotice';
 
-export default function DailyView({ selectedDate, today, selectedQuarter, courses, periods, nowMin, logs, courseMemos, dateMemos, recordState, getLog, onSelectDate, onOpenDetail, onRecord, onAddCourse }) {
+export default function DailyView({ selectedDate, today, selectedQuarter, courses, periods, nowMin, logs, courseMemos, dateMemos, recordState, getLog, onSelectDate, onOpenDetail, onRecord, onAddCourse, unrecordedCount, lookbackDays, onShowUnrecorded }) {
   const swipe = useSwipe((direction) => onSelectDate(addDays(selectedDate, direction))); // 左右スワイプで前後の日へ
   const weekStart = getDateOfWeekday(selectedDate, 0);
   const selectedDateObj = parseDateStr(selectedDate);
@@ -21,6 +21,11 @@ export default function DailyView({ selectedDate, today, selectedQuarter, course
 
   return (
     <div className="swipe-area" {...swipe}>
+      {unrecordedCount > 0 && (
+        <button type="button" onClick={onShowUnrecorded} className="unrecorded-banner">
+          ⚠ 記録していない授業が {unrecordedCount}件 あります（直近{lookbackDays / 7}週間）<span className="unrecorded-banner-link">確認する ›</span>
+        </button>
+      )}
       <div className="row gap-6 mb-10">
         <button type="button" onClick={() => onSelectDate(addDays(selectedDate, -7))} className="btn btn-soft grow">◀ 前の週</button>
         <button type="button" onClick={() => onSelectDate(today)} disabled={isToday} className="btn btn-soft grow">今日</button>

@@ -34,8 +34,8 @@ export default [
     },
   },
   {
-    // 設定ファイルは Node.js で動く
-    files: ['vite.config.js'],
+    // 設定ファイルと画面操作のテストは Node.js で動く
+    files: ['vite.config.js', 'playwright.config.js', 'e2e/**/*.js'],
     languageOptions: { globals: globals.node },
   },
 ]
