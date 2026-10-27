@@ -80,6 +80,10 @@
 .day-tab { position: relative; flex: 1; padding: 10px 0; border: none; border-radius: 8px; background: none; color: var(--text-muted); font-weight: 700; }
 .day-tab.is-active { background: var(--accent); color: var(--on-accent); }
 .day-tab.is-today::after { content: ""; position: absolute; bottom: 3px; left: 50%; width: 5px; height: 5px; margin-left: -2.5px; border-radius: 50%; background: currentcolor; }
+.unrecorded-banner { display: flex; justify-content: space-between; align-items: center; gap: 8px; width: 100%; margin-bottom: 10px; padding: 10px 12px; border: 1px solid var(--warn-border); border-radius: 8px; background: var(--warn-bg); color: var(--danger); font-size: 0.85rem; font-weight: 700; text-align: left; }
+.unrecorded-banner-link { flex-shrink: 0; text-decoration: underline; }
+.unrecorded-list { display: flex; flex-direction: column; gap: 6px; max-height: 50vh; overflow-y: auto; }
+.unrecorded-item { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface-2); color: var(--text); text-align: left; }
 .swipe-area { min-height: 60vh; touch-action: pan-y; } /* 縦スクロールは通常どおり、横は左右スワイプで日を移動 */
 .date-heading { margin: 14px 2px 0; color: var(--text-strong); font-weight: 700; }
 
@@ -133,6 +137,27 @@
 .bar-fill { height: 100%; }
 .bar-fill.is-ok { background: var(--present); }
 .bar-fill.is-ng { background: var(--absent); }
+
+/* グラフ */
+.chart-card { margin-bottom: 10px; padding: 15px; }
+.chart { display: block; width: 100%; height: auto; overflow: visible; }
+.chart-grid { stroke: var(--border); stroke-width: 1; }
+.chart-ref { stroke: var(--text-muted); stroke-width: 1.5; }
+.chart-axis { fill: var(--text-muted); font-size: 10px; }
+.chart-value { fill: var(--text-strong); font-size: 11px; font-weight: 700; }
+.chart-bar { fill: var(--chart); }
+.chart-hit { fill: transparent; cursor: pointer; }
+.chart-table table { width: 100%; margin-top: 6px; border-collapse: collapse; font-size: 0.8rem; }
+.chart-table th, .chart-table td { padding: 4px 6px; border-bottom: 1px solid var(--border); text-align: right; }
+.chart-table th:first-child, .chart-table td:first-child { text-align: left; }
+.chart-table summary { cursor: pointer; }
+.hbars { display: flex; flex-direction: column; gap: 6px; }
+.hbar-row { display: flex; align-items: center; gap: 8px; }
+.hbar-label { width: 1.5em; color: var(--text-muted); font-size: 0.85rem; font-weight: 700; }
+.hbar-track { flex: 1; height: 12px; }
+.hbar-fill { display: block; height: 100%; border-radius: 0 4px 4px 0; background: var(--chart); }
+.hbar-value { width: 3em; text-align: right; color: var(--text); font-size: 0.8rem; }
+.slot-list { margin: 0; padding-left: 1.4em; }
 
 /* ===== マップ ===== */
 .map-img { display: block; width: 100%; border-radius: 8px; }

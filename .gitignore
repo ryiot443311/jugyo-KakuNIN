@@ -4,3 +4,6 @@ dist
 # 実データ（時間割・マップ画像）は公開しない
 src/data/constants.local.js
 public/local/
+# 画面操作テストの結果
+test-results/
+playwright-report/

@@ -5,8 +5,11 @@ import { SETTINGS_KEY, resolveSettings } from './data/settings';
 import { COURSES_KEY, CAMPUSES_KEY, BUILDINGS_KEY, IMAGES_KEY, resolveAppData } from './data/appData';
 import { sanitizeLogs, sanitizeMemos } from './data/sanitize';
 import { buildBackup } from './data/backup';
+import { mergeBackupData } from './data/merge';
+import { findUnrecorded, LOOKBACK_DAYS } from './utils/unrecorded';
 import { parseDateStr, getQuarterByDate, getNearestQuarter, getWeekOfMonth, getDateOfWeekday, getFiscalYear } from './utils/date';
 import { buildCourseAnalytics, calcRate, countStatuses } from './utils/stats';
+import { absenceByWeekday, topAbsenceSlots, weeklyRates } from './utils/trends';
 import { dateMemoKey } from './utils/memo';
 import { applyTheme } from './utils/theme';
 import { useLocalStorageState, useSaveFailed } from './hooks/useLocalStorageState';
@@ -14,6 +17,7 @@ import { useToday } from './hooks/useToday';
 import { useNowMinutes } from './hooks/useNowMinutes';
 import ConfirmRecordModal from './components/ConfirmRecordModal';
 import UndoToast from './components/UndoToast';
+import UnrecordedModal from './components/UnrecordedModal';
 import CourseDetailModal from './components/CourseDetailModal';
 import EditLogModal from './components/EditLogModal';
 import CourseFormModal from './components/CourseFormModal';
@@ -26,6 +30,11 @@ import SettingsView from './views/SettingsView';
 import './App.css';
 
 const UNDO_MS = 6000; // 記録後に「元に戻す」を出しておく時間
+
+const PART_NAMES = {
+  logs: '出席記録', courses: '授業', courseMemos: '授業メモ', datedMemos: '日付別メモ',
+  campuses: 'キャンパス', campusBuildings: '施設の説明', campusImages: 'マップ画像',
+};
 
 const VIEWS = [
   { id: 'home', label: '日別' },
@@ -72,6 +81,7 @@ function App() {
   const [dateMemos, setDateMemos] = useLocalStorageState('dated_memos', {}, sanitizeMemos);
   const [pendingRecord, setPendingRecord] = useState(null);
   const [undo, setUndo] = useState(null); // { logId, text }
+  const [showUnrecorded, setShowUnrecorded] = useState(false);
   const [analyticsYear, setAnalyticsYear] = useState(() => getFiscalYear(today));
   const [editLog, setEditLog] = useState(null);
   const [detailCourse, setDetailCourse] = useState(null);
@@ -165,8 +175,27 @@ function App() {
     campuses: appData.campuses, campusBuildings: appData.buildings, campusImages,
   }), null, 2);
 
-  // バックアップに含まれていた項目だけを置き換える
-  const importBackup = (backup) => {
+  // バックアップを読み込む。mode が 'merge' なら手元にないものだけ足し、'replace' なら含まれていた項目を置き換える
+  // 戻り値は、結果の説明文
+  const importBackup = (incoming, mode) => {
+    const backup = mode === 'merge'
+      ? mergeBackupData({
+        logs, courseMemos, datedMemos: dateMemos, campusImages,
+        // 初期データのまま（一度も編集していない）の授業・キャンパス・施設は、統合せず読み込んだ内容に置き換える
+        courses: savedCourses ? appData.courses : [],
+        campuses: savedCampuses ? appData.campuses : [],
+        campusBuildings: savedBuildings ? appData.buildings : {},
+      }, incoming)
+      : { data: incoming };
+    applyBackup(backup.data);
+    if (mode !== 'merge') return '読み込みました（置き換え）。';
+    const added = Object.entries(backup.stats).filter(([, s]) => s.added > 0).map(([k, s]) => `${PART_NAMES[k]} ${s.added}件`);
+    const skipped = Object.values(backup.stats).reduce((n, s) => n + s.skipped, 0);
+    return `統合しました。追加: ${added.length > 0 ? added.join('、') : 'なし'}${skipped > 0 ? `（手元と同じ ${skipped}件は手元を優先）` : ''}`;
+  };
+
+  // 含まれていた項目だけを反映する
+  const applyBackup = (backup) => {
     if (backup.courses) setSavedCourses(backup.courses);
     if (backup.campuses) setSavedCampuses(backup.campuses);
     if (backup.campusBuildings) setSavedBuildings(backup.campusBuildings);
@@ -189,6 +218,14 @@ function App() {
     const ids = new Set(courses.map(c => c.id));
     return logs.filter(l => l.quarter === selectedQuarter && ids.has(l.courseId) && getFiscalYear(l.date) === year);
   }, [logs, courses, selectedQuarter, year]);
+  // 記録し忘れの授業（日別画面で知らせる）
+  const unrecorded = useMemo(
+    () => findUnrecorded({ logs, courses, quarters: settings.quarters, periods: settings.periods, today, nowMin }),
+    [logs, courses, settings.quarters, settings.periods, today, nowMin],
+  );
+  const weekly = useMemo(() => weeklyRates(quarterLogs), [quarterLogs]);
+  const absenceWeekdays = useMemo(() => absenceByWeekday(quarterLogs), [quarterLogs]);
+  const absenceSlots = useMemo(() => topAbsenceSlots(quarterLogs, quarterCourses), [quarterLogs, quarterCourses]);
   const statusCounts = useMemo(() => countStatuses(quarterLogs), [quarterLogs]);
   const overallRate = calcRate(statusCounts['出席'], statusCounts['遅刻'], statusCounts['欠席']);
   const courseAnalytics = useMemo(() => buildCourseAnalytics(quarterCourses, quarterLogs, settings.threshold), [quarterCourses, quarterLogs, settings.threshold]);
@@ -255,7 +292,11 @@ function App() {
           courses={courses} periods={settings.periods} nowMin={nowMin} logs={logs}
           courseMemos={courseMemos} dateMemos={dateMemos} recordState={recordState} getLog={getLog}
           onSelectDate={selectDate} onOpenDetail={setDetailCourse} onRecord={requestRecord} onAddCourse={openAddCourse}
+          unrecordedCount={unrecorded.length} lookbackDays={LOOKBACK_DAYS} onShowUnrecorded={() => setShowUnrecorded(true)}
         />
+      )}
+      {showUnrecorded && (
+        <UnrecordedModal items={unrecorded} onSelect={(date) => { selectDate(date); setShowUnrecorded(false); }} onClose={() => setShowUnrecorded(false)} />
       )}
       {currentView === 'weekly' && (
         // 週間表から開いた授業は、今週のその曜日の日付として扱う
@@ -266,6 +307,7 @@ function App() {
         <AnalyticsView
           selectedQuarter={selectedQuarter} statusCounts={statusCounts} overallRate={overallRate} courseAnalytics={courseAnalytics}
           threshold={settings.threshold} years={fiscalYears} year={year} onYearChange={setAnalyticsYear}
+          weekly={weekly} absenceWeekdays={absenceWeekdays} absenceSlots={absenceSlots}
         />
       )}
       {currentView === 'map' && <MapView campuses={appData.campuses} buildings={appData.buildings} campusImages={campusImages} />}
