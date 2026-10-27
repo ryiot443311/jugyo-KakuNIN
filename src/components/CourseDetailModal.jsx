@@ -3,7 +3,7 @@ import Modal from './Modal';
 import StatusButtons from './StatusButtons';
 import RecordNotice from './RecordNotice';
 
-export default function CourseDetailModal({ course, date, memo, dateMemo, recordState, log, onSaveMemo, onSaveDateMemo, onRecord, onEditLog, onClose }) {
+export default function CourseDetailModal({ course, date, memo, dateMemo, recordState, log, onSaveMemo, onSaveDateMemo, onRecord, onEditLog, onEdit, onClose }) {
   const [tempMemo, setTempMemo] = useState(memo || '');
   const [tempDateMemo, setTempDateMemo] = useState(dateMemo || '');
 
@@ -42,6 +42,7 @@ export default function CourseDetailModal({ course, date, memo, dateMemo, record
           </>
         )}
       </div>
+      <button type="button" onClick={() => { onSaveMemo(tempMemo); onSaveDateMemo(tempDateMemo); onEdit(); }} className="btn btn-soft block mb-6">授業情報を編集</button>
       <button type="button" onClick={() => { onSaveMemo(tempMemo); onSaveDateMemo(tempDateMemo); onClose(); }} className="btn btn-ghost block">閉じる</button>
     </Modal>
   );

@@ -1,26 +1,28 @@
 import { useState } from 'react';
-import { CAMPUSES, CAMPUS_BUILDINGS } from '../data/constants';
 
-export default function MapView() {
-  const [mapCampus, setMapCampus] = useState(CAMPUSES[0]?.id);
-  const [mapImgError, setMapImgError] = useState(false);
-  const mapImage = CAMPUSES.find(c => c.id === mapCampus)?.mapImage;
+export default function MapView({ campuses, buildings, campusImages }) {
+  const [mapCampus, setMapCampus] = useState(null);
+  const [failedSrc, setFailedSrc] = useState(null);
+  const campus = campuses.find(c => c.id === mapCampus) ?? campuses[0];
+  const mapImage = campus && (campusImages[campus.id] || campus.mapImage);
+
+  if (!campus) return <div className="empty">キャンパスが登録されていません（設定タブから追加できます）</div>;
 
   return (
     <div className="mb-20">
       <div className="row gap-10 mb-15">
-        {CAMPUSES.map(c => (
-          <button key={c.id} type="button" onClick={() => { setMapCampus(c.id); setMapImgError(false); }} className={`btn grow ${mapCampus === c.id ? 'btn-accent' : 'btn-soft'}`}>{c.name}</button>
+        {campuses.map(c => (
+          <button key={c.id} type="button" onClick={() => setMapCampus(c.id)} className={`btn grow ${campus.id === c.id ? 'btn-accent' : 'btn-soft'}`}>{c.name}</button>
         ))}
       </div>
-      {!mapImage || mapImgError ? (
-        <div className="empty small">マップ画像がありません（public/ に画像を配置してください）</div>
+      {!mapImage || failedSrc === mapImage ? (
+        <div className="empty small">マップ画像がありません（設定タブから追加できます）</div>
       ) : (
         <div className="card section">
-          <img src={mapImage} alt="マップ" onError={() => setMapImgError(true)} className="map-img" />
+          <img src={mapImage} alt="マップ" onError={() => setFailedSrc(mapImage)} className="map-img" />
         </div>
       )}
-      {CAMPUS_BUILDINGS[mapCampus]?.map(b => (
+      {buildings[campus.id]?.map(b => (
         <div key={b.id} className="card building">
           <div className="strong accent mb-6">{b.name}</div>
           <div className="small muted">{b.description}</div>

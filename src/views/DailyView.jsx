@@ -4,7 +4,7 @@ import { dateMemoKey, hasText } from '../utils/memo';
 import StatusButtons from '../components/StatusButtons';
 import RecordNotice from '../components/RecordNotice';
 
-export default function DailyView({ selectedDate, today, selectedQuarter, courses, periods, nowMin, courseMemos, dateMemos, recordState, getLog, onSelectDate, onOpenDetail, onRecord }) {
+export default function DailyView({ selectedDate, today, selectedQuarter, courses, periods, nowMin, courseMemos, dateMemos, recordState, getLog, onSelectDate, onOpenDetail, onRecord, onAddCourse }) {
   const weekStart = getDateOfWeekday(selectedDate, 0);
   const selectedDateObj = parseDateStr(selectedDate);
   const selectedDay = selectedDateObj.getDay();
@@ -69,6 +69,7 @@ export default function DailyView({ selectedDate, today, selectedQuarter, course
           </div>
         );
       })}
+      <button type="button" onClick={() => onAddCourse({ dayOfWeek: selectedDay })} className="btn btn-soft block mt-10">＋ {DAYS[selectedDay]}曜に授業を追加</button>
     </div>
   );
 }
