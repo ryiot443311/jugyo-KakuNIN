@@ -1,18 +1,18 @@
 import { useState } from 'react';
-import Modal from '../components/Modal';
-import { downloadBackup } from '../utils/download';
+import Modal from '../Modal';
+import { downloadBackup } from '../../utils/download';
 
 const CONFIRM_WORD = '削除';
 
-// 取り消せない操作をまとめた画面。実行には確認の文字入力が必要
-export default function DangerView({ logCount, onResetLogs, getBackup }) {
+// 取り消せない操作をまとめた項目。折りたたんでおき、実行には確認の文字入力が必要
+export default function DangerSection({ logCount, onResetLogs, getBackup }) {
   const [confirming, setConfirming] = useState(false);
   const [typed, setTyped] = useState('');
 
   const close = () => { setConfirming(false); setTyped(''); };
 
   return (
-    <div className="mb-20">
+    <section className="card section danger-zone">
       {confirming && (
         <Modal>
           <h3 className="modal-title danger-text">出席記録の全削除</h3>
@@ -27,11 +27,11 @@ export default function DangerView({ logCount, onResetLogs, getBackup }) {
         </Modal>
       )}
 
-      <section className="card section">
-        <h3 className="section-title danger-text">危険な操作</h3>
+      <details>
+        <summary className="section-title danger-text">危険な項目</summary>
         <p className="small muted mb-10">ここの操作は元に戻せません。実行前にバックアップの書き出しをおすすめします。</p>
         <button type="button" onClick={() => setConfirming(true)} disabled={logCount === 0} className="btn btn-danger block">出席記録をすべて削除（{logCount}件）</button>
-      </section>
-    </div>
+      </details>
+    </section>
   );
 }

@@ -20,7 +20,6 @@ import HistoryView from './views/HistoryView';
 import AnalyticsView from './views/AnalyticsView';
 import MapView from './views/MapView';
 import SettingsView from './views/SettingsView';
-import DangerView from './views/DangerView';
 import './App.css';
 
 const VIEWS = [
@@ -30,7 +29,6 @@ const VIEWS = [
   { id: 'analytics', label: '分析' },
   { id: 'map', label: 'マップ' },
   { id: 'settings', label: '設定' },
-  { id: 'danger', label: '危険', danger: true },
 ];
 
 function App() {
@@ -196,15 +194,18 @@ function App() {
 
       <nav className="tabs" aria-label="画面切り替え">
         {VIEWS.map(view => (
-          <button key={view.id} type="button" onClick={() => setCurrentView(view.id)} aria-current={currentView === view.id ? 'page' : undefined} className={`tab${view.danger ? ' is-danger' : ''}${currentView === view.id ? ' is-active' : ''}`}>{view.label}</button>
+          <button key={view.id} type="button" onClick={() => setCurrentView(view.id)} aria-current={currentView === view.id ? 'page' : undefined} className={`tab${currentView === view.id ? ' is-active' : ''}`}>{view.label}</button>
         ))}
       </nav>
 
-      <div className="quarters">
-        {Object.keys(QUARTERS).map(Number).map(q => (
-          <button key={q} type="button" onClick={() => setSelectedQuarter(q)} aria-pressed={selectedQuarter === q} className={`quarter${selectedQuarter === q ? ' is-active' : ''}`}>第{q}Q</button>
-        ))}
-      </div>
+      {/* クォーターに関係しないマップ・設定では非表示 */}
+      {currentView !== 'map' && currentView !== 'settings' && (
+        <div className="quarters">
+          {Object.keys(QUARTERS).map(Number).map(q => (
+            <button key={q} type="button" onClick={() => setSelectedQuarter(q)} aria-pressed={selectedQuarter === q} className={`quarter${selectedQuarter === q ? ' is-active' : ''}`}>第{q}Q</button>
+          ))}
+        </div>
+      )}
 
       {currentView === 'home' && (
         <DailyView
@@ -226,10 +227,10 @@ function App() {
           settings={settings} onChange={updateSettings}
           appData={appData} onChangeData={updateData} campusImages={campusImages} onChangeImages={setCampusImages}
           onAddCourse={() => openAddCourse()} onEditCourse={(course) => setCourseForm({ course })}
+          logCount={logs.length} onResetLogs={() => setLogs([])}
           getBackup={getBackup} onImportBackup={importBackup}
         />
       )}
-      {currentView === 'danger' && <DangerView logCount={logs.length} onResetLogs={() => setLogs([])} getBackup={getBackup} />}
     </div>
   );
 }

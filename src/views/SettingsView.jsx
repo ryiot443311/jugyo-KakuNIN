@@ -3,6 +3,7 @@ import { THEMES, MAX_DAYS } from '../data/settings';
 import CoursesSection from '../components/settings/CoursesSection';
 import CampusSection from '../components/settings/CampusSection';
 import DataSection from '../components/settings/DataSection';
+import DangerSection from '../components/settings/DangerSection';
 
 const pad = (n) => String(n).padStart(2, '0');
 
@@ -34,7 +35,7 @@ function MonthDayInput({ value, label, onChange }) {
   );
 }
 
-export default function SettingsView({ settings, onChange, appData, onChangeData, campusImages, onChangeImages, onAddCourse, onEditCourse, getBackup, onImportBackup }) {
+export default function SettingsView({ settings, onChange, appData, onChangeData, campusImages, onChangeImages, logCount, onResetLogs, onAddCourse, onEditCourse, getBackup, onImportBackup }) {
   const setQuarter = (q, patch) => onChange({ quarters: { ...settings.quarters, [q]: { ...settings.quarters[q], ...patch } } });
   const setPeriod = (p, patch) => onChange({ periods: { ...settings.periods, [p]: { ...settings.periods[p], ...patch } } });
   const toggleCourse = (id) => onChange({
@@ -79,6 +80,7 @@ export default function SettingsView({ settings, onChange, appData, onChangeData
       <CoursesSection courses={appData.courses} hiddenCourses={settings.hiddenCourses} onToggle={toggleCourse} onEdit={onEditCourse} onAdd={onAddCourse} />
       <CampusSection campuses={appData.campuses} buildings={appData.buildings} images={campusImages} onChangeData={onChangeData} onChangeImages={onChangeImages} />
       <DataSection getBackup={getBackup} onImportBackup={onImportBackup} />
+      <DangerSection logCount={logCount} onResetLogs={onResetLogs} getBackup={getBackup} />
     </div>
   );
 }
