@@ -4,6 +4,8 @@ import { parseBackup } from '../../data/backup';
 import { downloadBackup } from '../../utils/download';
 import SettingsGroup from './SettingsGroup';
 
+const MAX_BACKUP_BYTES = 30 * 1024 * 1024; // マップ画像を含めても収まる大きさ
+
 const PART_LABELS = {
   logs: '出席記録', courses: '授業', courseMemos: '授業メモ', datedMemos: '日付別メモ', settings: '設定',
   campuses: 'キャンパス', campusBuildings: '施設の説明', campusImages: 'マップ画像',
@@ -18,6 +20,7 @@ export default function DataSection({ getBackup, onImportBackup }) {
   const chooseFile = async (e) => {
     const input = e.target; const file = input.files[0];
     if (!file) return;
+    if (file.size > MAX_BACKUP_BYTES) { setMessage('読み込めませんでした: ファイルが大きすぎます（30MBまで）'); input.value = ''; return; }
     const result = parseBackup(await file.text());
     if (result.ok) { setPendingImport(result); setMessage(''); } else setMessage(`読み込めませんでした: ${result.error}`);
     input.value = '';

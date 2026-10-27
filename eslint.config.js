@@ -33,4 +33,9 @@ export default [
       'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
     },
   },
+  {
+    // 設定ファイルは Node.js で動く
+    files: ['vite.config.js'],
+    languageOptions: { globals: globals.node },
+  },
 ]

@@ -6,6 +6,7 @@ import CampusSection from '../components/settings/CampusSection';
 import DataSection from '../components/settings/DataSection';
 import DangerSection from '../components/settings/DangerSection';
 import CsvSection from '../components/settings/CsvSection';
+import InstallSection from '../components/settings/InstallSection';
 
 const pad = (n) => String(n).padStart(2, '0');
 
@@ -87,6 +88,7 @@ export default function SettingsView({ settings, onChange, appData, onChangeData
       </SettingsGroup>
 
       <CsvSection logs={logs} courses={appData.courses} />
+      <InstallSection />
       <DataSection getBackup={getBackup} onImportBackup={onImportBackup} />
       <DangerSection logCount={logCount} onResetLogs={onResetLogs} getBackup={getBackup} />
     </div>
