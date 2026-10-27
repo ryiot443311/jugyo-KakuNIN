@@ -102,7 +102,8 @@ function App() {
     return { status: 'ok', quarter };
   }, [selectedDate, selectedQuarter, today, settings.quarters]);
 
-  const getLog = useCallback((courseId) => logs.find(log => log.courseId === courseId && log.date === selectedDate), [logs, selectedDate]);
+  const logIndex = useMemo(() => new Map(logs.map(log => [`${log.courseId}|${log.date}`, log])), [logs]);
+  const getLog = useCallback((courseId) => logIndex.get(`${courseId}|${selectedDate}`), [logIndex, selectedDate]);
 
   const saveMemo = useCallback((courseId, text) => setCourseMemos(prev => ({ ...prev, [courseId]: text })), [setCourseMemos]);
 

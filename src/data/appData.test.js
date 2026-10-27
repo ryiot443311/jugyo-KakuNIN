@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { resolveAppData, sanitizeCourses } from './appData';
+import { isSafeImagePath, resolveAppData, sanitizeCampuses, sanitizeCourses } from './appData';
 import { sanitizeLogs, sanitizeMemos } from './sanitize';
 import { MY_COURSES } from './constants';
 
@@ -43,5 +43,22 @@ describe('保存データの検証', () => {
   it('sanitizeMemos は文字列以外を捨て、オブジェクトでなければ例外', () => {
     expect(sanitizeMemos({ a: 'メモ', b: 5 })).toEqual({ a: 'メモ' });
     expect(() => sanitizeMemos([])).toThrow();
+  });
+});
+
+describe('マップ画像の場所の検証', () => {
+  it('このアプリ内のパスと data:image だけ許可する', () => {
+    expect(isSafeImagePath('/local/map.jpg')).toBe(true);
+    expect(isSafeImagePath('data:image/jpeg;base64,AAAA')).toBe(true);
+  });
+  it('外部サイト・プロトコル相対・javascript:・文字列以外は拒否する', () => {
+    for (const bad of ['https://example.com/a.png', '//example.com/a.png', 'javascript:alert(1)', 'data:text/html,<b>', 'map.jpg', '', null, 5]) {
+      expect(isSafeImagePath(bad)).toBe(false);
+    }
+  });
+  it('キャンパスの画像が不正なら null にする', () => {
+    const [c] = sanitizeCampuses([{ id: 'x', name: '北', mapImage: 'https://example.com/a.png' }]);
+    expect(c.mapImage).toBeNull();
+    expect(sanitizeCampuses([{ id: 'y', name: '南', mapImage: '/local/s.jpg' }])[0].mapImage).toBe('/local/s.jpg');
   });
 });

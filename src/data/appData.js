@@ -29,7 +29,10 @@ const sanitizeCourse = (c) => {
   };
 };
 
-const sanitizeCampus = (c) => (isObject(c) && isText(c.id) && isText(c.name) ? { id: c.id, name: c.name, mapImage: isText(c.mapImage) ? c.mapImage : null } : null);
+// 画像の場所は、このアプリ内のパス（/ で始まる。// は外部サイトになるので除く）か data:image のみ
+export const isSafeImagePath = (v) => isText(v) && (/^\/(?!\/)/.test(v) || v.startsWith('data:image/'));
+
+const sanitizeCampus = (c) => (isObject(c) && isText(c.id) && isText(c.name) ? { id: c.id, name: c.name, mapImage: isSafeImagePath(c.mapImage) ? c.mapImage : null } : null);
 
 const sanitizeBuilding = (b) => (isObject(b) && isText(b.id) ? { id: b.id, name: isText(b.name) ? b.name : '', description: isText(b.description) ? b.description : '' } : null);
 
