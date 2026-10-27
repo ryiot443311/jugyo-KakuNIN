@@ -69,6 +69,7 @@
 /* ===== タブ・クォーター ===== */
 .tabs { display: flex; gap: 4px; margin-bottom: 15px; }
 .tab { flex: 1; padding: 10px 0; border: none; border-radius: 8px; background: var(--surface-3); color: var(--text-muted); font-size: 0.75rem; font-weight: 700; }
+.tab.is-danger { color: var(--danger); }
 .tab.is-active { background: var(--primary); color: var(--on-primary); }
 
 .quarters { display: flex; gap: 8px; margin-bottom: 15px; }

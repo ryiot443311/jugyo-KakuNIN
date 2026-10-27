@@ -1,25 +1,18 @@
 import { useState } from 'react';
 import Modal from '../Modal';
 import { parseBackup } from '../../data/backup';
+import { downloadBackup } from '../../utils/download';
 
 const PART_LABELS = {
   appData: '授業・キャンパス情報', settings: '設定', campusImages: 'マップ画像',
   logs: '出席記録', courseMemos: '授業メモ', dateMemos: '日付別メモ',
 };
 
-export default function DataSection({ logCount, onResetLogs, getBackup, onImportBackup }) {
-  const [confirmReset, setConfirmReset] = useState(false);
+export default function DataSection({ getBackup, onImportBackup }) {
   const [pendingImport, setPendingImport] = useState(null);
   const [message, setMessage] = useState('');
 
-  const exportBackup = () => {
-    const url = URL.createObjectURL(new Blob([getBackup()], { type: 'application/json' }));
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `jugyo-kakunin-backup-${new Date().toISOString().slice(0, 10)}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
+  const exportBackup = () => downloadBackup(getBackup());
 
   const chooseFile = async (e) => {
     const input = e.target; const file = input.files[0];
@@ -35,15 +28,6 @@ export default function DataSection({ logCount, onResetLogs, getBackup, onImport
 
   return (
     <section className="card section">
-      {confirmReset && (
-        <Modal>
-          <p className="center strong">出席記録を{logCount}件すべて削除します。<br />この操作は取り消せません。</p>
-          <div className="row gap-10 mt-20">
-            <button type="button" onClick={() => setConfirmReset(false)} className="btn btn-soft grow">キャンセル</button>
-            <button type="button" onClick={() => { onResetLogs(); setConfirmReset(false); }} className="btn btn-danger grow">削除</button>
-          </div>
-        </Modal>
-      )}
       {pendingImport && (
         <Modal>
           <p className="center strong">次のデータを読み込み、現在の内容を置き換えます。</p>
@@ -64,8 +48,7 @@ export default function DataSection({ logCount, onResetLogs, getBackup, onImport
         </label>
       </div>
       {message && <p className="small danger-text mt-8" role="alert">{message}</p>}
-      <p className="tiny muted mt-8 mb-15">授業・キャンパス情報、設定、マップ画像、出席記録、メモを JSON で保存・復元できます。</p>
-      <button type="button" onClick={() => setConfirmReset(true)} disabled={logCount === 0} className="btn btn-danger block">出席記録をすべて削除（{logCount}件）</button>
+      <p className="tiny muted mt-8">授業・キャンパス情報、設定、マップ画像、出席記録、メモを JSON で保存・復元できます。</p>
     </section>
   );
 }

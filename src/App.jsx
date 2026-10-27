@@ -20,6 +20,7 @@ import HistoryView from './views/HistoryView';
 import AnalyticsView from './views/AnalyticsView';
 import MapView from './views/MapView';
 import SettingsView from './views/SettingsView';
+import DangerView from './views/DangerView';
 import './App.css';
 
 const VIEWS = [
@@ -29,6 +30,7 @@ const VIEWS = [
   { id: 'analytics', label: '分析' },
   { id: 'map', label: 'マップ' },
   { id: 'settings', label: '設定' },
+  { id: 'danger', label: '危険', danger: true },
 ];
 
 function App() {
@@ -194,7 +196,7 @@ function App() {
 
       <nav className="tabs" aria-label="画面切り替え">
         {VIEWS.map(view => (
-          <button key={view.id} type="button" onClick={() => setCurrentView(view.id)} aria-current={currentView === view.id ? 'page' : undefined} className={`tab${currentView === view.id ? ' is-active' : ''}`}>{view.label}</button>
+          <button key={view.id} type="button" onClick={() => setCurrentView(view.id)} aria-current={currentView === view.id ? 'page' : undefined} className={`tab${view.danger ? ' is-danger' : ''}${currentView === view.id ? ' is-active' : ''}`}>{view.label}</button>
         ))}
       </nav>
 
@@ -223,11 +225,11 @@ function App() {
         <SettingsView
           settings={settings} onChange={updateSettings}
           appData={appData} onChangeData={updateData} campusImages={campusImages} onChangeImages={setCampusImages}
-          logCount={logs.length} onResetLogs={() => setLogs([])}
           onAddCourse={() => openAddCourse()} onEditCourse={(course) => setCourseForm({ course })}
           getBackup={getBackup} onImportBackup={importBackup}
         />
       )}
+      {currentView === 'danger' && <DangerView logCount={logs.length} onResetLogs={() => setLogs([])} getBackup={getBackup} />}
     </div>
   );
 }
