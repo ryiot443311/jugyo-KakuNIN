@@ -26,6 +26,8 @@ const sanitizeCourse = (c) => {
   return {
     id: c.id, name: c.name, quarter: toQuarter(c.quarter), dayOfWeek: c.dayOfWeek, period: c.period,
     campus: isText(c.campus) ? c.campus : '', room: isText(c.room) ? c.room : '', teacher: isText(c.teacher) ? c.teacher : '',
+    // 画面から追加した日（記録し忘れの検出で、追加より前の授業を数えないため）
+    ...(isText(c.createdAt) && /^\d{4}-\d{2}-\d{2}$/.test(c.createdAt) ? { createdAt: c.createdAt } : {}),
   };
 };
 

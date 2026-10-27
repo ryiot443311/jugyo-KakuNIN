@@ -35,6 +35,12 @@ describe('findUnrecorded（記録し忘れの検出）', () => {
     expect(result.at(-1)).toBe('2026-09-30 wed2'); // 28日前（9/30）まで
     expect(result.every(r => r >= '2026-09-30')).toBe(true);
   });
+  it('授業を追加した日より前は数えない', () => {
+    const added = [...courses, { id: 'new', name: 'D', dayOfWeek: 3, period: 2, quarter: 3, createdAt: '2026-10-20' }];
+    const result = findUnrecorded({ logs: [log('wed1', '2026-10-07'), log('wed2', '2026-10-07')], courses: added, quarters, periods, today: '2026-10-28', nowMin: 9 * 60 })
+      .filter(u => u.course.id === 'new').map(u => u.date);
+    expect(result).toEqual(['2026-10-21']); // 10/14 は追加前なので数えない
+  });
   it('休み期間は数えない', () => {
     expect(run([log('wed1', '2026-08-05')], { today: '2026-08-26', nowMin: 23 * 60 })).toEqual([]);
   });

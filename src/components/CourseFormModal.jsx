@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import Modal from './Modal';
-import { DAYS } from '../utils/date';
+import { DAYS, formatDate } from '../utils/date';
 import { newId } from '../data/appData';
 
 const QUARTER_IDS = [1, 2, 3, 4];
@@ -27,6 +27,7 @@ export default function CourseFormModal({ course, preset, periods, logCount, onS
     onSave({
       ...course,
       id: course?.id ?? newId('course'),
+      ...(course ? {} : { createdAt: formatDate(new Date()) }), // 追加した日（記録し忘れの検出に使う）
       name: name.trim(), dayOfWeek, period,
       quarter: [...quarters].sort(),
       room: room.trim(), teacher: teacher.trim(),

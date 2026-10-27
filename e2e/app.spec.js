@@ -54,6 +54,15 @@ test.describe('日別画面', () => {
     await page.click('.status-stack > .st-present')
     await page.click('.modal .btn-primary')
     await expect(page.locator('.unrecorded-banner')).toContainText('記録していない授業が 3件')
+
+    // 学期の途中で授業を追加しても、追加する前の週は記録し忘れにならない
+    await page.click('text=今日')
+    await page.click('text=水曜に授業を追加')
+    await page.fill('#course-name', '途中から追加した授業')
+    await page.selectOption('#course-period', '1')
+    await page.click('button[type=submit]')
+    await expect(page.locator('.course-name')).toContainText(['途中から追加した授業'])
+    await expect(page.locator('.unrecorded-banner')).toContainText('記録していない授業が 3件')
   })
 })
 
