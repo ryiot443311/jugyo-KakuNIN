@@ -21,6 +21,11 @@ describe('sanitizeCourses', () => {
     expect(sanitizeCourses([{ ...ok, quarter: [] }])[0].quarter).toBeUndefined();
     expect(sanitizeCourses([{ ...ok, quarter: [1, 2] }])[0].quarter).toEqual([1, 2]);
   });
+  it('追加した日（createdAt）は正しい形式のときだけ残す', () => {
+    expect(sanitizeCourses([{ ...ok, createdAt: '2026-10-20' }])[0].createdAt).toBe('2026-10-20');
+    expect(sanitizeCourses([{ ...ok, createdAt: 'yesterday' }])[0]).not.toHaveProperty('createdAt');
+    expect(sanitizeCourses([ok])[0]).not.toHaveProperty('createdAt');
+  });
   it('配列でなければ例外', () => {
     expect(() => sanitizeCourses({})).toThrow();
   });
