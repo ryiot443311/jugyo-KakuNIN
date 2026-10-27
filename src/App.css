@@ -144,6 +144,8 @@
 
 .settings-group summary { margin-bottom: 0; cursor: pointer; }
 .settings-group[open] > summary { margin-bottom: 10px; }
+.day-group { border-top: 1px solid var(--border); }
+.day-group summary { padding: 8px 0; font-weight: 700; cursor: pointer; }
 .danger-zone { border-color: var(--warn-border); }
 .danger-zone summary { color: var(--danger); }
 

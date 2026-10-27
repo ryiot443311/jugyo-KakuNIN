@@ -9,6 +9,7 @@ export default function CampusSection({ campuses, buildings, images, onChangeDat
   const [selectedId, setSelectedId] = useState(null);
   const [message, setMessage] = useState('');
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleteBuilding, setDeleteBuilding] = useState(null); // 削除を確認中の施設
 
   const campus = campuses.find(c => c.id === selectedId) ?? campuses[0];
   const buildingList = campus ? buildings[campus.id] ?? [] : [];
@@ -93,6 +94,16 @@ export default function CampusSection({ campuses, buildings, images, onChangeDat
       </SettingsGroup>
 
       <SettingsGroup title="施設の説明">
+        {deleteBuilding && (
+          <Modal>
+            <p className="center strong">「{deleteBuilding.name || '名称なしの施設'}」を削除しますか？</p>
+            <p className="center small muted mt-10">この操作は取り消せません。</p>
+            <div className="row gap-10 mt-20">
+              <button type="button" onClick={() => setDeleteBuilding(null)} className="btn btn-soft grow">キャンセル</button>
+              <button type="button" onClick={() => { setBuildings(buildingList.filter(x => x.id !== deleteBuilding.id)); setDeleteBuilding(null); }} className="btn btn-danger grow">削除</button>
+            </div>
+          </Modal>
+        )}
         {!campus ? (
           <p className="small muted">先に「マップ」でキャンパスを追加してください。</p>
         ) : (
@@ -103,7 +114,7 @@ export default function CampusSection({ campuses, buildings, images, onChangeDat
               <div key={b.id} className="mb-10">
                 <div className="row gap-6">
                   <input className="input grow" aria-label="施設名" value={b.name} onChange={(e) => updateBuilding(b.id, { name: e.target.value })} placeholder="施設名（例: 3号館）" />
-                  <button type="button" onClick={() => setBuildings(buildingList.filter(x => x.id !== b.id))} className="btn btn-ghost danger-text btn-small" aria-label={`${b.name || '施設'}を削除`}>削除</button>
+                  <button type="button" onClick={() => setDeleteBuilding(b)} className="btn btn-ghost danger-text btn-small" aria-label={`${b.name || '施設'}を削除`}>削除</button>
                 </div>
                 <input className="input mt-8" aria-label="説明" value={b.description} onChange={(e) => updateBuilding(b.id, { description: e.target.value })} placeholder="説明（例: 1階: 学生課）" />
               </div>
