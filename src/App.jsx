@@ -321,7 +321,7 @@ function App() {
         />
       )}
 
-      {undo && <UndoToast text={undo.text} onUndo={undoRecord} />}
+      {undo && <UndoToast text={undo.text} onUndo={undoRecord} onDismiss={() => setUndo(null)} />}
     </div>
   );
 }

@@ -193,7 +193,8 @@
 .info-box p { margin-bottom: 5px; }
 .info-box p:last-child { margin-bottom: 0; }
 
-.toast { position: fixed; left: 50%; bottom: calc(16px + env(safe-area-inset-bottom)); z-index: 1100; display: flex; align-items: center; gap: 12px; max-width: calc(100% - 30px); padding: 10px 14px; border-radius: 12px; background: var(--primary); color: var(--on-primary); font-size: 0.85rem; box-shadow: 0 4px 16px #0004; transform: translateX(-50%); }
+.toast { position: fixed; left: 15px; right: 15px; top: calc(12px + env(safe-area-inset-top)); z-index: 1100; display: flex; align-items: center; gap: 12px; width: fit-content; max-width: 480px; margin: 0 auto; padding: 10px 14px; border-radius: 12px; background: var(--primary); color: var(--on-primary); font-size: 0.85rem; box-shadow: 0 4px 16px #0004; transform: translateX(var(--toast-dx, 0px)); touch-action: pan-y; } /* 画面上部の中央に表示。左右スワイプで消せる */
+.toast .btn { flex-shrink: 0; white-space: nowrap; }
 
 /* ===== エラー ===== */
 .error-banner { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 12px; padding: 8px 12px; background: var(--warn-bg); border: 1px solid var(--warn-border); border-radius: 8px; color: var(--danger); font-size: 0.85rem; }
