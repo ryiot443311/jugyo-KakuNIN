@@ -30,6 +30,23 @@ test.describe('日別画面', () => {
     await page.click('.toast button')
     await expect(page.locator('.status-btn')).toHaveCount(4)
 
+    // 記録の表示は画面上部に出て、左右スワイプで消せる（日付は変わらない）
+    await page.click('.status-stack > .st-present')
+    await page.click('.modal .btn-primary')
+    const toast = await page.locator('.toast').boundingBox()
+    expect(toast.y).toBeLessThan(100)
+    await swipe(page, toast.x + toast.width / 2, toast.x + toast.width / 2 + 150, toast.y + toast.height / 2)
+    await expect(page.locator('.toast')).toHaveCount(0)
+    await expect(page.locator('.date-heading')).toHaveText('10月28日（水）今日')
+    await expect(page.locator('.course-card .notice')).toHaveText('出席 記録済み') // 消しても記録は残る
+    await page.click('.tab:text-is("履歴")')
+    await page.click('.acc-dayhead >> nth=0')
+    await page.locator('.log-card', { hasText: '英語' }).locator('button:text-is("修正")').click()
+    await page.click('.modal button:text-is("記録を削除")')
+    await page.click('.modal .btn-danger')
+    await page.click('.tab:text-is("日別")')
+    await expect(page.locator('.status-btn')).toHaveCount(4)
+
     await page.click('.icon-btn')
     await page.fill('#course-memo', '持ち物')
     await page.fill('#date-memo', '教室変更')
