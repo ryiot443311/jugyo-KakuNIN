@@ -13,7 +13,7 @@ export default function WeeklyView({ today, periods, quarterCourses, courseMemos
         <tbody>
           {Object.keys(periods).map(p => (
             <tr key={p}>
-              <td className="period-col">{p}</td>
+              <td className="period-col">{p}{periods[p] && <span className="period-time">{periods[p].start}</span>}</td>
               {WEEKDAYS.map((_, i) => (
                 <td key={i} className="weekly-cell">
                   {cellCourses(i + 1, p).map(course => (

@@ -1,6 +1,22 @@
 import { useMemo } from 'react';
 import { DAYS, parseDateStr, getWeekOfMonth, getFiscalYear } from '../utils/date';
 import LogCard from '../components/LogCard';
+import { STATUSES, statusBgClass } from '../data/status';
+
+// 'YYYY-MM-DD' を「10月21日」に
+const monthDay = (date) => `${Number(date.slice(5, 7))}月${Number(date.slice(8))}日`;
+
+// その日の記録の内訳（出席2・欠席1 など）。閉じたままでも状態が分かるように
+function DaySummary({ logs }) {
+  return (
+    <span className="day-summary">
+      {STATUSES.map(s => {
+        const n = logs.filter(l => l.status === s).length;
+        return n > 0 && <span key={s} className={`pill ${statusBgClass(s)}`}>{s}{n > 1 ? ` ${n}` : ''}</span>;
+      })}
+    </span>
+  );
+}
 
 function AccordionHeader({ onClick, isOpen, className, children }) {
   return (
@@ -54,7 +70,7 @@ export default function HistoryView({ logs, courses, expandedSections, onToggle,
                         return (
                           <div key={date} className="acc-day">
                             <AccordionHeader onClick={() => onToggle(dKey, false)} isOpen={isDOpen} className="acc-dayhead">
-                              <span>{date} ({dayLogs[0].dayName})</span>
+                              <span className="day-head-label">{monthDay(date)}（{dayLogs[0].dayName}）<DaySummary logs={dayLogs} /></span>
                             </AccordionHeader>
                             {isDOpen && <div className="pt-8">{dayLogs.map(log => <LogCard key={log.id} log={log} courses={courses} onEdit={onEditLog} />)}</div>}
                           </div>

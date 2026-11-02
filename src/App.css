@@ -1,7 +1,9 @@
 /* ===== レイアウト ===== */
-.app { max-width: 720px; margin: 0 auto; padding: 15px 15px 40px; }
-.app-title { text-align: center; color: var(--text-strong); margin-bottom: 4px; font-size: 1.4rem; }
-.app-sub { text-align: center; color: var(--text-muted); margin-bottom: 15px; font-size: 0.9rem; font-weight: 700; }
+.app { max-width: 720px; margin: 0 auto; padding: 12px 15px 40px; }
+/* タイトルと今週を1行にまとめ、授業カードをなるべく上に出す */
+.app-header { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin: 0 2px 10px; }
+.app-title { color: var(--text-strong); font-size: 1.15rem; }
+.app-sub { color: var(--text-muted); font-size: 0.85rem; font-weight: 700; }
 
 /* ===== ユーティリティ ===== */
 .row { display: flex; }
@@ -25,6 +27,7 @@
 .mt-10 { margin-top: 10px; }
 .mt-20 { margin-top: 20px; }
 .mb-6 { margin-bottom: 6px; }
+.mb-8 { margin-bottom: 8px; }
 .mb-10 { margin-bottom: 10px; }
 .mb-15 { margin-bottom: 15px; }
 .mb-20 { margin-bottom: 20px; }
@@ -67,27 +70,28 @@
 .badge-next { background: var(--accent); color: var(--on-accent); }
 
 /* ===== タブ・クォーター ===== */
-.tabs { display: flex; gap: 4px; margin-bottom: 15px; }
-.tab { flex: 1; padding: 10px 0; border: none; border-radius: 8px; background: var(--surface-3); color: var(--text-muted); font-size: 0.75rem; font-weight: 700; }
+.tabs { display: flex; gap: 4px; margin-bottom: 8px; }
+.tab { flex: 1; padding: 9px 0; border: none; border-radius: 8px; background: var(--surface-3); color: var(--text-muted); font-size: 0.75rem; font-weight: 700; }
 .tab.is-active { background: var(--primary); color: var(--on-primary); }
 
-.quarters { display: flex; gap: 8px; margin-bottom: 15px; }
-.quarter { flex: 1; padding: 8px 0; border: 1px solid var(--border); border-radius: 8px; background: var(--surface-2); color: var(--text-muted); font-weight: 700; }
+.quarters { display: flex; gap: 6px; margin-bottom: 10px; }
+.quarter { flex: 1; padding: 6px 0; border: 1px solid var(--border); border-radius: 8px; background: var(--surface-2); color: var(--text-muted); font-weight: 700; }
 .quarter.is-active { background: var(--primary); color: var(--on-primary); }
 
 /* ===== 日別 ===== */
 .day-tabs { display: flex; justify-content: space-between; padding: 5px; border-radius: 10px; background: var(--surface-3); }
-.day-tab { position: relative; flex: 1; padding: 10px 0; border: none; border-radius: 8px; background: none; color: var(--text-muted); font-weight: 700; }
+.day-tab { position: relative; flex: 1; padding: 8px 0; border: none; border-radius: 8px; background: none; color: var(--text-muted); font-weight: 700; }
 .day-tab.is-active { background: var(--accent); color: var(--on-accent); }
 .day-tab.is-today::after { content: ""; position: absolute; bottom: 3px; left: 50%; width: 5px; height: 5px; margin-left: -2.5px; border-radius: 50%; background: currentcolor; }
-.unrecorded-banner { display: flex; justify-content: space-between; align-items: center; gap: 8px; width: 100%; margin-bottom: 10px; padding: 10px 12px; border: 1px solid var(--warn-border); border-radius: 8px; background: var(--warn-bg); color: var(--danger); font-size: 0.85rem; font-weight: 700; text-align: left; }
+.unrecorded-banner { display: flex; justify-content: space-between; align-items: center; gap: 8px; width: 100%; margin-bottom: 8px; padding: 8px 12px; border: 1px solid var(--warn-border); border-radius: 8px; background: var(--warn-bg); color: var(--danger); font-size: 0.85rem; font-weight: 700; text-align: left; }
 .unrecorded-banner-link { flex-shrink: 0; text-decoration: underline; }
 .unrecorded-list { display: flex; flex-direction: column; gap: 6px; max-height: 50vh; overflow-y: auto; }
 .unrecorded-item { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface-2); color: var(--text); text-align: left; }
 .swipe-area { min-height: 60vh; touch-action: pan-y; } /* 縦スクロールは通常どおり、横は左右スワイプで日を移動 */
-.date-heading { margin: 14px 2px 0; color: var(--text-strong); font-weight: 700; }
+.date-heading { margin: 10px 2px 0; color: var(--text-strong); font-weight: 700; }
 
-.course-card { position: relative; margin-top: 12px; padding: 18px; }
+.course-card { position: relative; margin-top: 10px; padding: 16px 18px; }
+.week-nav .btn { min-height: 40px; padding: 8px 10px; } /* 週の移動は控えめな高さに */
 .course-card.is-now { border: 2px solid var(--present); }
 .course-card.is-next { border: 2px solid var(--accent); }
 .course-name { margin: 10px 0; color: var(--text-strong); font-size: 1.1rem; }
@@ -96,19 +100,21 @@
 .memo-dated { background: var(--memo-dated-bg); border-left-color: var(--accent); color: var(--memo-dated-text); }
 
 /* ===== 週間 ===== */
-.table-wrap { padding: 10px; overflow-x: auto; }
-.weekly { width: 100%; min-width: 450px; border-collapse: collapse; }
-.weekly th { padding: 8px; color: var(--text-muted); }
+.table-wrap { padding: 8px 6px; overflow-x: auto; }
+.weekly { width: 100%; table-layout: fixed; border-collapse: collapse; } /* 曜日の列幅をそろえる */
+.weekly th { padding: 6px 0; color: var(--text-muted); }
 .weekly th.is-today { color: var(--accent); border-bottom: 2px solid var(--accent); }
-.period-col { width: 30px; text-align: center; color: var(--text-faint); font-weight: 700; }
-.weekly-cell { padding: 4px; border: 1px solid var(--border); vertical-align: top; }
-.weekly-course { position: relative; display: block; width: 100%; margin-bottom: 4px; padding: 6px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface-2); text-align: left; }
-.weekly-name { display: block; margin-bottom: 2px; color: var(--accent); font-size: 0.65rem; font-weight: 700; }
-.weekly-room { display: block; color: var(--text-muted); font-size: 0.6rem; }
+.period-col { width: 34px; text-align: center; color: var(--text-muted); font-weight: 700; }
+.period-time { display: block; margin-top: 2px; color: var(--text-faint); font-size: 0.6rem; font-weight: 400; }
+.weekly-cell { padding: 2px; border: 1px solid var(--border); vertical-align: top; }
+.weekly-course { position: relative; display: block; width: 100%; margin-bottom: 2px; padding: 4px 3px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface-2); text-align: left; }
+.weekly-name { display: -webkit-box; margin-bottom: 2px; overflow: hidden; color: var(--accent); font-size: 0.62rem; font-weight: 700; line-height: 1.3; overflow-wrap: anywhere; -webkit-box-orient: vertical; -webkit-line-clamp: 3; line-clamp: 3; } /* 長い授業名は3行で省略（全文は授業詳細で） */
+.weekly-room { display: block; color: var(--text-muted); font-size: 0.6rem; overflow-wrap: anywhere; }
 .memo-dot { position: absolute; bottom: 4px; right: 4px; width: 6px; height: 6px; border-radius: 50%; background: var(--late); }
 
 
-.weekly-add { display: block; width: 100%; min-height: 28px; border: 1px dashed var(--border-strong); border-radius: 6px; background: none; color: var(--text-faint); }
+.weekly-add { display: block; width: 100%; min-height: 36px; border: none; border-radius: 6px; background: none; color: var(--border-strong); font-size: 0.9rem; } /* 空きマスの「＋」は目立たせない */
+.weekly-add:hover, .weekly-add:focus-visible { background: var(--surface-2); color: var(--text-muted); }
 
 /* ===== 履歴 ===== */
 .accordion { margin-bottom: 15px; overflow: hidden; }
@@ -118,7 +124,9 @@
 .acc-week { margin-bottom: 10px; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
 .acc-weekhead { padding: 8px 12px; background: var(--surface-3); }
 .acc-day { margin-bottom: 8px; }
-.acc-dayhead { padding: 8px 10px; border-bottom: 1px solid var(--border); color: var(--text-muted); }
+.acc-dayhead { padding: 8px 10px; border-bottom: 1px solid var(--border); color: var(--text); }
+.day-head-label { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.day-summary { display: inline-flex; gap: 4px; }
 .arrow { display: inline-block; transition: transform 0.2s; }
 .arrow.is-open { transform: rotate(180deg); }
 .log-card { margin-bottom: 8px; padding: 12px; border-radius: 8px; }
