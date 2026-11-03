@@ -261,8 +261,10 @@ function App() {
 
       {editLog && <EditLogModal log={editLog} onChangeStatus={changeLogStatus} onDelete={deleteLog} onClose={() => setEditLog(null)} />}
 
-      <h2 className="app-title">授業管理アプリ</h2>
-      <div className="app-sub">{todayObj.getMonth() + 1}月 第{getWeekOfMonth(todayObj)}週</div>
+      <header className="app-header">
+        <h2 className="app-title">授業管理アプリ</h2>
+        <div className="app-sub">{todayObj.getMonth() + 1}月 第{getWeekOfMonth(todayObj)}週</div>
+      </header>
 
       {saveFailed && !saveErrorDismissed && (
         <div className="error-banner" role="alert">

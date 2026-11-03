@@ -26,7 +26,7 @@ export default function DailyView({ selectedDate, today, selectedQuarter, course
           ⚠ 記録していない授業が {unrecordedCount}件 あります（直近{lookbackDays / 7}週間）<span className="unrecorded-banner-link">確認する ›</span>
         </button>
       )}
-      <div className="row gap-6 mb-10">
+      <div className="row gap-6 mb-8 week-nav">
         <button type="button" onClick={() => onSelectDate(addDays(selectedDate, -7))} className="btn btn-soft grow">◀ 前の週</button>
         <button type="button" onClick={() => onSelectDate(today)} disabled={isToday} className="btn btn-soft grow">今日</button>
         <button type="button" onClick={() => onSelectDate(addDays(selectedDate, 7))} className="btn btn-soft grow">次の週 ▶</button>
