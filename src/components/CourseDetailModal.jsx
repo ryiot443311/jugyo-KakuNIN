@@ -9,8 +9,10 @@ export default function CourseDetailModal({ course, date, today, tasks, onAddTas
   const [tempMemo, setTempMemo] = useState(memo || '');
   const [tempDateMemo, setTempDateMemo] = useState(dateMemo || '');
 
+  const saveAndClose = () => { onSaveMemo(tempMemo); onSaveDateMemo(tempDateMemo); onClose(); };
+
   return (
-    <Modal>
+    <Modal onClose={saveAndClose}>
       <h3 className="modal-title">授業詳細</h3>
       <div className="info-box">
         <p><b>科目:</b> {course.name}</p>
@@ -48,7 +50,7 @@ export default function CourseDetailModal({ course, date, today, tasks, onAddTas
         )}
       </div>
       <button type="button" onClick={() => { onSaveMemo(tempMemo); onSaveDateMemo(tempDateMemo); onEdit(); }} className="btn btn-soft block mb-6">授業情報を編集</button>
-      <button type="button" onClick={() => { onSaveMemo(tempMemo); onSaveDateMemo(tempDateMemo); onClose(); }} className="btn btn-ghost block">閉じる</button>
+      <button type="button" onClick={saveAndClose} className="btn btn-ghost block">閉じる</button>
     </Modal>
   );
 }

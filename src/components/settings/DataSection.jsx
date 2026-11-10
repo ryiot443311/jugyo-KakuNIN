@@ -34,7 +34,7 @@ export default function DataSection({ getBackup, onImportBackup }) {
   return (
     <SettingsGroup title="データ">
       {pendingImport && (
-        <Modal>
+        <Modal onClose={() => setPendingImport(null)}>
           <h3 className="modal-title">バックアップの読み込み</h3>
           <p className="center small muted">含まれている項目: {Object.keys(pendingImport.data).map(k => PART_LABELS[k]).join('、')}</p>
           {pendingImport.dropped > 0 && <p className="center small muted mt-8">不正なデータ {pendingImport.dropped} 件は除外します。</p>}

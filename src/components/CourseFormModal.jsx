@@ -40,7 +40,7 @@ export default function CourseFormModal({ course, preset, periods, logCount, onS
 
   if (confirmDelete) {
     return (
-      <Modal>
+      <Modal onClose={() => setConfirmDelete(false)}>
         <p className="center strong">「{course.name}」を削除しますか？</p>
         {logCount > 0 && <p className="center small muted mt-10">この授業の出席記録 {logCount}件 は残り、履歴では「不明」と表示されます。</p>}
         <div className="row gap-10 mt-20">
@@ -52,7 +52,7 @@ export default function CourseFormModal({ course, preset, periods, logCount, onS
   }
 
   return (
-    <Modal>
+    <Modal onClose={onClose}>
       <form onSubmit={submit}>
         <h3 className="modal-title">{course ? '授業を編集' : '授業を追加'}</h3>
 

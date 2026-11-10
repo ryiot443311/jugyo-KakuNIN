@@ -27,7 +27,7 @@ test.describe('日別画面', () => {
     await page.click('.modal .btn-primary')
     await expect(page.locator('.course-card .notice')).toHaveText('出席 記録済み')
     await expect(page.locator('.warning')).toHaveCount(0)
-    await page.click('.toast button')
+    await page.click('.toast button:text-is("元に戻す")')
     await expect(page.locator('.status-btn')).toHaveCount(4)
 
     // 記録の表示は画面上部に出て、左右スワイプで消せる（日付は変わらない）

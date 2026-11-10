@@ -1,11 +1,12 @@
 /* ===== テーマ（ライト/ダーク） ===== */
+/* 文字と背景のコントラストは WCAG AA（4.5:1）以上にする（e2e/a11y.spec.js で検査） */
 :root {
   --bg: #f8fafc; --surface: #fff; --surface-2: #f8fafc; --surface-3: #f1f5f9;
   --border: #e2e8f0; --border-strong: #cbd5e1;
-  --text: #334155; --text-strong: #0f172a; --text-muted: #64748b; --text-faint: #94a3b8;
+  --text: #334155; --text-strong: #0f172a; --text-muted: #556275; --text-faint: #5b6779;
   --primary: #1e293b; --on-primary: #fff; --accent: #1d4ed8; --on-accent: #fff;
-  --present: #16a34a; --late: #d97706; --absent: #dc2626; --canceled: #64748b;
-  --danger: #dc2626; --ok: #16a34a;
+  --present: #15803d; --late: #b45309; --absent: #dc2626; --canceled: #64748b; --on-status: #fff;
+  --danger: #b91c1c; --ok: #15803d;
   --memo-bg: #fffbeb; --memo-text: #b45309; --memo-dated-bg: #eff6ff; --memo-dated-text: #1d4ed8;
   --warn-bg: #fef2f2; --warn-border: #fecaca; --overlay: #0009;
   --chart: #1d4ed8;
@@ -17,7 +18,7 @@
   --border: #2a374d; --border-strong: #3b4a63;
   --text: #cbd5e1; --text-strong: #f1f5f9; --text-muted: #94a3b8; --text-faint: #7b8aa3;
   --primary: #e2e8f0; --on-primary: #0f172a; --accent: #60a5fa; --on-accent: #0b1220;
-  --present: #22c55e; --late: #f59e0b; --absent: #f87171; --canceled: #94a3b8;
+  --present: #22c55e; --late: #f59e0b; --absent: #f87171; --canceled: #94a3b8; --on-status: #0b1220;
   --danger: #f87171; --ok: #4ade80;
   --memo-bg: #3a2e10; --memo-text: #fbbf24; --memo-dated-bg: #14274a; --memo-dated-text: #93c5fd;
   --warn-bg: #3b1519; --warn-border: #7f1d1d; --overlay: #000000bf;
@@ -32,7 +33,7 @@
     --border: #2a374d; --border-strong: #3b4a63;
     --text: #cbd5e1; --text-strong: #f1f5f9; --text-muted: #94a3b8; --text-faint: #7b8aa3;
     --primary: #e2e8f0; --on-primary: #0f172a; --accent: #60a5fa; --on-accent: #0b1220;
-    --present: #22c55e; --late: #f59e0b; --absent: #f87171; --canceled: #94a3b8;
+    --present: #22c55e; --late: #f59e0b; --absent: #f87171; --canceled: #94a3b8; --on-status: #0b1220;
     --danger: #f87171; --ok: #4ade80;
     --memo-bg: #3a2e10; --memo-text: #fbbf24; --memo-dated-bg: #14274a; --memo-dated-text: #93c5fd;
     --warn-bg: #3b1519; --warn-border: #7f1d1d; --overlay: #000000bf;

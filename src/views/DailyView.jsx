@@ -80,7 +80,7 @@ export default function DailyView({ selectedDate, today, selectedQuarter, course
                 {isNow && <span className="badge badge-now">授業中</span>}
                 {isNext && <span className="badge badge-next">次の授業</span>}
                 <span>{course.period}時限{period && ` (${period.start}〜${period.end})`}</span>
-                {recordState.status !== 'outOfQuarter' && <button type="button" onClick={() => onOpenDetail(course)} className="icon-btn" aria-label="詳細">⋯</button>}
+                {recordState.status !== 'outOfQuarter' && <button type="button" onClick={() => onOpenDetail(course)} className="icon-btn" aria-label={`${course.name}の詳細`}>⋯</button>}
               </div>
             </div>
             <h3 className="course-name">{course.name}{course.weeks && <span className="badge badge-weeks">{weekPatternLabel(course)}</span>}</h3>
