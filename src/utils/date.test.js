@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { addDays, getDateOfWeekday, getFiscalYear, getNearestQuarter, getQuarterByDate, getWeekOfMonth, parseDateStr } from './date';
+import { addDays, getDateOfWeekday, getFiscalYear, getNearestQuarter, getQuarterByDate, getQuarterStart, getQuarterWeek, getWeekOfMonth, parseDateStr } from './date';
 
 const QUARTERS = {
   1: { start: '04-13', end: '06-03' },
@@ -68,5 +68,23 @@ describe('日付の計算', () => {
   it('getWeekOfMonth は月の第何週か', () => {
     expect(getWeekOfMonth(parseDateStr('2026-10-01'))).toBe(1);
     expect(getWeekOfMonth(parseDateStr('2026-10-27'))).toBe(5);
+  });
+});
+
+describe('getQuarterStart / getQuarterWeek（隔週の数え方）', () => {
+  it('クォーターの開始日を返す（年をまたぐ期間の 1 月側は前の年）', () => {
+    expect(getQuarterStart('2026-05-01', QUARTERS)).toBe('2026-04-13');
+    expect(getQuarterStart('2027-01-10', QUARTERS)).toBe('2026-11-20');
+    expect(getQuarterStart('2026-11-25', QUARTERS)).toBe('2026-11-20');
+    expect(getQuarterStart('2026-08-01', QUARTERS)).toBeNull();
+  });
+  it('開始日を含む週（月曜始まり）を第1週として数える', () => {
+    expect(getQuarterWeek('2026-04-13', QUARTERS)).toBe(1); // 月曜に開始
+    expect(getQuarterWeek('2026-04-19', QUARTERS)).toBe(1); // 同じ週の日曜
+    expect(getQuarterWeek('2026-04-20', QUARTERS)).toBe(2);
+    expect(getQuarterWeek('2026-11-20', QUARTERS)).toBe(1); // 金曜に開始
+    expect(getQuarterWeek('2026-11-23', QUARTERS)).toBe(2); // 次の月曜から第2週
+    expect(getQuarterWeek('2027-01-04', QUARTERS)).toBe(8); // 年をまたいでも続けて数える
+    expect(getQuarterWeek('2026-08-01', QUARTERS)).toBe(0);
   });
 });

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import Modal from './Modal';
 import { DAYS, formatDate } from '../utils/date';
 import { newId } from '../data/appData';
+import { WEEK_PATTERNS } from '../data/status';
 
 const QUARTER_IDS = [1, 2, 3, 4];
 
@@ -11,6 +12,7 @@ export default function CourseFormModal({ course, preset, periods, logCount, onS
   const [dayOfWeek, setDayOfWeek] = useState(course?.dayOfWeek ?? preset?.dayOfWeek ?? 1);
   const [period, setPeriod] = useState(course?.period ?? preset?.period ?? 1);
   const [quarters, setQuarters] = useState(() => (course ? [].concat(course.quarter ?? QUARTER_IDS) : preset?.quarters ?? QUARTER_IDS));
+  const [weeks, setWeeks] = useState(course?.weeks ?? 'every');
   const [room, setRoom] = useState(course?.room ?? '');
   const [teacher, setTeacher] = useState(course?.teacher ?? '');
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -24,12 +26,14 @@ export default function CourseFormModal({ course, preset, periods, logCount, onS
   const submit = (e) => {
     e.preventDefault();
     if (!canSave) return;
+    const { weeks: _w, ...rest } = course ?? {}; // eslint-disable-line no-unused-vars
     onSave({
-      ...course,
+      ...rest,
       id: course?.id ?? newId('course'),
       ...(course ? {} : { createdAt: formatDate(new Date()) }), // 追加した日（記録し忘れの検出に使う）
       name: name.trim(), dayOfWeek, period,
       quarter: [...quarters].sort(),
+      ...(weeks === 'every' ? {} : { weeks }),
       room: room.trim(), teacher: teacher.trim(),
     });
   };
@@ -76,6 +80,14 @@ export default function CourseFormModal({ course, preset, periods, logCount, onS
             <label key={q} className="check"><input type="checkbox" checked={quarters.includes(q)} onChange={() => toggleQuarter(q)} />第{q}Q</label>
           ))}
         </div>
+
+        <span className="field-label">頻度</span>
+        <div className="row gap-10" role="radiogroup" aria-label="頻度">
+          {WEEK_PATTERNS.map(w => (
+            <label key={w.id} className="check"><input type="radio" name="course-weeks" checked={weeks === w.id} onChange={() => setWeeks(w.id)} />{w.label}</label>
+          ))}
+        </div>
+        {weeks !== 'every' && <p className="tiny muted mt-8">クォーターが始まる週を第1週として数えます（週は月曜始まり）。</p>}
 
         <label className="field-label" htmlFor="course-room">教室</label>
         <input id="course-room" className="input" value={room} onChange={(e) => setRoom(e.target.value)} placeholder="例: 3-601" />

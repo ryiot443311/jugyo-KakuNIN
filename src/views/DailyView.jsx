@@ -1,18 +1,18 @@
 import { DAYS, addDays, getDateOfWeekday, parseDateStr, toMinutes } from '../utils/date';
-import { isCourseInQuarter, statusTextClass } from '../data/status';
+import { isCourseInQuarter, isCourseOnDate, statusTextClass, weekPatternLabel } from '../data/status';
 import { dateMemoKey, hasText } from '../utils/memo';
 import { getAbsenceStreak, STREAK_ALERT } from '../utils/streak';
 import { useSwipe } from '../hooks/useSwipe';
 import StatusButtons from '../components/StatusButtons';
 import RecordNotice from '../components/RecordNotice';
 
-export default function DailyView({ selectedDate, today, selectedQuarter, courses, periods, nowMin, logs, courseMemos, dateMemos, recordState, getLog, onSelectDate, onOpenDetail, onRecord, onAddCourse, unrecordedCount, lookbackDays, onShowUnrecorded }) {
+export default function DailyView({ selectedDate, today, selectedQuarter, courses, periods, quarters, nowMin, logs, courseMemos, dateMemos, recordState, getLog, onSelectDate, onOpenDetail, onRecord, onAddCourse, unrecordedCount, lookbackDays, onShowUnrecorded }) {
   const swipe = useSwipe((direction) => onSelectDate(addDays(selectedDate, direction))); // 左右スワイプで前後の日へ
   const weekStart = getDateOfWeekday(selectedDate, 0);
   const selectedDateObj = parseDateStr(selectedDate);
   const selectedDay = selectedDateObj.getDay();
   const isToday = selectedDate === today;
-  const dayCourses = courses.filter(c => c.dayOfWeek === selectedDay && isCourseInQuarter(c, selectedQuarter)).sort((a, b) => a.period - b.period);
+  const dayCourses = courses.filter(c => isCourseOnDate(c, selectedDate, quarters) && isCourseInQuarter(c, selectedQuarter)).sort((a, b) => a.period - b.period);
 
   // 今日（記録できる状態）のときだけ、授業中・次の授業を強調する。休講の授業は対象外
   const trackable = isToday && recordState.status === 'ok' ? dayCourses.filter(c => getLog(c.id)?.status !== '休講') : [];
@@ -66,7 +66,7 @@ export default function DailyView({ selectedDate, today, selectedQuarter, course
                 {recordState.status !== 'outOfQuarter' && <button type="button" onClick={() => onOpenDetail(course)} className="icon-btn" aria-label="詳細">⋯</button>}
               </div>
             </div>
-            <h3 className="course-name">{course.name}</h3>
+            <h3 className="course-name">{course.name}{course.weeks && <span className="badge badge-weeks">{weekPatternLabel(course)}</span>}</h3>
             {streak >= STREAK_ALERT && <div className="warning small" role="alert">⚠ 直近{streak}回連続で欠席しています</div>}
             {hasText(memo) && <div className="memo">{memo}</div>}
             {hasText(dateMemo) && <div className="memo memo-dated"><b>この日:</b> {dateMemo}</div>}

@@ -1,5 +1,5 @@
 import { addDays, parseDateStr, getQuarterByDate, toMinutes } from './date';
-import { isCourseInQuarter } from '../data/status';
+import { isCourseInQuarter, isCourseOnDate } from '../data/status';
 
 export const LOOKBACK_DAYS = 28; // さかのぼって調べる日数（直近4週間）
 
@@ -19,7 +19,7 @@ export function findUnrecorded({ logs, courses, quarters, periods, today, nowMin
     const quarter = getQuarterByDate(d, quarters);
     if (quarter === 0) continue; // 休み期間
     const missing = courses.filter((c) => {
-      if (c.dayOfWeek !== d.getDay() || !isCourseInQuarter(c, quarter) || recorded.has(`${c.id}|${date}`)) return false;
+      if (!isCourseOnDate(c, date, quarters) || !isCourseInQuarter(c, quarter) || recorded.has(`${c.id}|${date}`)) return false;
       if (c.createdAt && date < c.createdAt) return false;
       if (date !== today) return true;
       const p = periods[c.period]; // 今日は、終わった授業だけ

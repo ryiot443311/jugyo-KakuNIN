@@ -2,6 +2,7 @@ import { useState } from 'react';
 import Modal from './Modal';
 import StatusButtons from './StatusButtons';
 import RecordNotice from './RecordNotice';
+import { weekPatternLabel } from '../data/status';
 
 export default function CourseDetailModal({ course, date, memo, dateMemo, recordState, log, onSaveMemo, onSaveDateMemo, onRecord, onEditLog, onEdit, onClose }) {
   const [tempMemo, setTempMemo] = useState(memo || '');
@@ -14,6 +15,7 @@ export default function CourseDetailModal({ course, date, memo, dateMemo, record
         <p><b>科目:</b> {course.name}</p>
         <p><b>教室:</b> {course.room}</p>
         <p><b>担当:</b> {course.teacher}</p>
+        {course.weeks && <p><b>頻度:</b> {weekPatternLabel(course)}</p>}
       </div>
 
       <label className="field-label" htmlFor="course-memo">メモ (自動保存)</label>

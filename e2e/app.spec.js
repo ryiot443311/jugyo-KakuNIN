@@ -58,6 +58,17 @@ test.describe('日別画面', () => {
     await page.selectOption('#course-period', '2')
     await page.click('button[type=submit]')
     await expect(page.locator('.course-name')).toContainText(['統計学'])
+
+    // 隔週の授業: 10/28 は第3Qの第9週（奇数週）なので、偶数週の授業は前の週（第8週）にだけ出る
+    await page.click('text=水曜に授業を追加')
+    await page.fill('#course-name', '輪講')
+    await page.click('label.check:has-text("偶数週")')
+    await page.click('button[type=submit]')
+    await expect(page.locator('.course-name', { hasText: '輪講' })).toHaveCount(0)
+    await page.click('text=◀ 前の週')
+    await expect(page.locator('.course-name', { hasText: '輪講' })).toHaveText('輪講偶数週')
+    await page.click('.tab:text-is("週間")')
+    await expect(page.locator('.weekly-course', { hasText: '輪講' })).toContainText('偶数週')
   })
 
   test('記録し忘れの授業を知らせ、選ぶとその日へ移動する', async ({ page }) => {

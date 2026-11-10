@@ -68,6 +68,7 @@
 .badge-today { margin-left: 8px; background: var(--accent); color: var(--on-accent); }
 .badge-now { background: var(--present); color: #fff; }
 .badge-next { background: var(--accent); color: var(--on-accent); }
+.badge-weeks { margin-left: 8px; vertical-align: middle; background: var(--border); color: var(--text-muted); }
 
 /* ===== タブ・クォーター ===== */
 .tabs { display: flex; gap: 4px; margin-bottom: 8px; }
