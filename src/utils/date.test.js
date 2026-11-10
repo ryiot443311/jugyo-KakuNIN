@@ -60,6 +60,18 @@ describe('日付の計算', () => {
     expect(addDays('2026-03-01', -1)).toBe('2026-02-28');
     expect(addDays('2026-10-28', -7)).toBe('2026-10-21');
   });
+  it('うるう年の 2月29日をまたいで計算する', () => {
+    expect(addDays('2028-02-28', 1)).toBe('2028-02-29');
+    expect(addDays('2028-02-29', 1)).toBe('2028-03-01');
+    expect(addDays('2027-02-28', 1)).toBe('2027-03-01');
+  });
+  it('2月29日までの期間は、うるう年でない年も 2月28日まで入る', () => {
+    const qs = { 1: { start: '02-01', end: '02-29' } };
+    expect(getQuarterByDate(parseDateStr('2027-02-28'), qs)).toBe(1);
+    expect(getQuarterByDate(parseDateStr('2028-02-29'), qs)).toBe(1);
+    expect(getQuarterByDate(parseDateStr('2027-03-01'), qs)).toBe(0);
+    expect(getQuarterStart('2027-03-10', { 1: { start: '02-29', end: '03-31' } })).toBe('2027-03-01');
+  });
   it('getDateOfWeekday は日曜始まりの同じ週の指定曜日', () => {
     expect(getDateOfWeekday('2026-10-28', 0)).toBe('2026-10-25'); // 水曜 → その週の日曜
     expect(getDateOfWeekday('2026-10-28', 6)).toBe('2026-10-31');

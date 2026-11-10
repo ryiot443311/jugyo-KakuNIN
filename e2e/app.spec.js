@@ -94,6 +94,18 @@ test.describe('日別画面', () => {
   })
 })
 
+test('開いたまま日付が変わると、今日の表示が新しい日に移る（ほかの日を見ているときは移らない）', async ({ page }) => {
+  await openApp(page, { now: '2026-10-28T23:59:00' })
+  await expect(page.locator('.date-heading')).toHaveText('10月28日（水）今日')
+  await page.clock.runFor(120_000)
+  await expect(page.locator('.date-heading')).toHaveText('10月29日（木）今日')
+  await page.click('text=◀ 前の週')
+  await page.clock.fastForward('24:00:00')
+  await expect(page.locator('.date-heading')).toHaveText('10月22日（木）')
+  await page.click('button:text-is("今日")')
+  await expect(page.locator('.date-heading')).toHaveText('10月30日（金）今日')
+})
+
 test('課題: 授業詳細で登録し、期限が近いものを日別画面に出す', async ({ page }) => {
   await openApp(page)
   await page.click('.icon-btn')

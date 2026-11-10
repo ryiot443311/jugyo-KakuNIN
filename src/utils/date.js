@@ -57,7 +57,7 @@ export const getQuarterStart = (dateStr, quarters = QUARTERS) => {
   const s = toMonthDay(quarters[q].start);
   const md = (d.getMonth() + 1) * 100 + d.getDate();
   const year = md >= s ? d.getFullYear() : d.getFullYear() - 1; // 年をまたぐ期間の 1 月側
-  return `${year}-${quarters[q].start}`;
+  return formatDate(parseDateStr(`${year}-${quarters[q].start}`)); // うるう年でない年の 2月29日は 3月1日
 };
 
 // クォーターの何週目か（開始日を含む週が第1週。週は月曜始まり）。クォーター外は 0

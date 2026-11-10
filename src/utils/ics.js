@@ -1,14 +1,18 @@
-import { addDays } from './date';
+import { addDays, formatDate, parseDateStr } from './date';
 import { isCourseInQuarter, isCourseOnDate } from '../data/status';
 
 // 時間割をカレンダー（iCalendar / .ics）にする。授業ごと・クォーターごとに繰り返しの予定を作る
 // 時刻は端末の時刻として扱う（タイムゾーンを付けない）
 
 // 年度 fiscalYear のクォーター期間 { start, end }（'YYYY-MM-DD'）。4〜12月始まりはその年、1〜3月始まりは翌年
+// うるう年でない年の 2月29日は、開始なら 3月1日、終了なら 2月28日にする
 export const quarterDates = (range, fiscalYear) => {
   const startYear = Number(range.start.slice(0, 2)) >= 4 ? fiscalYear : fiscalYear + 1;
   const endYear = range.end >= range.start ? startYear : startYear + 1;
-  return { start: `${startYear}-${range.start}`, end: `${endYear}-${range.end}` };
+  const start = formatDate(parseDateStr(`${startYear}-${range.start}`));
+  const endRaw = `${endYear}-${range.end}`;
+  const endFixed = formatDate(parseDateStr(endRaw));
+  return { start, end: endFixed === endRaw ? endRaw : addDays(endFixed, -1) };
 };
 
 // テキストのエスケープ（RFC 5545）

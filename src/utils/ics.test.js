@@ -13,6 +13,11 @@ describe('quarterDates', () => {
     expect(quarterDates(quarters[4], 2026)).toEqual({ start: '2026-11-01', end: '2027-01-31' });
     expect(quarterDates({ start: '01-10', end: '03-01' }, 2026)).toEqual({ start: '2027-01-10', end: '2027-03-01' });
   });
+  it('2月29日は、うるう年ならそのまま、そうでなければ存在する日にする', () => {
+    expect(quarterDates({ start: '12-01', end: '02-29' }, 2026)).toEqual({ start: '2026-12-01', end: '2027-02-28' });
+    expect(quarterDates({ start: '12-01', end: '02-29' }, 2027)).toEqual({ start: '2027-12-01', end: '2028-02-29' });
+    expect(quarterDates({ start: '02-29', end: '03-31' }, 2026)).toEqual({ start: '2027-03-01', end: '2027-03-31' });
+  });
 });
 
 describe('buildIcs', () => {
