@@ -15,6 +15,7 @@ import { dateMemoKey } from './utils/memo';
 import { applyTheme } from './utils/theme';
 import { useLocalStorageState, useSaveFailed } from './hooks/useLocalStorageState';
 import { useStoredState } from './hooks/useStoredState';
+import { useCourseNotifications } from './hooks/useCourseNotifications';
 import { useToday } from './hooks/useToday';
 import { useNowMinutes } from './hooks/useNowMinutes';
 import ConfirmRecordModal from './components/ConfirmRecordModal';
@@ -237,6 +238,7 @@ function App() {
     const ids = new Set(courses.map(c => c.id));
     return upcomingTasks(tasks.filter(t => ids.has(t.courseId)), today);
   }, [tasks, courses, today]);
+  useCourseNotifications({ courses, quarters: settings.quarters, periods: settings.periods, logs, today, nowMin, notify: settings.notify });
   const weekly = useMemo(() => weeklyRates(quarterLogs), [quarterLogs]);
   const absenceWeekdays = useMemo(() => absenceByWeekday(quarterLogs), [quarterLogs]);
   const absenceSlots = useMemo(() => topAbsenceSlots(quarterLogs, quarterCourses), [quarterLogs, quarterCourses]);
@@ -334,7 +336,7 @@ function App() {
       {currentView === 'settings' && !imagesLoaded && <div className="empty" role="status">読み込み中…</div>}
       {currentView === 'settings' && imagesLoaded && (
         <SettingsView
-          settings={settings} onChange={updateSettings}
+          settings={settings} onChange={updateSettings} courses={courses} today={today}
           appData={appData} onChangeData={updateData} campusImages={campusImages} onChangeImages={setCampusImages}
           onAddCourse={() => openAddCourse()} onEditCourse={(course) => setCourseForm({ course })}
           logs={logs} logCount={logs.length} onResetLogs={() => setLogs([])}

@@ -208,6 +208,33 @@ test('設定（テーマ・期間・基準・授業・マップ・施設・CSV�
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
 })
 
+test('通知: 授業開始の10分前に知らせる・カレンダーに書き出す', async ({ page, context }) => {
+  await context.grantPermissions(['notifications'])
+  // 表示した通知を記録する（Service Worker 経由・直接のどちらでも）
+  await page.addInitScript(() => {
+    window.__shown = []
+    const record = (title) => window.__shown.push(title)
+    if (window.ServiceWorkerRegistration) ServiceWorkerRegistration.prototype.showNotification = async function (title) { record(title) }
+    window.Notification = class { static permission = 'granted'; static requestPermission = async () => 'granted'; constructor(title) { record(title) } }
+  })
+  await openApp(page, { now: '2026-10-28T12:48:30' }) // 英語コミュニケーションは水曜3限（13:00〜）
+  await page.click('.tab:text-is("設定")')
+  const group = await openGroup(page, '通知・カレンダー')
+  await group.locator('text=授業開始の10分前に知らせる').click()
+  expect((await stored(page, 'app_settings')).notify).toEqual({ before: true, after: false })
+  expect(await page.evaluate(() => window.__shown)).toEqual([])
+  await page.clock.runFor(90_000) // 12:50 になる
+  await expect.poll(() => page.evaluate(() => window.__shown)).toEqual(['まもなく 英語コミュニケーション'])
+  await page.clock.runFor(60_000) // 同じ通知は二度出さない
+  expect(await page.evaluate(() => window.__shown)).toHaveLength(1)
+
+  const ics = await download(page, '.settings-group button:text-is("書き出す")')
+  expect(ics).toContain('BEGIN:VCALENDAR')
+  expect(ics).toContain('SUMMARY:英語コミュニケーション')
+  expect(ics).toContain('TRIGGER:-PT10M')
+  await expect(group.locator('[role=status]')).toContainText('繰り返し予定を書き出しました')
+})
+
 test('バックアップ: 書き出し・置き換え・統合', async ({ page }) => {
   await openApp(page, { logs: [log('e1', 'wed-3', '2026-10-07'), log('e2', 'wed-3', '2026-10-14')] })
   await page.click('.tab:text-is("設定")')

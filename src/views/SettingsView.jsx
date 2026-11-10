@@ -7,6 +7,7 @@ import DataSection from '../components/settings/DataSection';
 import DangerSection from '../components/settings/DangerSection';
 import CsvSection from '../components/settings/CsvSection';
 import InstallSection from '../components/settings/InstallSection';
+import NotifySection from '../components/settings/NotifySection';
 
 const pad = (n) => String(n).padStart(2, '0');
 
@@ -38,7 +39,7 @@ function MonthDayInput({ value, label, onChange }) {
   );
 }
 
-export default function SettingsView({ settings, onChange, appData, onChangeData, campusImages, onChangeImages, logs, logCount, onResetLogs, onAddCourse, onEditCourse, getBackup, onImportBackup }) {
+export default function SettingsView({ settings, onChange, courses, today, appData, onChangeData, campusImages, onChangeImages, logs, logCount, onResetLogs, onAddCourse, onEditCourse, getBackup, onImportBackup }) {
   const setQuarter = (q, patch) => onChange({ quarters: { ...settings.quarters, [q]: { ...settings.quarters[q], ...patch } } });
   const setPeriod = (p, patch) => onChange({ periods: { ...settings.periods, [p]: { ...settings.periods[p], ...patch } } });
   const toggleCourse = (id) => onChange({
@@ -87,6 +88,7 @@ export default function SettingsView({ settings, onChange, appData, onChangeData
         ))}
       </SettingsGroup>
 
+      <NotifySection settings={settings} onChange={onChange} courses={courses} today={today} />
       <CsvSection logs={logs} courses={appData.courses} />
       <InstallSection />
       <DataSection getBackup={getBackup} onImportBackup={onImportBackup} />

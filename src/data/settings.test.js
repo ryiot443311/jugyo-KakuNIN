@@ -5,8 +5,11 @@ import { QUARTERS, PERIODS } from './constants';
 describe('resolveSettings', () => {
   it('未保存・不正な値は既定値になる', () => {
     for (const bad of [undefined, null, 5, 'x', []]) {
-      expect(resolveSettings(bad)).toEqual({ theme: 'auto', quarters: QUARTERS, periods: PERIODS, hiddenCourses: [], threshold: 80 });
+      expect(resolveSettings(bad)).toEqual({ theme: 'auto', quarters: QUARTERS, periods: PERIODS, hiddenCourses: [], threshold: 80, notify: { before: false, after: false } });
     }
+  });
+  it('通知は true のときだけ有効にする', () => {
+    expect(resolveSettings({ notify: { before: true, after: 'yes' } }).notify).toEqual({ before: true, after: false });
   });
   it('テーマ・出席率の基準は、正しい値だけ採用する', () => {
     expect(resolveSettings({ theme: 'dark', threshold: 70 })).toMatchObject({ theme: 'dark', threshold: 70 });
