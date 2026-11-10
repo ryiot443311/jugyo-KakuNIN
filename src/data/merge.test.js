@@ -37,6 +37,12 @@ describe('mergeBackupData（統合して読み込む）', () => {
     expect(data.campusBuildings.s.map(b => b.name)).toEqual(['A館']);
     expect(stats.campusBuildings).toEqual({ added: 2, skipped: 1 });
   });
+  it('課題は同じIDなら手元を優先し、手元に課題がなくても足せる', () => {
+    const task = (id, done) => ({ id, courseId: 'a', title: id, due: '2026-10-30', done });
+    expect(mergeBackupData({ ...current, tasks: [task('t1', true)] }, { tasks: [task('t1', false), task('t2', false)] }).data.tasks)
+      .toEqual([task('t1', true), task('t2', false)]);
+    expect(mergeBackupData(current, { tasks: [task('t1', false)] }).stats.tasks).toEqual({ added: 1, skipped: 0 });
+  });
   it('含まれていない項目と設定は変更しない', () => {
     const { data } = mergeBackupData(current, { settings: { theme: 'dark' }, logs: [] });
     expect(Object.keys(data)).toEqual(['logs']);

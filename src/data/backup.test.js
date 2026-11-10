@@ -41,6 +41,13 @@ describe('バックアップ', () => {
     expect(parseBackup(write({}))).toMatchObject({ ok: false });
     expect(parseBackup(write({ logs: 'x' }))).toMatchObject({ ok: false });
   });
+  it('課題を書き出して読み込める（不正な課題は捨てて件数に含める）', () => {
+    const tasks = [{ id: 't1', courseId: 'c1', title: 'レポート', due: '2026-10-30', done: false }];
+    const result = parseBackup(write({ tasks: [...tasks, { id: 't2', courseId: 'c1', title: '', due: '2026-10-30' }] }));
+    expect(result.data.tasks).toEqual(tasks);
+    expect(result.dropped).toBe(1);
+    expect(buildBackup({ ...base, tasks }).data.tasks).toEqual(tasks);
+  });
   it('画像は data:image/ のものだけ受け付ける', () => {
     const result = parseBackup(write({ campusImages: { a: 'data:image/jpeg;base64,AAAA', b: 'http://example.com/x.png', c: 5 } }));
     expect(result.data.campusImages).toEqual({ a: 'data:image/jpeg;base64,AAAA' });

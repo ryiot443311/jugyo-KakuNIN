@@ -3,8 +3,9 @@ import Modal from './Modal';
 import StatusButtons from './StatusButtons';
 import RecordNotice from './RecordNotice';
 import { weekPatternLabel } from '../data/status';
+import TaskList from './TaskList';
 
-export default function CourseDetailModal({ course, date, memo, dateMemo, recordState, log, onSaveMemo, onSaveDateMemo, onRecord, onEditLog, onEdit, onClose }) {
+export default function CourseDetailModal({ course, date, today, tasks, onAddTask, onToggleTask, onDeleteTask, memo, dateMemo, recordState, log, onSaveMemo, onSaveDateMemo, onRecord, onEditLog, onEdit, onClose }) {
   const [tempMemo, setTempMemo] = useState(memo || '');
   const [tempDateMemo, setTempDateMemo] = useState(dateMemo || '');
 
@@ -31,6 +32,8 @@ export default function CourseDetailModal({ course, date, memo, dateMemo, record
         placeholder="この日だけの教室変更など..."
         className="textarea"
       />
+
+      <TaskList tasks={tasks} today={today} onAdd={onAddTask} onToggle={onToggleTask} onDelete={onDeleteTask} />
 
       <div className="mt-20 mb-10">
         {recordState.status !== 'ok' ? (

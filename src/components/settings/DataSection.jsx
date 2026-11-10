@@ -7,7 +7,7 @@ import SettingsGroup from './SettingsGroup';
 const MAX_BACKUP_BYTES = 30 * 1024 * 1024; // マップ画像を含めても収まる大きさ
 
 const PART_LABELS = {
-  logs: '出席記録', courses: '授業', courseMemos: '授業メモ', datedMemos: '日付別メモ', settings: '設定',
+  logs: '出席記録', courses: '授業', courseMemos: '授業メモ', datedMemos: '日付別メモ', tasks: '課題', settings: '設定',
   campuses: 'キャンパス', campusBuildings: '施設の説明', campusImages: 'マップ画像',
 };
 

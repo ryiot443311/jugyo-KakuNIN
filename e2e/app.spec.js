@@ -94,6 +94,31 @@ test.describe('日別画面', () => {
   })
 })
 
+test('課題: 授業詳細で登録し、期限が近いものを日別画面に出す', async ({ page }) => {
+  await openApp(page)
+  await page.click('.icon-btn')
+  await page.fill('input[aria-label="課題名"]', 'レポート')
+  await page.fill('input[aria-label="期限"]', '2026-10-30')
+  await page.click('.modal button:text-is("追加")')
+  await page.fill('input[aria-label="課題名"]', '期末課題')
+  await page.fill('input[aria-label="期限"]', '2026-11-20')
+  await page.click('.modal button:text-is("追加")')
+  await expect(page.locator('.modal .task-item')).toHaveText([/レポート.*あと2日/, /期末課題.*あと23日/])
+  await page.click('.modal button:text-is("閉じる")')
+
+  // 7日以内のものだけ日別画面に出る。完了にすると消える
+  await expect(page.locator('.task-banner .task-item')).toHaveCount(1)
+  await expect(page.locator('.task-banner')).toContainText('英語コミュニケーション')
+  await page.click('.task-banner input[type=checkbox]')
+  await expect(page.locator('.task-banner')).toHaveCount(0)
+  expect((await stored(page, 'course_tasks')).map(t => `${t.title}:${t.done}`)).toEqual(['レポート:true', '期末課題:false'])
+
+  await page.click('.icon-btn')
+  await expect(page.locator('.modal .task-item.is-done')).toContainText('レポート')
+  await page.click('.modal button[aria-label="課題「レポート」を削除"]')
+  await expect(page.locator('.modal .task-item')).toHaveCount(1)
+})
+
 test('週間・履歴・分析', async ({ page }) => {
   await openApp(page, { logs: [
     log('c1', 'wed-3', '2026-10-07'), log('c2', 'wed-3', '2026-10-14', '欠席'), log('c3', 'thu-1', '2026-10-15'),
