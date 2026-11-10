@@ -282,6 +282,17 @@ test('マップ画像: 以前の localStorage の画像を IndexedDB に移し�
   await expect(page.locator(`img[src="${png}"]`)).toHaveCount(0)
 })
 
+test('ホーム画面のショートカット: ?view= で開く画面を選べる（不正な値は日別）', async ({ page }) => {
+  const manifest = await (await page.request.get('/manifest.webmanifest')).json()
+  expect(manifest.shortcuts.map(s => s.url)).toEqual(['/?view=home', '/?view=weekly', '/?view=analytics'])
+  await openApp(page, { path: '/?view=weekly' })
+  await expect(page.locator('.tab[aria-current=page]')).toHaveText('週間')
+  await page.goto('/?view=analytics')
+  await expect(page.locator('.tab[aria-current=page]')).toHaveText('分析')
+  await page.goto('/?view=unknown')
+  await expect(page.locator('.tab[aria-current=page]')).toHaveText('日別')
+})
+
 test('オフラインで起動できる・CSP 違反やエラーがない', async ({ page, context }) => {
   const errors = []
   page.on('pageerror', e => errors.push(e.message))

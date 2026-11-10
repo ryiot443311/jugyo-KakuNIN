@@ -48,6 +48,16 @@ const VIEWS = [
   { id: 'settings', label: '設定' },
 ];
 
+// ホーム画面のショートカット（manifest の shortcuts）から開いたときの画面。?view=weekly など
+const initialView = () => {
+  try {
+    const view = new URLSearchParams(window.location.search).get('view');
+    return VIEWS.some(v => v.id === view) ? view : 'home';
+  } catch {
+    return 'home';
+  }
+};
+
 function App() {
   const today = useToday();
   const nowMin = useNowMinutes();
@@ -77,7 +87,7 @@ function App() {
   const saveFailed = useSaveFailed();
   const [saveErrorDismissed, setSaveErrorDismissed] = useState(false);
 
-  const [currentView, setCurrentView] = useState('home');
+  const [currentView, setCurrentView] = useState(initialView);
   const [selectedDate, setSelectedDate] = useState(today);
   const [selectedQuarter, setSelectedQuarter] = useState(() => getNearestQuarter(parseDateStr(today), settings.quarters));
   const [logs, setLogs] = useLocalStorageState('attendance_logs', [], sanitizeLogs);
