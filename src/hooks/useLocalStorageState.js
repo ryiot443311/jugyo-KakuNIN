@@ -3,7 +3,7 @@ import { useState, useEffect, useRef, useSyncExternalStore } from 'react';
 // 保存に失敗したかどうか（画面上部のエラー表示用）
 let saveFailed = false;
 const listeners = new Set();
-const markSaveFailed = () => { saveFailed = true; listeners.forEach(l => l()); };
+export const markSaveFailed = () => { saveFailed = true; listeners.forEach(l => l()); };
 const subscribe = (listener) => { listeners.add(listener); return () => listeners.delete(listener); };
 export const useSaveFailed = () => useSyncExternalStore(subscribe, () => saveFailed);
 

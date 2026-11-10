@@ -1,4 +1,4 @@
-// 画像ファイルを縮小した JPEG の data URL にする（localStorage の容量を節約するため）
+// 画像ファイルを縮小した JPEG の data URL にする（保存容量を節約するため）
 const MAX_FILE_BYTES = 20 * 1024 * 1024; // 極端に大きなファイルは読み込まない
 
 export async function fileToDataUrl(file, maxSize = 1600, quality = 0.8) {

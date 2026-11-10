@@ -4,7 +4,7 @@ import { isCourseInQuarter } from './data/status';
 import { SETTINGS_KEY, resolveSettings } from './data/settings';
 import { COURSES_KEY, CAMPUSES_KEY, BUILDINGS_KEY, IMAGES_KEY, resolveAppData } from './data/appData';
 import { sanitizeLogs, sanitizeMemos } from './data/sanitize';
-import { buildBackup } from './data/backup';
+import { buildBackup, sanitizeImages } from './data/backup';
 import { mergeBackupData } from './data/merge';
 import { findUnrecorded, LOOKBACK_DAYS } from './utils/unrecorded';
 import { parseDateStr, getQuarterByDate, getNearestQuarter, getWeekOfMonth, getDateOfWeekday, getFiscalYear } from './utils/date';
@@ -13,6 +13,7 @@ import { absenceByWeekday, topAbsenceSlots, weeklyRates } from './utils/trends';
 import { dateMemoKey } from './utils/memo';
 import { applyTheme } from './utils/theme';
 import { useLocalStorageState, useSaveFailed } from './hooks/useLocalStorageState';
+import { useStoredState } from './hooks/useStoredState';
 import { useToday } from './hooks/useToday';
 import { useNowMinutes } from './hooks/useNowMinutes';
 import ConfirmRecordModal from './components/ConfirmRecordModal';
@@ -68,7 +69,8 @@ function App() {
     if (patch.campuses) setSavedCampuses(patch.campuses);
     if (patch.buildings) setSavedBuildings(patch.buildings);
   }, [setSavedCourses, setSavedCampuses, setSavedBuildings]);
-  const [campusImages, setCampusImages] = useLocalStorageState(IMAGES_KEY, {});
+  // マップ画像は容量が大きいので IndexedDB に保存する（読み込みが終わるまでは書き出し・読み込み・画像の変更をしない）
+  const [campusImages, setCampusImages, imagesLoaded] = useStoredState(IMAGES_KEY, {}, sanitizeImages);
 
   const saveFailed = useSaveFailed();
   const [saveErrorDismissed, setSaveErrorDismissed] = useState(false);
@@ -313,7 +315,8 @@ function App() {
         />
       )}
       {currentView === 'map' && <MapView campuses={appData.campuses} buildings={appData.buildings} campusImages={campusImages} />}
-      {currentView === 'settings' && (
+      {currentView === 'settings' && !imagesLoaded && <div className="empty" role="status">読み込み中…</div>}
+      {currentView === 'settings' && imagesLoaded && (
         <SettingsView
           settings={settings} onChange={updateSettings}
           appData={appData} onChangeData={updateData} campusImages={campusImages} onChangeImages={setCampusImages}

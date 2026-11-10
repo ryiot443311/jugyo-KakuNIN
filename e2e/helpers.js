@@ -1,13 +1,15 @@
 import fs from 'node:fs'
 
 // テスト用の初期データを localStorage に入れ、時計を固定してから開く
-export async function openApp(page, { logs = [], settings, now = '2026-10-28T10:00:00', path = '/' } = {}) {
-  await page.addInitScript(({ logs, settings }) => {
+// extra: そのほかに localStorage に入れる値 { キー: 値 }
+export async function openApp(page, { logs = [], settings, extra = {}, now = '2026-10-28T10:00:00', path = '/' } = {}) {
+  await page.addInitScript(({ logs, settings, extra }) => {
     if (sessionStorage.getItem('seeded')) return // 再読み込みでは上書きしない
     sessionStorage.setItem('seeded', '1')
     localStorage.setItem('attendance_logs', JSON.stringify(logs))
     if (settings) localStorage.setItem('app_settings', JSON.stringify(settings))
-  }, { logs, settings })
+    for (const [k, v] of Object.entries(extra)) localStorage.setItem(k, JSON.stringify(v))
+  }, { logs, settings, extra })
   await page.clock.install({ time: new Date(now) })
   await page.goto(path)
 }
@@ -19,6 +21,18 @@ export async function stored(page, key) {
   await page.waitForTimeout(300)
   return page.evaluate((k) => JSON.parse(localStorage.getItem(k)), key)
 }
+
+// IndexedDB に保存された値を読む（無ければ undefined）
+export const storedInDb = (page, key) => page.evaluate((k) => new Promise((resolve, reject) => {
+  const req = indexedDB.open('attendance-app', 1)
+  req.onupgradeneeded = () => req.result.createObjectStore('kv')
+  req.onerror = () => reject(req.error)
+  req.onsuccess = () => {
+    const get = req.result.transaction('kv').objectStore('kv').get(k)
+    get.onsuccess = () => { req.result.close(); resolve(get.result) }
+    get.onerror = () => reject(get.error)
+  }
+}), key)
 
 // 横スワイプ（タッチ操作）
 export async function swipe(page, fromX, toX, y = 450) {

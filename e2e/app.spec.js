@@ -2,7 +2,7 @@ import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import { test, expect } from '@playwright/test'
-import { openApp, log, stored, swipe, download, openGroup, settingsGroup } from './helpers.js'
+import { openApp, log, stored, storedInDb, swipe, download, openGroup, settingsGroup } from './helpers.js'
 
 // サンプルデータ（constants.sample.js）の授業: 水曜3限 英語コミュニケーション(wed-3, 第3・4Q) / 木曜1限 データ構造とアルゴリズム(thu-1, 第3Q)
 
@@ -196,6 +196,27 @@ test('バックアップ: 書き出し・置き換え・統合', async ({ page }
   await page.click('.modal button:text-is("置き換える")')
   expect((await stored(page, 'attendance_logs')).map(l => l.id).sort()).toEqual(['x1', 'x2'])
   fs.rmSync(file)
+})
+
+test('マップ画像: 以前の localStorage の画像を IndexedDB に移し、再読み込み後も表示する', async ({ page }) => {
+  const png = `data:image/png;base64,${fs.readFileSync('public/icon-192.png').toString('base64')}`
+  await openApp(page, { extra: { campus_images: { north: png } } })
+  await page.click('.tab:text-is("マップ")')
+  await expect(page.locator('img.map-img')).toHaveAttribute('src', png)
+  await expect.poll(() => page.evaluate(() => localStorage.getItem('campus_images'))).toBeNull()
+  expect(await storedInDb(page, 'campus_images')).toEqual({ north: png })
+  await page.reload()
+  await page.click('.tab:text-is("マップ")')
+  await expect(page.locator('img.map-img')).toHaveAttribute('src', png)
+
+  // 設定から削除すると、再読み込み後も消えたまま
+  await page.click('.tab:text-is("設定")')
+  await (await openGroup(page, 'マップ')).locator('text=画像を削除').click()
+  await expect.poll(() => storedInDb(page, 'campus_images')).toEqual({})
+  await page.reload()
+  await page.click('.tab:text-is("マップ")')
+  await expect(page.locator('h2.app-title')).toBeVisible()
+  await expect(page.locator(`img[src="${png}"]`)).toHaveCount(0)
 })
 
 test('オフラインで起動できる・CSP 違反やエラーがない', async ({ page, context }) => {

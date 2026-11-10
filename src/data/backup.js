@@ -15,7 +15,7 @@ export const buildBackup = ({ logs, courseMemos, datedMemos, courses, settings, 
   data: { logs, courseMemos, datedMemos, courses, settings, campuses, campusBuildings, campusImages },
 });
 
-const sanitizeImages = (obj) => {
+export const sanitizeImages = (obj) => {
   if (!isPlainObject(obj)) throw new Error('images is not an object');
   return Object.fromEntries(Object.entries(obj).filter(([, v]) => typeof v === 'string' && v.startsWith('data:image/')));
 };
