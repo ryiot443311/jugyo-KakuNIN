@@ -38,7 +38,7 @@
 .btn-primary { background: var(--primary); color: var(--on-primary); }
 .btn-accent { background: var(--accent); color: var(--on-accent); }
 .btn-soft { background: var(--surface-3); color: var(--text-muted); }
-.btn-danger { background: var(--danger); color: #fff; }
+.btn-danger { background: var(--danger); color: var(--on-status); }
 .btn-ghost { background: none; color: var(--text-muted); }
 .btn-ghost.danger-text { color: var(--danger); }
 .btn-small { min-height: 36px; padding: 6px 12px; font-size: 0.75rem; }
@@ -46,13 +46,13 @@
 
 .status-stack { display: flex; flex-direction: column; gap: 6px; }
 .status-row { display: flex; gap: 6px; }
-.status-btn { flex: 1; padding: 12px 0; color: #fff; font-size: 0.85rem; }
+.status-btn { flex: 1; padding: 12px 0; color: var(--on-status); font-size: 0.85rem; }
 .status-stack > .st-present { flex: none; width: 100%; padding: 14px 0; font-size: 1rem; }
 .st-present { background: var(--present); }
 .st-late { background: var(--late); }
 .st-absent { background: var(--absent); }
 .st-canceled { background: var(--canceled); }
-.pill { padding: 2px 8px; border-radius: 4px; color: #fff; font-size: 0.75rem; font-weight: 700; }
+.pill { padding: 2px 8px; border-radius: 4px; color: var(--on-status); font-size: 0.75rem; font-weight: 700; }
 
 .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; }
 
@@ -66,8 +66,9 @@
 
 .badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 0.7rem; font-weight: 700; line-height: 1.2; white-space: nowrap; }
 .badge-today { margin-left: 8px; background: var(--accent); color: var(--on-accent); }
-.badge-now { background: var(--present); color: #fff; }
+.badge-now { background: var(--present); color: var(--on-status); }
 .badge-next { background: var(--accent); color: var(--on-accent); }
+.badge-weeks { margin-left: 8px; vertical-align: middle; background: var(--border); color: var(--text-muted); }
 
 /* ===== タブ・クォーター ===== */
 .tabs { display: flex; gap: 4px; margin-bottom: 8px; }
@@ -208,3 +209,19 @@
 .error-banner { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 12px; padding: 8px 12px; background: var(--warn-bg); border: 1px solid var(--warn-border); border-radius: 8px; color: var(--danger); font-size: 0.85rem; }
 .error-screen { display: flex; flex-direction: column; align-items: center; gap: 12px; max-width: 480px; margin: 0 auto; padding: 60px 20px; text-align: center; overflow-wrap: anywhere; }
 .error-screen h2 { color: var(--text-strong); }
+
+/* 課題 */
+.task-banner { margin-bottom: 8px; padding: 8px 12px; }
+.task-banner-title { margin: 0 0 4px; font-size: 0.85rem; color: var(--text-strong); }
+.task-list { margin: 0; padding: 0; list-style: none; }
+.task-item { display: flex; align-items: center; gap: 8px; padding: 4px 0; border-bottom: 1px solid var(--border); }
+.task-item:last-child { border-bottom: none; }
+.task-item .check { align-items: flex-start; }
+.task-item .check input { flex-shrink: 0; margin-top: 2px; }
+.task-item.is-done .check span { text-decoration: line-through; color: var(--text-faint); }
+.task-item.is-overdue .task-due, .task-item.is-overdue > .tiny { color: var(--danger); }
+.task-due { flex-shrink: 0; }
+
+/* ダイアログ自体にフォーカスを移したときは枠を出さない（中のボタンなどには出す） */
+.modal:focus { outline: none; }
+.toast-close { flex-shrink: 0; min-width: 32px; min-height: 32px; padding: 0; border: none; background: transparent; color: inherit; font-size: 1.2rem; line-height: 1; }

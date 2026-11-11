@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import { getSwipeDirection } from '../utils/swipe';
 
-// 記録した直後に、数秒間だけ画面上部に「元に戻す」を出す。左右にスワイプすると消せる
+// 記録した直後に、数秒間だけ画面上部に「元に戻す」を出す。左右にスワイプするか × で消せる
 export default function UndoToast({ text, onUndo, onDismiss }) {
   const start = useRef(null);
   const [dx, setDx] = useState(0); // 指に合わせて横にずらす量
@@ -32,6 +32,7 @@ export default function UndoToast({ text, onUndo, onDismiss }) {
     >
       <span>{text}</span>
       <button type="button" onClick={onUndo} className="btn btn-soft btn-small">元に戻す</button>
+      <button type="button" onClick={onDismiss} className="toast-close" aria-label="閉じる">×</button>
     </div>
   );
 }

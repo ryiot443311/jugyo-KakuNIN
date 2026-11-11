@@ -1,5 +1,5 @@
 import { DAYS } from '../../utils/date';
-import { quarterLabel } from '../../data/status';
+import { quarterLabel, weekPatternLabel } from '../../data/status';
 import SettingsGroup from './SettingsGroup';
 
 const WEEK_ORDER = [1, 2, 3, 4, 5, 6, 0]; // 月曜始まり
@@ -21,7 +21,7 @@ export default function CoursesSection({ courses, hiddenCourses, onToggle, onEdi
                 <input type="checkbox" checked={!hiddenCourses.includes(c.id)} onChange={() => onToggle(c.id)} aria-label={`${c.name}を表示`} />
                 <span>
                   {c.name}
-                  <span className="small muted block">{c.period}限・{quarterLabel(c)}</span>
+                  <span className="small muted block">{c.period}限・{quarterLabel(c)}{c.weeks && `・${weekPatternLabel(c)}`}</span>
                 </span>
               </label>
               <button type="button" onClick={() => onEdit(c)} className="btn btn-soft btn-small">編集</button>

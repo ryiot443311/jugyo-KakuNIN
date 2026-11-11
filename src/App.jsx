@@ -2,9 +2,10 @@ import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { QUARTERS } from './data/constants';
 import { isCourseInQuarter } from './data/status';
 import { SETTINGS_KEY, resolveSettings } from './data/settings';
-import { COURSES_KEY, CAMPUSES_KEY, BUILDINGS_KEY, IMAGES_KEY, resolveAppData } from './data/appData';
+import { COURSES_KEY, CAMPUSES_KEY, BUILDINGS_KEY, IMAGES_KEY, resolveAppData, newId } from './data/appData';
 import { sanitizeLogs, sanitizeMemos } from './data/sanitize';
-import { buildBackup } from './data/backup';
+import { TASKS_KEY, sanitizeTasks, upcomingTasks } from './data/tasks';
+import { buildBackup, sanitizeImages } from './data/backup';
 import { mergeBackupData } from './data/merge';
 import { findUnrecorded, LOOKBACK_DAYS } from './utils/unrecorded';
 import { parseDateStr, getQuarterByDate, getNearestQuarter, getWeekOfMonth, getDateOfWeekday, getFiscalYear } from './utils/date';
@@ -13,6 +14,8 @@ import { absenceByWeekday, topAbsenceSlots, weeklyRates } from './utils/trends';
 import { dateMemoKey } from './utils/memo';
 import { applyTheme } from './utils/theme';
 import { useLocalStorageState, useSaveFailed } from './hooks/useLocalStorageState';
+import { useStoredState } from './hooks/useStoredState';
+import { useCourseNotifications } from './hooks/useCourseNotifications';
 import { useToday } from './hooks/useToday';
 import { useNowMinutes } from './hooks/useNowMinutes';
 import ConfirmRecordModal from './components/ConfirmRecordModal';
@@ -32,7 +35,7 @@ import './App.css';
 const UNDO_MS = 6000; // 記録後に「元に戻す」を出しておく時間
 
 const PART_NAMES = {
-  logs: '出席記録', courses: '授業', courseMemos: '授業メモ', datedMemos: '日付別メモ',
+  logs: '出席記録', courses: '授業', courseMemos: '授業メモ', datedMemos: '日付別メモ', tasks: '課題',
   campuses: 'キャンパス', campusBuildings: '施設の説明', campusImages: 'マップ画像',
 };
 
@@ -44,6 +47,16 @@ const VIEWS = [
   { id: 'map', label: 'マップ' },
   { id: 'settings', label: '設定' },
 ];
+
+// ホーム画面のショートカット（manifest の shortcuts）から開いたときの画面。?view=weekly など
+const initialView = () => {
+  try {
+    const view = new URLSearchParams(window.location.search).get('view');
+    return VIEWS.some(v => v.id === view) ? view : 'home';
+  } catch {
+    return 'home';
+  }
+};
 
 function App() {
   const today = useToday();
@@ -68,17 +81,19 @@ function App() {
     if (patch.campuses) setSavedCampuses(patch.campuses);
     if (patch.buildings) setSavedBuildings(patch.buildings);
   }, [setSavedCourses, setSavedCampuses, setSavedBuildings]);
-  const [campusImages, setCampusImages] = useLocalStorageState(IMAGES_KEY, {});
+  // マップ画像は容量が大きいので IndexedDB に保存する（読み込みが終わるまでは書き出し・読み込み・画像の変更をしない）
+  const [campusImages, setCampusImages, imagesLoaded] = useStoredState(IMAGES_KEY, {}, sanitizeImages);
 
   const saveFailed = useSaveFailed();
   const [saveErrorDismissed, setSaveErrorDismissed] = useState(false);
 
-  const [currentView, setCurrentView] = useState('home');
+  const [currentView, setCurrentView] = useState(initialView);
   const [selectedDate, setSelectedDate] = useState(today);
   const [selectedQuarter, setSelectedQuarter] = useState(() => getNearestQuarter(parseDateStr(today), settings.quarters));
   const [logs, setLogs] = useLocalStorageState('attendance_logs', [], sanitizeLogs);
   const [courseMemos, setCourseMemos] = useLocalStorageState('course_memos', {}, sanitizeMemos);
   const [dateMemos, setDateMemos] = useLocalStorageState('dated_memos', {}, sanitizeMemos);
+  const [tasks, setTasks] = useLocalStorageState(TASKS_KEY, [], sanitizeTasks);
   const [pendingRecord, setPendingRecord] = useState(null);
   const [undo, setUndo] = useState(null); // { logId, text }
   const [showUnrecorded, setShowUnrecorded] = useState(false);
@@ -124,6 +139,10 @@ function App() {
     if (text.trim() === '') delete next[key]; else next[key] = text;
     return next;
   }), [selectedDate, setDateMemos]);
+
+  const addTask = useCallback((courseId, title, due) => setTasks(prev => [...prev, { id: newId('task'), courseId, title, due, done: false }]), [setTasks]);
+  const toggleTask = useCallback((id) => setTasks(prev => prev.map(t => (t.id === id ? { ...t, done: !t.done } : t))), [setTasks]);
+  const deleteTask = useCallback((id) => setTasks(prev => prev.filter(t => t.id !== id)), [setTasks]);
 
   const requestRecord = useCallback((courseId, status) => setPendingRecord({ courseId, status, date: selectedDate, quarter: recordState.quarter }), [selectedDate, recordState.quarter]);
 
@@ -171,7 +190,7 @@ function App() {
   }, [appData.courses, updateData]);
 
   const getBackup = () => JSON.stringify(buildBackup({
-    logs, courseMemos, datedMemos: dateMemos, courses: appData.courses, settings,
+    logs, courseMemos, datedMemos: dateMemos, tasks, courses: appData.courses, settings,
     campuses: appData.campuses, campusBuildings: appData.buildings, campusImages,
   }), null, 2);
 
@@ -180,7 +199,7 @@ function App() {
   const importBackup = (incoming, mode) => {
     const backup = mode === 'merge'
       ? mergeBackupData({
-        logs, courseMemos, datedMemos: dateMemos, campusImages,
+        logs, courseMemos, datedMemos: dateMemos, tasks, campusImages,
         // 初期データのまま（一度も編集していない）の授業・キャンパス・施設は、統合せず読み込んだ内容に置き換える
         courses: savedCourses ? appData.courses : [],
         campuses: savedCampuses ? appData.campuses : [],
@@ -204,6 +223,7 @@ function App() {
     if (backup.logs) setLogs(backup.logs);
     if (backup.courseMemos) setCourseMemos(backup.courseMemos);
     if (backup.datedMemos) setDateMemos(backup.datedMemos);
+    if (backup.tasks) setTasks(backup.tasks);
   };
 
   const toggleAccordion = useCallback((key, defaultOpen) => setExpandedSections(prev => ({ ...prev, [key]: !(prev[key] ?? defaultOpen) })), []);
@@ -223,6 +243,12 @@ function App() {
     () => findUnrecorded({ logs, courses, quarters: settings.quarters, periods: settings.periods, today, nowMin }),
     [logs, courses, settings.quarters, settings.periods, today, nowMin],
   );
+  // 期限が近い課題（非表示の授業の課題は出さない）
+  const dueTasks = useMemo(() => {
+    const ids = new Set(courses.map(c => c.id));
+    return upcomingTasks(tasks.filter(t => ids.has(t.courseId)), today);
+  }, [tasks, courses, today]);
+  useCourseNotifications({ courses, quarters: settings.quarters, periods: settings.periods, logs, today, nowMin, notify: settings.notify });
   const weekly = useMemo(() => weeklyRates(quarterLogs), [quarterLogs]);
   const absenceWeekdays = useMemo(() => absenceByWeekday(quarterLogs), [quarterLogs]);
   const absenceSlots = useMemo(() => topAbsenceSlots(quarterLogs, quarterCourses), [quarterLogs, quarterCourses]);
@@ -239,6 +265,9 @@ function App() {
           course={detailCourse}
           date={selectedDate}
           memo={courseMemos[detailCourse.id]}
+          today={today}
+          tasks={tasks.filter(t => t.courseId === detailCourse.id)}
+          onAddTask={(title, due) => addTask(detailCourse.id, title, due)} onToggleTask={toggleTask} onDeleteTask={deleteTask}
           dateMemo={dateMemos[dateMemoKey(detailCourse.id, selectedDate)]}
           recordState={recordState}
           log={getLog(detailCourse.id)}
@@ -291,9 +320,10 @@ function App() {
       {currentView === 'home' && (
         <DailyView
           selectedDate={selectedDate} today={today} selectedQuarter={selectedQuarter}
-          courses={courses} periods={settings.periods} nowMin={nowMin} logs={logs}
+          courses={courses} periods={settings.periods} quarters={settings.quarters} nowMin={nowMin} logs={logs}
           courseMemos={courseMemos} dateMemos={dateMemos} recordState={recordState} getLog={getLog}
           onSelectDate={selectDate} onOpenDetail={setDetailCourse} onRecord={requestRecord} onAddCourse={openAddCourse}
+          dueTasks={dueTasks} onToggleTask={toggleTask}
           unrecordedCount={unrecorded.length} lookbackDays={LOOKBACK_DAYS} onShowUnrecorded={() => setShowUnrecorded(true)}
         />
       )}
@@ -313,9 +343,10 @@ function App() {
         />
       )}
       {currentView === 'map' && <MapView campuses={appData.campuses} buildings={appData.buildings} campusImages={campusImages} />}
-      {currentView === 'settings' && (
+      {currentView === 'settings' && !imagesLoaded && <div className="empty" role="status">読み込み中…</div>}
+      {currentView === 'settings' && imagesLoaded && (
         <SettingsView
-          settings={settings} onChange={updateSettings}
+          settings={settings} onChange={updateSettings} courses={courses} today={today}
           appData={appData} onChangeData={updateData} campusImages={campusImages} onChangeImages={setCampusImages}
           onAddCourse={() => openAddCourse()} onEditCourse={(course) => setCourseForm({ course })}
           logs={logs} logCount={logs.length} onResetLogs={() => setLogs([])}

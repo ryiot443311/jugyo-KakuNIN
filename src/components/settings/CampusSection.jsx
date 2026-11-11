@@ -58,7 +58,7 @@ export default function CampusSection({ campuses, buildings, images, onChangeDat
     <>
       <SettingsGroup title="マップ">
         {confirmDelete && (
-          <Modal>
+          <Modal onClose={() => setConfirmDelete(false)}>
             <p className="center strong">「{campus.name}」と、その施設の説明・アップロード画像を削除しますか？</p>
             <div className="row gap-10 mt-20">
               <button type="button" onClick={() => setConfirmDelete(false)} className="btn btn-soft grow">キャンセル</button>

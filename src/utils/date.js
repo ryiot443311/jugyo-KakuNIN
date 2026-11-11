@@ -49,4 +49,23 @@ export const getNearestQuarter = (dateObj, quarters = QUARTERS) => {
   return best;
 };
 
+// 日付が属するクォーターの開始日 'YYYY-MM-DD'（どのクォーターにも入らなければ null）
+export const getQuarterStart = (dateStr, quarters = QUARTERS) => {
+  const d = parseDateStr(dateStr);
+  const q = getQuarterByDate(d, quarters);
+  if (q === 0) return null;
+  const s = toMonthDay(quarters[q].start);
+  const md = (d.getMonth() + 1) * 100 + d.getDate();
+  const year = md >= s ? d.getFullYear() : d.getFullYear() - 1; // 年をまたぐ期間の 1 月側
+  return formatDate(parseDateStr(`${year}-${quarters[q].start}`)); // うるう年でない年の 2月29日は 3月1日
+};
+
+// クォーターの何週目か（開始日を含む週が第1週。週は月曜始まり）。クォーター外は 0
+export const getQuarterWeek = (dateStr, quarters = QUARTERS) => {
+  const start = getQuarterStart(dateStr, quarters);
+  if (!start) return 0;
+  const monday = (s) => { const d = parseDateStr(s); d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); return d; };
+  return Math.round((monday(dateStr) - monday(start)) / (7 * 24 * 60 * 60 * 1000)) + 1;
+};
+
 export const getWeekOfMonth = (date) => Math.ceil((date.getDate() + new Date(date.getFullYear(), date.getMonth(), 1).getDay()) / 7);

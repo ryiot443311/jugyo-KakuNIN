@@ -7,7 +7,7 @@ import SettingsGroup from './SettingsGroup';
 const MAX_BACKUP_BYTES = 30 * 1024 * 1024; // マップ画像を含めても収まる大きさ
 
 const PART_LABELS = {
-  logs: '出席記録', courses: '授業', courseMemos: '授業メモ', datedMemos: '日付別メモ', settings: '設定',
+  logs: '出席記録', courses: '授業', courseMemos: '授業メモ', datedMemos: '日付別メモ', tasks: '課題', settings: '設定',
   campuses: 'キャンパス', campusBuildings: '施設の説明', campusImages: 'マップ画像',
 };
 
@@ -34,7 +34,7 @@ export default function DataSection({ getBackup, onImportBackup }) {
   return (
     <SettingsGroup title="データ">
       {pendingImport && (
-        <Modal>
+        <Modal onClose={() => setPendingImport(null)}>
           <h3 className="modal-title">バックアップの読み込み</h3>
           <p className="center small muted">含まれている項目: {Object.keys(pendingImport.data).map(k => PART_LABELS[k]).join('、')}</p>
           {pendingImport.dropped > 0 && <p className="center small muted mt-8">不正なデータ {pendingImport.dropped} 件は除外します。</p>}

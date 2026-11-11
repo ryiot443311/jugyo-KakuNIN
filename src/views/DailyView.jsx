@@ -1,18 +1,19 @@
 import { DAYS, addDays, getDateOfWeekday, parseDateStr, toMinutes } from '../utils/date';
-import { isCourseInQuarter, statusTextClass } from '../data/status';
+import { isCourseInQuarter, isCourseOnDate, statusTextClass, weekPatternLabel } from '../data/status';
 import { dateMemoKey, hasText } from '../utils/memo';
 import { getAbsenceStreak, STREAK_ALERT } from '../utils/streak';
 import { useSwipe } from '../hooks/useSwipe';
 import StatusButtons from '../components/StatusButtons';
 import RecordNotice from '../components/RecordNotice';
+import { dueLabel, daysUntil, UPCOMING_DAYS } from '../data/tasks';
 
-export default function DailyView({ selectedDate, today, selectedQuarter, courses, periods, nowMin, logs, courseMemos, dateMemos, recordState, getLog, onSelectDate, onOpenDetail, onRecord, onAddCourse, unrecordedCount, lookbackDays, onShowUnrecorded }) {
+export default function DailyView({ selectedDate, today, selectedQuarter, courses, periods, quarters, nowMin, logs, courseMemos, dateMemos, recordState, getLog, onSelectDate, onOpenDetail, onRecord, onAddCourse, dueTasks, onToggleTask, unrecordedCount, lookbackDays, onShowUnrecorded }) {
   const swipe = useSwipe((direction) => onSelectDate(addDays(selectedDate, direction))); // 左右スワイプで前後の日へ
   const weekStart = getDateOfWeekday(selectedDate, 0);
   const selectedDateObj = parseDateStr(selectedDate);
   const selectedDay = selectedDateObj.getDay();
   const isToday = selectedDate === today;
-  const dayCourses = courses.filter(c => c.dayOfWeek === selectedDay && isCourseInQuarter(c, selectedQuarter)).sort((a, b) => a.period - b.period);
+  const dayCourses = courses.filter(c => isCourseOnDate(c, selectedDate, quarters) && isCourseInQuarter(c, selectedQuarter)).sort((a, b) => a.period - b.period);
 
   // 今日（記録できる状態）のときだけ、授業中・次の授業を強調する。休講の授業は対象外
   const trackable = isToday && recordState.status === 'ok' ? dayCourses.filter(c => getLog(c.id)?.status !== '休講') : [];
@@ -25,6 +26,22 @@ export default function DailyView({ selectedDate, today, selectedQuarter, course
         <button type="button" onClick={onShowUnrecorded} className="unrecorded-banner">
           ⚠ 記録していない授業が {unrecordedCount}件 あります（直近{lookbackDays / 7}週間）<span className="unrecorded-banner-link">確認する ›</span>
         </button>
+      )}
+      {dueTasks.length > 0 && (
+        <section className="card task-banner" aria-labelledby="due-heading">
+          <h3 id="due-heading" className="task-banner-title">期限が近い課題（{UPCOMING_DAYS}日以内・期限切れ）</h3>
+          <ul className="task-list">
+            {dueTasks.map(t => (
+              <li key={t.id} className={`task-item${daysUntil(t.due, today) < 0 ? ' is-overdue' : ''}`}>
+                <label className="check grow">
+                  <input type="checkbox" checked={false} onChange={() => onToggleTask(t.id)} aria-label={`「${t.title}」を完了にする`} />
+                  <span className="grow">{t.title}<span className="tiny muted block">{courses.find(c => c.id === t.courseId)?.name}</span></span>
+                </label>
+                <span className="tiny strong task-due">{dueLabel(t.due, today)}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
       )}
       <div className="row gap-6 mb-8 week-nav">
         <button type="button" onClick={() => onSelectDate(addDays(selectedDate, -7))} className="btn btn-soft grow">◀ 前の週</button>
@@ -63,10 +80,10 @@ export default function DailyView({ selectedDate, today, selectedQuarter, course
                 {isNow && <span className="badge badge-now">授業中</span>}
                 {isNext && <span className="badge badge-next">次の授業</span>}
                 <span>{course.period}時限{period && ` (${period.start}〜${period.end})`}</span>
-                {recordState.status !== 'outOfQuarter' && <button type="button" onClick={() => onOpenDetail(course)} className="icon-btn" aria-label="詳細">⋯</button>}
+                {recordState.status !== 'outOfQuarter' && <button type="button" onClick={() => onOpenDetail(course)} className="icon-btn" aria-label={`${course.name}の詳細`}>⋯</button>}
               </div>
             </div>
-            <h3 className="course-name">{course.name}</h3>
+            <h3 className="course-name">{course.name}{course.weeks && <span className="badge badge-weeks">{weekPatternLabel(course)}</span>}</h3>
             {streak >= STREAK_ALERT && <div className="warning small" role="alert">⚠ 直近{streak}回連続で欠席しています</div>}
             {hasText(memo) && <div className="memo">{memo}</div>}
             {hasText(dateMemo) && <div className="memo memo-dated"><b>この日:</b> {dateMemo}</div>}

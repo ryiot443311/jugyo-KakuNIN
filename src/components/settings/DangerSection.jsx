@@ -26,7 +26,7 @@ export default function DangerSection({ logCount, onResetLogs, getBackup, campus
   return (
     <SettingsGroup title="危険な項目" className="danger-zone">
       {pending && (
-        <Modal>
+        <Modal onClose={close}>
           <h3 className="modal-title danger-text">{pending.title}</h3>
           <p className="center strong">{pending.message}<br />この操作は取り消せません。</p>
           <button type="button" onClick={() => downloadBackup(getBackup())} className="btn btn-soft block mt-10">先にバックアップを書き出す</button>

@@ -45,3 +45,15 @@ describe('findUnrecorded（記録し忘れの検出）', () => {
     expect(run([log('wed1', '2026-08-05')], { today: '2026-08-26', nowMin: 23 * 60 })).toEqual([]);
   });
 });
+
+describe('findUnrecorded（隔週の授業）', () => {
+  // 第3Q は 09-01（火）開始: 9/2 は第1週、10/7 は第6週、10/14 は第7週、10/21 は第8週、10/28 は第9週
+  const biweekly = [
+    { id: 'odd', name: 'A', dayOfWeek: 3, period: 1, quarter: 3, weeks: 'odd' },
+    { id: 'even', name: 'B', dayOfWeek: 3, period: 1, quarter: 3, weeks: 'even' },
+  ];
+  it('授業のない週は記録し忘れにしない', () => {
+    const logs = [log('even', '2026-10-07')];
+    expect(run(logs, { courses: biweekly })).toEqual(['2026-10-28 odd', '2026-10-21 even', '2026-10-14 odd']);
+  });
+});

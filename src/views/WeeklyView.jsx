@@ -1,5 +1,6 @@
 import { DAYS, parseDateStr } from '../utils/date';
 import { hasText } from '../utils/memo';
+import { weekPatternLabel } from '../data/status';
 
 const WEEKDAYS = DAYS.slice(1, 7); // 月〜土
 
@@ -20,6 +21,7 @@ export default function WeeklyView({ today, periods, quarterCourses, courseMemos
                     <button key={course.id} type="button" onClick={() => onOpenDetail(course)} className="weekly-course">
                       <span className="weekly-name">{course.name}</span>
                       <span className="weekly-room">{course.room}</span>
+                      {course.weeks && <span className="weekly-room">{weekPatternLabel(course)}</span>}
                       {hasText(courseMemos[course.id]) && <span className="memo-dot"></span>}
                     </button>
                   ))}

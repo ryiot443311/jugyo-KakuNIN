@@ -46,5 +46,7 @@ export function resolveSettings(saved) {
     periods: mergeRanges(PERIODS, s.periods, isTime),
     hiddenCourses: Array.isArray(s.hiddenCourses) ? s.hiddenCourses : [],
     threshold: isThreshold(s.threshold) ? s.threshold : 80, // 出席率の基準 (%)
+    // 通知（授業開始前 / 終了時に未記録なら）。既定はどちらも切
+    notify: { before: s.notify?.before === true, after: s.notify?.after === true },
   };
 }

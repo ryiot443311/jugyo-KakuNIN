@@ -8,7 +8,7 @@ export default function EditLogModal({ log, onChangeStatus, onDelete, onClose })
 
   if (pendingStatus || pendingDelete) {
     return (
-      <Modal>
+      <Modal onClose={() => { setPendingStatus(null); setPendingDelete(false); }}>
         <p className="center strong">{pendingDelete ? `${log.date} の記録を削除しますか？` : `【 ${pendingStatus} 】に変更しますか？`}</p>
         <div className="row gap-10 mt-20">
           <button type="button" onClick={() => { setPendingStatus(null); setPendingDelete(false); }} className="btn btn-soft grow">戻る</button>
@@ -21,8 +21,8 @@ export default function EditLogModal({ log, onChangeStatus, onDelete, onClose })
   }
 
   return (
-    <Modal>
-      <p className="field-label center">状態を変更</p>
+    <Modal onClose={onClose}>
+      <h3 className="modal-title">状態を変更（{log.date}）</h3>
       <StatusButtons onSelect={setPendingStatus} exclude={log.status} />
       <button type="button" onClick={() => setPendingDelete(true)} className="btn btn-ghost danger-text block mt-20">記録を削除</button>
       <button type="button" onClick={onClose} className="btn btn-ghost block">キャンセル</button>

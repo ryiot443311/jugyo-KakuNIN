@@ -2,18 +2,23 @@ import { useState } from 'react';
 import Modal from './Modal';
 import StatusButtons from './StatusButtons';
 import RecordNotice from './RecordNotice';
+import { weekPatternLabel } from '../data/status';
+import TaskList from './TaskList';
 
-export default function CourseDetailModal({ course, date, memo, dateMemo, recordState, log, onSaveMemo, onSaveDateMemo, onRecord, onEditLog, onEdit, onClose }) {
+export default function CourseDetailModal({ course, date, today, tasks, onAddTask, onToggleTask, onDeleteTask, memo, dateMemo, recordState, log, onSaveMemo, onSaveDateMemo, onRecord, onEditLog, onEdit, onClose }) {
   const [tempMemo, setTempMemo] = useState(memo || '');
   const [tempDateMemo, setTempDateMemo] = useState(dateMemo || '');
 
+  const saveAndClose = () => { onSaveMemo(tempMemo); onSaveDateMemo(tempDateMemo); onClose(); };
+
   return (
-    <Modal>
+    <Modal onClose={saveAndClose}>
       <h3 className="modal-title">授業詳細</h3>
       <div className="info-box">
         <p><b>科目:</b> {course.name}</p>
         <p><b>教室:</b> {course.room}</p>
         <p><b>担当:</b> {course.teacher}</p>
+        {course.weeks && <p><b>頻度:</b> {weekPatternLabel(course)}</p>}
       </div>
 
       <label className="field-label" htmlFor="course-memo">メモ (自動保存)</label>
@@ -30,6 +35,8 @@ export default function CourseDetailModal({ course, date, memo, dateMemo, record
         className="textarea"
       />
 
+      <TaskList tasks={tasks} today={today} onAdd={onAddTask} onToggle={onToggleTask} onDelete={onDeleteTask} />
+
       <div className="mt-20 mb-10">
         {recordState.status !== 'ok' ? (
           <RecordNotice status={recordState.status} long />
@@ -43,7 +50,7 @@ export default function CourseDetailModal({ course, date, memo, dateMemo, record
         )}
       </div>
       <button type="button" onClick={() => { onSaveMemo(tempMemo); onSaveDateMemo(tempDateMemo); onEdit(); }} className="btn btn-soft block mb-6">授業情報を編集</button>
-      <button type="button" onClick={() => { onSaveMemo(tempMemo); onSaveDateMemo(tempDateMemo); onClose(); }} className="btn btn-ghost block">閉じる</button>
+      <button type="button" onClick={saveAndClose} className="btn btn-ghost block">閉じる</button>
     </Modal>
   );
 }

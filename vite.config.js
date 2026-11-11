@@ -48,7 +48,7 @@ export default defineConfig({
   build: { reportCompressedSize: false },
   test: {
     environment: 'node',
-    include: ['src/**/*.test.js'],
+    include: ['src/**/*.test.{js,jsx}'], // 画面部品のテスト（.test.jsx）はファイル先頭の指定で jsdom を使う
   },
   server: {
     // 既定では自分の端末からだけ開ける。スマホなど別の端末から開くときは EXPOSE_LAN=1 npm run dev

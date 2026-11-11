@@ -2,7 +2,7 @@ import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import { test, expect } from '@playwright/test'
-import { openApp, log, stored, swipe, download, openGroup, settingsGroup } from './helpers.js'
+import { openApp, log, stored, storedInDb, swipe, download, openGroup, settingsGroup } from './helpers.js'
 
 // サンプルデータ（constants.sample.js）の授業: 水曜3限 英語コミュニケーション(wed-3, 第3・4Q) / 木曜1限 データ構造とアルゴリズム(thu-1, 第3Q)
 
@@ -27,7 +27,7 @@ test.describe('日別画面', () => {
     await page.click('.modal .btn-primary')
     await expect(page.locator('.course-card .notice')).toHaveText('出席 記録済み')
     await expect(page.locator('.warning')).toHaveCount(0)
-    await page.click('.toast button')
+    await page.click('.toast button:text-is("元に戻す")')
     await expect(page.locator('.status-btn')).toHaveCount(4)
 
     // 記録の表示は画面上部に出て、左右スワイプで消せる（日付は変わらない）
@@ -58,6 +58,17 @@ test.describe('日別画面', () => {
     await page.selectOption('#course-period', '2')
     await page.click('button[type=submit]')
     await expect(page.locator('.course-name')).toContainText(['統計学'])
+
+    // 隔週の授業: 10/28 は第3Qの第9週（奇数週）なので、偶数週の授業は前の週（第8週）にだけ出る
+    await page.click('text=水曜に授業を追加')
+    await page.fill('#course-name', '輪講')
+    await page.click('label.check:has-text("偶数週")')
+    await page.click('button[type=submit]')
+    await expect(page.locator('.course-name', { hasText: '輪講' })).toHaveCount(0)
+    await page.click('text=◀ 前の週')
+    await expect(page.locator('.course-name', { hasText: '輪講' })).toHaveText('輪講偶数週')
+    await page.click('.tab:text-is("週間")')
+    await expect(page.locator('.weekly-course', { hasText: '輪講' })).toContainText('偶数週')
   })
 
   test('記録し忘れの授業を知らせ、選ぶとその日へ移動する', async ({ page }) => {
@@ -81,6 +92,43 @@ test.describe('日別画面', () => {
     await expect(page.locator('.course-name')).toContainText(['途中から追加した授業'])
     await expect(page.locator('.unrecorded-banner')).toContainText('記録していない授業が 3件')
   })
+})
+
+test('開いたまま日付が変わると、今日の表示が新しい日に移る（ほかの日を見ているときは移らない）', async ({ page }) => {
+  await openApp(page, { now: '2026-10-28T23:59:00' })
+  await expect(page.locator('.date-heading')).toHaveText('10月28日（水）今日')
+  await page.clock.runFor(120_000)
+  await expect(page.locator('.date-heading')).toHaveText('10月29日（木）今日')
+  await page.click('text=◀ 前の週')
+  await page.clock.fastForward('24:00:00')
+  await expect(page.locator('.date-heading')).toHaveText('10月22日（木）')
+  await page.click('button:text-is("今日")')
+  await expect(page.locator('.date-heading')).toHaveText('10月30日（金）今日')
+})
+
+test('課題: 授業詳細で登録し、期限が近いものを日別画面に出す', async ({ page }) => {
+  await openApp(page)
+  await page.click('.icon-btn')
+  await page.fill('input[aria-label="課題名"]', 'レポート')
+  await page.fill('input[aria-label="期限"]', '2026-10-30')
+  await page.click('.modal button:text-is("追加")')
+  await page.fill('input[aria-label="課題名"]', '期末課題')
+  await page.fill('input[aria-label="期限"]', '2026-11-20')
+  await page.click('.modal button:text-is("追加")')
+  await expect(page.locator('.modal .task-item')).toHaveText([/レポート.*あと2日/, /期末課題.*あと23日/])
+  await page.click('.modal button:text-is("閉じる")')
+
+  // 7日以内のものだけ日別画面に出る。完了にすると消える
+  await expect(page.locator('.task-banner .task-item')).toHaveCount(1)
+  await expect(page.locator('.task-banner')).toContainText('英語コミュニケーション')
+  await page.click('.task-banner input[type=checkbox]')
+  await expect(page.locator('.task-banner')).toHaveCount(0)
+  expect((await stored(page, 'course_tasks')).map(t => `${t.title}:${t.done}`)).toEqual(['レポート:true', '期末課題:false'])
+
+  await page.click('.icon-btn')
+  await expect(page.locator('.modal .task-item.is-done')).toContainText('レポート')
+  await page.click('.modal button[aria-label="課題「レポート」を削除"]')
+  await expect(page.locator('.modal .task-item')).toHaveCount(1)
 })
 
 test('週間・履歴・分析', async ({ page }) => {
@@ -172,6 +220,33 @@ test('設定（テーマ・期間・基準・授業・マップ・施設・CSV�
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
 })
 
+test('通知: 授業開始の10分前に知らせる・カレンダーに書き出す', async ({ page, context }) => {
+  await context.grantPermissions(['notifications'])
+  // 表示した通知を記録する（Service Worker 経由・直接のどちらでも）
+  await page.addInitScript(() => {
+    window.__shown = []
+    const record = (title) => window.__shown.push(title)
+    if (window.ServiceWorkerRegistration) ServiceWorkerRegistration.prototype.showNotification = async function (title) { record(title) }
+    window.Notification = class { static permission = 'granted'; static requestPermission = async () => 'granted'; constructor(title) { record(title) } }
+  })
+  await openApp(page, { now: '2026-10-28T12:48:30' }) // 英語コミュニケーションは水曜3限（13:00〜）
+  await page.click('.tab:text-is("設定")')
+  const group = await openGroup(page, '通知・カレンダー')
+  await group.locator('text=授業開始の10分前に知らせる').click()
+  expect((await stored(page, 'app_settings')).notify).toEqual({ before: true, after: false })
+  expect(await page.evaluate(() => window.__shown)).toEqual([])
+  await page.clock.runFor(90_000) // 12:50 になる
+  await expect.poll(() => page.evaluate(() => window.__shown)).toEqual(['まもなく 英語コミュニケーション'])
+  await page.clock.runFor(60_000) // 同じ通知は二度出さない
+  expect(await page.evaluate(() => window.__shown)).toHaveLength(1)
+
+  const ics = await download(page, '.settings-group button:text-is("書き出す")')
+  expect(ics).toContain('BEGIN:VCALENDAR')
+  expect(ics).toContain('SUMMARY:英語コミュニケーション')
+  expect(ics).toContain('TRIGGER:-PT10M')
+  await expect(group.locator('[role=status]')).toContainText('繰り返し予定を書き出しました')
+})
+
 test('バックアップ: 書き出し・置き換え・統合', async ({ page }) => {
   await openApp(page, { logs: [log('e1', 'wed-3', '2026-10-07'), log('e2', 'wed-3', '2026-10-14')] })
   await page.click('.tab:text-is("設定")')
@@ -196,6 +271,38 @@ test('バックアップ: 書き出し・置き換え・統合', async ({ page }
   await page.click('.modal button:text-is("置き換える")')
   expect((await stored(page, 'attendance_logs')).map(l => l.id).sort()).toEqual(['x1', 'x2'])
   fs.rmSync(file)
+})
+
+test('マップ画像: 以前の localStorage の画像を IndexedDB に移し、再読み込み後も表示する', async ({ page }) => {
+  const png = `data:image/png;base64,${fs.readFileSync('public/icon-192.png').toString('base64')}`
+  await openApp(page, { extra: { campus_images: { north: png } } })
+  await page.click('.tab:text-is("マップ")')
+  await expect(page.locator('img.map-img')).toHaveAttribute('src', png)
+  await expect.poll(() => page.evaluate(() => localStorage.getItem('campus_images'))).toBeNull()
+  expect(await storedInDb(page, 'campus_images')).toEqual({ north: png })
+  await page.reload()
+  await page.click('.tab:text-is("マップ")')
+  await expect(page.locator('img.map-img')).toHaveAttribute('src', png)
+
+  // 設定から削除すると、再読み込み後も消えたまま
+  await page.click('.tab:text-is("設定")')
+  await (await openGroup(page, 'マップ')).locator('text=画像を削除').click()
+  await expect.poll(() => storedInDb(page, 'campus_images')).toEqual({})
+  await page.reload()
+  await page.click('.tab:text-is("マップ")')
+  await expect(page.locator('h2.app-title')).toBeVisible()
+  await expect(page.locator(`img[src="${png}"]`)).toHaveCount(0)
+})
+
+test('ホーム画面のショートカット: ?view= で開く画面を選べる（不正な値は日別）', async ({ page }) => {
+  const manifest = await (await page.request.get('/manifest.webmanifest')).json()
+  expect(manifest.shortcuts.map(s => s.url)).toEqual(['/?view=home', '/?view=weekly', '/?view=analytics'])
+  await openApp(page, { path: '/?view=weekly' })
+  await expect(page.locator('.tab[aria-current=page]')).toHaveText('週間')
+  await page.goto('/?view=analytics')
+  await expect(page.locator('.tab[aria-current=page]')).toHaveText('分析')
+  await page.goto('/?view=unknown')
+  await expect(page.locator('.tab[aria-current=page]')).toHaveText('日別')
 })
 
 test('オフラインで起動できる・CSP 違反やエラーがない', async ({ page, context }) => {

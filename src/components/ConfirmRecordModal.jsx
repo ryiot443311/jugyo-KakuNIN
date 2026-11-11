@@ -3,7 +3,7 @@ import { statusTextClass } from '../data/status';
 
 export default function ConfirmRecordModal({ record, onConfirm, onCancel }) {
   return (
-    <Modal>
+    <Modal onClose={onCancel}>
       <p className="center strong">{record.date} を <span className={statusTextClass(record.status)}>{record.status}</span> で記録します。</p>
       <div className="row gap-10 mt-20">
         <button type="button" onClick={onCancel} className="btn btn-soft grow">キャンセル</button>

@@ -4,7 +4,7 @@ import { DAYS, parseDateStr } from '../utils/date';
 // 記録し忘れの授業の一覧。選ぶとその日の日別画面へ移動する
 export default function UnrecordedModal({ items, onSelect, onClose }) {
   return (
-    <Modal>
+    <Modal onClose={onClose}>
       <h3 className="modal-title">記録していない授業</h3>
       <p className="small muted mb-10">選ぶと、その日の画面に移動します。休講だった授業は「休講」で記録してください。</p>
       <div className="unrecorded-list">
