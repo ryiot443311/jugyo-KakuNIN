@@ -12,14 +12,14 @@ const saveSent = (sent, today) => {
 };
 
 // アプリを開いている間（バックグラウンドを含む）、授業の開始前・終了時に通知する
-export function useCourseNotifications({ courses, quarters, periods, logs, today, nowMin, notify }) {
+export function useCourseNotifications({ courses, quarters, periods, logs, today, nowMin, notify, t }) {
   const sent = useRef(null);
   useEffect(() => {
     if (!notificationSupported() || Notification.permission !== 'granted') return;
     if (!sent.current) sent.current = loadSent();
-    const due = dueNotifications({ courses, quarters, periods, logs, today, nowMin, notify }).filter(n => !sent.current.has(n.key));
+    const due = dueNotifications({ courses, quarters, periods, logs, today, nowMin, notify, t }).filter(n => !sent.current.has(n.key));
     if (due.length === 0) return;
     due.forEach(n => { sent.current.add(n.key); showNotification(n); });
     saveSent(sent.current, today);
-  }, [courses, quarters, periods, logs, today, nowMin, notify]);
+  }, [courses, quarters, periods, logs, today, nowMin, notify, t]);
 }

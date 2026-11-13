@@ -1,3 +1,4 @@
+import { useI18n } from '../i18n';
 import { DAYS, addDays, getDateOfWeekday, parseDateStr, toMinutes } from '../utils/date';
 import { isCourseInQuarter, isCourseOnDate, statusTextClass, weekPatternLabel } from '../data/status';
 import { dateMemoKey, hasText } from '../utils/memo';
@@ -8,6 +9,7 @@ import RecordNotice from '../components/RecordNotice';
 import { dueLabel, daysUntil, UPCOMING_DAYS } from '../data/tasks';
 
 export default function DailyView({ selectedDate, today, selectedQuarter, courses, periods, quarters, nowMin, logs, courseMemos, dateMemos, recordState, getLog, onSelectDate, onOpenDetail, onRecord, onAddCourse, dueTasks, onToggleTask, unrecordedCount, lookbackDays, onShowUnrecorded }) {
+  const t = useI18n();
   const swipe = useSwipe((direction) => onSelectDate(addDays(selectedDate, direction))); // 左右スワイプで前後の日へ
   const weekStart = getDateOfWeekday(selectedDate, 0);
   const selectedDateObj = parseDateStr(selectedDate);
@@ -24,45 +26,45 @@ export default function DailyView({ selectedDate, today, selectedQuarter, course
     <div className="swipe-area" {...swipe}>
       {unrecordedCount > 0 && (
         <button type="button" onClick={onShowUnrecorded} className="unrecorded-banner">
-          ⚠ 記録していない授業が {unrecordedCount}件 あります（直近{lookbackDays / 7}週間）<span className="unrecorded-banner-link">確認する ›</span>
+          {t.unrecordedBanner(unrecordedCount, lookbackDays / 7)}<span className="unrecorded-banner-link">{t.review}</span>
         </button>
       )}
       {dueTasks.length > 0 && (
         <section className="card task-banner" aria-labelledby="due-heading">
-          <h3 id="due-heading" className="task-banner-title">期限が近い課題（{UPCOMING_DAYS}日以内・期限切れ）</h3>
+          <h3 id="due-heading" className="task-banner-title">{t.dueTasksTitle(UPCOMING_DAYS)}</h3>
           <ul className="task-list">
-            {dueTasks.map(t => (
-              <li key={t.id} className={`task-item${daysUntil(t.due, today) < 0 ? ' is-overdue' : ''}`}>
+            {dueTasks.map(task => (
+              <li key={task.id} className={`task-item${daysUntil(task.due, today) < 0 ? ' is-overdue' : ''}`}>
                 <label className="check grow">
-                  <input type="checkbox" checked={false} onChange={() => onToggleTask(t.id)} aria-label={`「${t.title}」を完了にする`} />
-                  <span className="grow">{t.title}<span className="tiny muted block">{courses.find(c => c.id === t.courseId)?.name}</span></span>
+                  <input type="checkbox" checked={false} onChange={() => onToggleTask(task.id)} aria-label={t.markTaskDone(task.title)} />
+                  <span className="grow">{task.title}<span className="tiny muted block">{courses.find(c => c.id === task.courseId)?.name}</span></span>
                 </label>
-                <span className="tiny strong task-due">{dueLabel(t.due, today)}</span>
+                <span className="tiny strong task-due">{dueLabel(task.due, today, t)}</span>
               </li>
             ))}
           </ul>
         </section>
       )}
       <div className="row gap-6 mb-8 week-nav">
-        <button type="button" onClick={() => onSelectDate(addDays(selectedDate, -7))} className="btn btn-soft grow">◀ 前の週</button>
-        <button type="button" onClick={() => onSelectDate(today)} disabled={isToday} className="btn btn-soft grow">今日</button>
-        <button type="button" onClick={() => onSelectDate(addDays(selectedDate, 7))} className="btn btn-soft grow">次の週 ▶</button>
+        <button type="button" onClick={() => onSelectDate(addDays(selectedDate, -7))} className="btn btn-soft grow">{t.prevWeek}</button>
+        <button type="button" onClick={() => onSelectDate(today)} disabled={isToday} className="btn btn-soft grow">{t.today}</button>
+        <button type="button" onClick={() => onSelectDate(addDays(selectedDate, 7))} className="btn btn-soft grow">{t.nextWeek}</button>
       </div>
       <div className="day-tabs">
         {DAYS.map((day, index) => {
           const date = addDays(weekStart, index);
           return (
-            <button key={day} type="button" onClick={() => onSelectDate(date)} className={`day-tab${selectedDay === index ? ' is-active' : ''}${date === today ? ' is-today' : ''}`}>{day}</button>
+            <button key={day} type="button" onClick={() => onSelectDate(date)} className={`day-tab${selectedDay === index ? ' is-active' : ''}${date === today ? ' is-today' : ''}`}>{t.days[index]}</button>
           );
         })}
       </div>
       <div className="date-heading">
-        {selectedDateObj.getMonth() + 1}月{selectedDateObj.getDate()}日（{DAYS[selectedDay]}）
-        {isToday && <span className="badge badge-today">今日</span>}
+        {t.dateHeading(selectedDateObj.getMonth() + 1, selectedDateObj.getDate(), selectedDay)}
+        {isToday && <span className="badge badge-today">{t.today}</span>}
       </div>
 
       {dayCourses.length === 0 ? (
-        <div className="empty">{isToday ? '本日' : 'この日'}の授業なし</div>
+        <div className="empty">{t.noClasses(isToday)}</div>
       ) : dayCourses.map(course => {
         const log = getLog(course.id);
         const memo = courseMemos[course.id];
@@ -77,27 +79,27 @@ export default function DailyView({ selectedDate, today, selectedQuarter, course
             <div className="row between align-center small muted strong">
               <span>{course.room}</span>
               <div className="row gap-10 align-center">
-                {isNow && <span className="badge badge-now">授業中</span>}
-                {isNext && <span className="badge badge-next">次の授業</span>}
-                <span>{course.period}時限{period && ` (${period.start}〜${period.end})`}</span>
-                {recordState.status !== 'outOfQuarter' && <button type="button" onClick={() => onOpenDetail(course)} className="icon-btn" aria-label={`${course.name}の詳細`}>⋯</button>}
+                {isNow && <span className="badge badge-now">{t.nowBadge}</span>}
+                {isNext && <span className="badge badge-next">{t.nextBadge}</span>}
+                <span>{t.periodLong(course.period)}{period && ` (${t.timeRange(period.start, period.end)})`}</span>
+                {recordState.status !== 'outOfQuarter' && <button type="button" onClick={() => onOpenDetail(course)} className="icon-btn" aria-label={t.courseDetailLabel(course.name)}>⋯</button>}
               </div>
             </div>
-            <h3 className="course-name">{course.name}{course.weeks && <span className="badge badge-weeks">{weekPatternLabel(course)}</span>}</h3>
-            {streak >= STREAK_ALERT && <div className="warning small" role="alert">⚠ 直近{streak}回連続で欠席しています</div>}
+            <h3 className="course-name">{course.name}{course.weeks && <span className="badge badge-weeks">{weekPatternLabel(course, t)}</span>}</h3>
+            {streak >= STREAK_ALERT && <div className="warning small" role="alert">{t.absenceStreak(streak)}</div>}
             {hasText(memo) && <div className="memo">{memo}</div>}
-            {hasText(dateMemo) && <div className="memo memo-dated"><b>この日:</b> {dateMemo}</div>}
+            {hasText(dateMemo) && <div className="memo memo-dated"><b>{t.thisDay}</b> {dateMemo}</div>}
             {recordState.status !== 'ok' ? (
               <RecordNotice status={recordState.status} />
             ) : log ? (
-              <div className={`notice ${statusTextClass(log.status)}`}>{log.status} 記録済み</div>
+              <div className={`notice ${statusTextClass(log.status)}`}>{t.recorded(t.status(log.status))}</div>
             ) : (
               <StatusButtons onSelect={(status) => onRecord(course.id, status)} />
             )}
           </div>
         );
       })}
-      <button type="button" onClick={() => onAddCourse({ dayOfWeek: selectedDay })} className="btn btn-soft block mt-10">＋ {DAYS[selectedDay]}曜に授業を追加</button>
+      <button type="button" onClick={() => onAddCourse({ dayOfWeek: selectedDay })} className="btn btn-soft block mt-10">{t.addCourseOnDay(selectedDay)}</button>
     </div>
   );
 }

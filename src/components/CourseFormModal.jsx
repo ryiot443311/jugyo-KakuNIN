@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import Modal from './Modal';
 import { DAYS, formatDate } from '../utils/date';
+import { useI18n } from '../i18n';
 import { newId } from '../data/appData';
 import { WEEK_PATTERNS } from '../data/status';
 
@@ -8,6 +9,7 @@ const QUARTER_IDS = [1, 2, 3, 4];
 
 // 授業の追加・編集フォーム（course が null なら追加。preset は追加時の初期値）
 export default function CourseFormModal({ course, preset, periods, logCount, onSave, onDelete, onClose }) {
+  const t = useI18n();
   const [name, setName] = useState(course?.name ?? '');
   const [dayOfWeek, setDayOfWeek] = useState(course?.dayOfWeek ?? preset?.dayOfWeek ?? 1);
   const [period, setPeriod] = useState(course?.period ?? preset?.period ?? 1);
@@ -41,11 +43,11 @@ export default function CourseFormModal({ course, preset, periods, logCount, onS
   if (confirmDelete) {
     return (
       <Modal onClose={() => setConfirmDelete(false)}>
-        <p className="center strong">「{course.name}」を削除しますか？</p>
-        {logCount > 0 && <p className="center small muted mt-10">この授業の出席記録 {logCount}件 は残り、履歴では「不明」と表示されます。</p>}
+        <p className="center strong">{t.deleteCourseConfirm(course.name)}</p>
+        {logCount > 0 && <p className="center small muted mt-10">{t.deleteCourseLogsNote(logCount)}</p>}
         <div className="row gap-10 mt-20">
-          <button type="button" onClick={() => setConfirmDelete(false)} className="btn btn-soft grow">戻る</button>
-          <button type="button" onClick={() => onDelete(course.id)} className="btn btn-danger grow">削除</button>
+          <button type="button" onClick={() => setConfirmDelete(false)} className="btn btn-soft grow">{t.back}</button>
+          <button type="button" onClick={() => onDelete(course.id)} className="btn btn-danger grow">{t.delete}</button>
         </div>
       </Modal>
     );
@@ -54,52 +56,52 @@ export default function CourseFormModal({ course, preset, periods, logCount, onS
   return (
     <Modal onClose={onClose}>
       <form onSubmit={submit}>
-        <h3 className="modal-title">{course ? '授業を編集' : '授業を追加'}</h3>
+        <h3 className="modal-title">{course ? t.editCourse : t.addCourse}</h3>
 
-        <label className="field-label" htmlFor="course-name">授業名</label>
-        <input id="course-name" className="input" value={name} onChange={(e) => setName(e.target.value)} placeholder="例: 線形代数" autoFocus />
+        <label className="field-label" htmlFor="course-name">{t.courseName}</label>
+        <input id="course-name" className="input" value={name} onChange={(e) => setName(e.target.value)} placeholder={t.courseNamePlaceholder} autoFocus />
 
         <div className="row gap-10">
           <div className="grow">
-            <label className="field-label" htmlFor="course-day">曜日</label>
+            <label className="field-label" htmlFor="course-day">{t.dayOfWeek}</label>
             <select id="course-day" className="input" value={dayOfWeek} onChange={(e) => setDayOfWeek(Number(e.target.value))}>
-              {DAYS.map((d, i) => <option key={d} value={i}>{d}曜</option>)}
+              {DAYS.map((d, i) => <option key={d} value={i}>{t.dayMid(i)}</option>)}
             </select>
           </div>
           <div className="grow">
-            <label className="field-label" htmlFor="course-period">時限</label>
+            <label className="field-label" htmlFor="course-period">{t.periodLabel}</label>
             <select id="course-period" className="input" value={period} onChange={(e) => setPeriod(Number(e.target.value))}>
-              {periodOptions.map(p => <option key={p} value={p}>{p}限{periods[p] && ` ${periods[p].start}〜`}</option>)}
+              {periodOptions.map(p => <option key={p} value={p}>{t.periodOption(p, periods[p]?.start)}</option>)}
             </select>
           </div>
         </div>
 
-        <span className="field-label">開講クォーター</span>
+        <span className="field-label">{t.offeredQuarters}</span>
         <div className="row gap-10">
           {QUARTER_IDS.map(q => (
-            <label key={q} className="check"><input type="checkbox" checked={quarters.includes(q)} onChange={() => toggleQuarter(q)} />第{q}Q</label>
+            <label key={q} className="check"><input type="checkbox" checked={quarters.includes(q)} onChange={() => toggleQuarter(q)} />{t.quarter(q)}</label>
           ))}
         </div>
 
-        <span className="field-label">頻度</span>
-        <div className="row gap-10" role="radiogroup" aria-label="頻度">
+        <span className="field-label">{t.frequency}</span>
+        <div className="row gap-10" role="radiogroup" aria-label={t.frequency}>
           {WEEK_PATTERNS.map(w => (
-            <label key={w.id} className="check"><input type="radio" name="course-weeks" checked={weeks === w.id} onChange={() => setWeeks(w.id)} />{w.label}</label>
+            <label key={w.id} className="check"><input type="radio" name="course-weeks" checked={weeks === w.id} onChange={() => setWeeks(w.id)} />{t.weekPatterns[w.id]}</label>
           ))}
         </div>
-        {weeks !== 'every' && <p className="tiny muted mt-8">クォーターが始まる週を第1週として数えます（週は月曜始まり）。</p>}
+        {weeks !== 'every' && <p className="tiny muted mt-8">{t.weeksNote}</p>}
 
-        <label className="field-label" htmlFor="course-room">教室</label>
-        <input id="course-room" className="input" value={room} onChange={(e) => setRoom(e.target.value)} placeholder="例: 3-601" />
+        <label className="field-label" htmlFor="course-room">{t.room}</label>
+        <input id="course-room" className="input" value={room} onChange={(e) => setRoom(e.target.value)} placeholder={t.roomPlaceholder} />
 
-        <label className="field-label" htmlFor="course-teacher">担当</label>
+        <label className="field-label" htmlFor="course-teacher">{t.teacher}</label>
         <input id="course-teacher" className="input" value={teacher} onChange={(e) => setTeacher(e.target.value)} />
 
         <div className="row gap-10 mt-20">
-          <button type="button" onClick={onClose} className="btn btn-soft grow">キャンセル</button>
-          <button type="submit" disabled={!canSave} className="btn btn-primary grow">保存</button>
+          <button type="button" onClick={onClose} className="btn btn-soft grow">{t.cancel}</button>
+          <button type="submit" disabled={!canSave} className="btn btn-primary grow">{t.save}</button>
         </div>
-        {course && <button type="button" onClick={() => setConfirmDelete(true)} className="btn btn-ghost danger-text block mt-10">この授業を削除</button>}
+        {course && <button type="button" onClick={() => setConfirmDelete(true)} className="btn btn-ghost danger-text block mt-10">{t.deleteThisCourse}</button>}
       </form>
     </Modal>
   );

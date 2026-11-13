@@ -122,3 +122,15 @@ describe('CourseFormModal', () => {
     expect(save.disabled).toBe(true);
   });
 });
+
+describe('英語表示', () => {
+  it('Provider の言語で文言が変わる（保存する状態は日本語のまま）', async () => {
+    const { I18nContext } = await import('../i18n');
+    const { en } = await import('../i18n/messages');
+    const onSelect = vi.fn();
+    render(<I18nContext.Provider value={en}><StatusButtons onSelect={onSelect} /></I18nContext.Provider>);
+    expect(screen.getAllByRole('button').map(b => b.textContent)).toEqual(['Late', 'Absent', 'Canceled', 'Present']);
+    fireEvent.click(screen.getByText('Absent'));
+    expect(onSelect).toHaveBeenCalledWith('欠席');
+  });
+});

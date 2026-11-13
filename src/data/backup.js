@@ -2,6 +2,7 @@ import { resolveSettings } from './settings';
 import { sanitizeCourses, sanitizeCampuses, sanitizeBuildings } from './appData';
 import { sanitizeLogs, sanitizeMemos } from './sanitize';
 import { sanitizeTasks } from './tasks';
+import { ja } from '../i18n/messages';
 
 const APP_ID = 'my-attendance-app';
 const BACKUP_VERSION = 1;
@@ -22,11 +23,11 @@ export const sanitizeImages = (obj) => {
 };
 
 // 成功: { ok: true, data, dropped }  data には含まれていたキーだけが入る / dropped は破棄した不正データの件数
-export const parseBackup = (text) => {
+export const parseBackup = (text, t = ja) => {
   let json;
-  try { json = JSON.parse(text); } catch { return { ok: false, error: 'JSON として読み込めません' }; }
+  try { json = JSON.parse(text); } catch { return { ok: false, error: t.backupNotJson }; }
   if (!isPlainObject(json) || json.app !== APP_ID || !isPlainObject(json.data)) {
-    return { ok: false, error: 'このアプリのバックアップファイルではありません' };
+    return { ok: false, error: t.backupNotOurs };
   }
   const src = json.data;
   const data = {};
@@ -47,8 +48,8 @@ export const parseBackup = (text) => {
     take('campusBuildings', sanitizeBuildings);
     take('campusImages', sanitizeImages);
   } catch {
-    return { ok: false, error: 'バックアップの形式が正しくありません' };
+    return { ok: false, error: t.backupBadFormat };
   }
-  if (Object.keys(data).length === 0) return { ok: false, error: '読み込めるデータがありません' };
+  if (Object.keys(data).length === 0) return { ok: false, error: t.backupEmpty };
   return { ok: true, data, dropped };
 };

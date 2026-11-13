@@ -1,12 +1,10 @@
 import { QUARTERS, PERIODS } from './constants';
+import { LANGS } from '../i18n';
 
 export const SETTINGS_KEY = 'app_settings';
 
-export const THEMES = [
-  { id: 'auto', label: '自動' },
-  { id: 'light', label: 'ライト' },
-  { id: 'dark', label: 'ダーク' },
-];
+// 表示名は i18n/messages.js の themes
+export const THEMES = [{ id: 'auto' }, { id: 'light' }, { id: 'dark' }];
 
 // 月ごとの最大日数（2月は閏年を考慮して 29）
 export const MAX_DAYS = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
@@ -42,6 +40,7 @@ export function resolveSettings(saved) {
   const s = saved && typeof saved === 'object' ? saved : {};
   return {
     theme: THEMES.some(t => t.id === s.theme) ? s.theme : 'auto',
+    lang: LANGS.some(l => l.id === s.lang) ? s.lang : 'ja', // 表示言語（既定は日本語）
     quarters: mergeRanges(QUARTERS, s.quarters ?? legacyQuarters(s.quarterRanges), isMonthDay),
     periods: mergeRanges(PERIODS, s.periods, isTime),
     hiddenCourses: Array.isArray(s.hiddenCourses) ? s.hiddenCourses : [],

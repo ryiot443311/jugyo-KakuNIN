@@ -1,14 +1,16 @@
 import { useRef, useState } from 'react';
 import { getSwipeDirection } from '../utils/swipe';
+import { useI18n } from '../i18n';
 
 // 記録した直後に、数秒間だけ画面上部に「元に戻す」を出す。左右にスワイプするか × で消せる
 export default function UndoToast({ text, onUndo, onDismiss }) {
+  const t = useI18n();
   const start = useRef(null);
   const [dx, setDx] = useState(0); // 指に合わせて横にずらす量
 
   const onTouchStart = (e) => {
-    const t = e.touches[0];
-    start.current = e.touches.length === 1 ? { x: t.clientX, y: t.clientY } : null;
+    const touch = e.touches[0];
+    start.current = e.touches.length === 1 ? { x: touch.clientX, y: touch.clientY } : null;
   };
   const onTouchMove = (e) => {
     if (!start.current) return;
@@ -16,8 +18,8 @@ export default function UndoToast({ text, onUndo, onDismiss }) {
   };
   const onTouchEnd = (e) => {
     if (!start.current) return;
-    const t = e.changedTouches[0];
-    const direction = getSwipeDirection(t.clientX - start.current.x, t.clientY - start.current.y);
+    const touch = e.changedTouches[0];
+    const direction = getSwipeDirection(touch.clientX - start.current.x, touch.clientY - start.current.y);
     start.current = null;
     if (direction !== 0) onDismiss();
     else setDx(0); // スワイプでなければ元の位置に戻す
@@ -31,8 +33,8 @@ export default function UndoToast({ text, onUndo, onDismiss }) {
       onTouchCancel={() => { start.current = null; setDx(0); }}
     >
       <span>{text}</span>
-      <button type="button" onClick={onUndo} className="btn btn-soft btn-small">元に戻す</button>
-      <button type="button" onClick={onDismiss} className="toast-close" aria-label="閉じる">×</button>
+      <button type="button" onClick={onUndo} className="btn btn-soft btn-small">{t.undo}</button>
+      <button type="button" onClick={onDismiss} className="toast-close" aria-label={t.close}>×</button>
     </div>
   );
 }

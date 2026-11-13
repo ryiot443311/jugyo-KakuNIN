@@ -1,5 +1,6 @@
 import { addDays, formatDate, parseDateStr } from './date';
 import { isCourseInQuarter, isCourseOnDate } from '../data/status';
+import { ja } from '../i18n/messages';
 
 // 時間割をカレンダー（iCalendar / .ics）にする。授業ごと・クォーターごとに繰り返しの予定を作る
 // 時刻は端末の時刻として扱う（タイムゾーンを付けない）
@@ -43,8 +44,8 @@ const firstDate = (course, start, end, quarters) => {
 };
 
 // from 以降に終わるクォーターだけを含める（過去の予定を作らないため）
-export function buildIcs({ courses, quarters, periods, fiscalYear, from, alarmMinutes = 10, now = new Date() }) {
-  const lines = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//jugyo-kakunin//attendance//JA', 'CALSCALE:GREGORIAN', 'X-WR-CALNAME:授業の時間割'];
+export function buildIcs({ courses, quarters, periods, fiscalYear, from, alarmMinutes = 10, now = new Date(), t = ja }) {
+  const lines = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//jugyo-kakunin//attendance//JA', 'CALSCALE:GREGORIAN', `X-WR-CALNAME:${esc(t.icsCalendarName)}`];
   let count = 0;
   for (const [q, range] of Object.entries(quarters)) {
     const { start, end } = quarterDates(range, fiscalYear);
@@ -64,7 +65,7 @@ export function buildIcs({ courses, quarters, periods, fiscalYear, from, alarmMi
         `RRULE:FREQ=WEEKLY;INTERVAL=${interval};UNTIL=${ymd(end)}T235959`,
         `SUMMARY:${esc(c.name)}`,
         ...(c.room ? [`LOCATION:${esc(c.room)}`] : []),
-        ...(c.teacher ? [`DESCRIPTION:${esc(`担当: ${c.teacher}`)}`] : []),
+        ...(c.teacher ? [`DESCRIPTION:${esc(`${t.teacher}: ${c.teacher}`)}`] : []),
       );
       if (alarmMinutes > 0) lines.push('BEGIN:VALARM', 'ACTION:DISPLAY', `DESCRIPTION:${esc(c.name)}`, `TRIGGER:-PT${alarmMinutes}M`, 'END:VALARM');
       lines.push('END:VEVENT');

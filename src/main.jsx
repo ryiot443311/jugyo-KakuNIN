@@ -4,10 +4,15 @@ import App from './App.jsx'
 import ErrorBoundary from './components/ErrorBoundary.jsx'
 import { SETTINGS_KEY, resolveSettings } from './data/settings.js'
 import { applyTheme } from './utils/theme.js'
+import { applyLang } from './i18n/index.js'
 import './index.css'
 
-// 初回描画前にテーマを反映して、ちらつきを防ぐ
-try { applyTheme(resolveSettings(JSON.parse(localStorage.getItem(SETTINGS_KEY))).theme) } catch { /* 読めなければ自動 */ }
+// 初回描画前にテーマと言語を反映して、ちらつきを防ぐ
+try {
+  const settings = resolveSettings(JSON.parse(localStorage.getItem(SETTINGS_KEY)))
+  applyTheme(settings.theme)
+  applyLang(settings.lang)
+} catch { /* 読めなければ自動・日本語 */ }
 
 // 本番ビルドでは Service Worker を登録し、オフラインでも開けるようにする
 if ('serviceWorker' in navigator && import.meta.env.PROD) {

@@ -1,18 +1,17 @@
 import { useMemo } from 'react';
-import { DAYS, parseDateStr, getWeekOfMonth, getFiscalYear } from '../utils/date';
+import { parseDateStr, getWeekOfMonth, getFiscalYear } from '../utils/date';
 import LogCard from '../components/LogCard';
 import { STATUSES, statusBgClass } from '../data/status';
-
-// 'YYYY-MM-DD' を「10月21日」に
-const monthDay = (date) => `${Number(date.slice(5, 7))}月${Number(date.slice(8))}日`;
+import { useI18n } from '../i18n';
 
 // その日の記録の内訳（出席2・欠席1 など）。閉じたままでも状態が分かるように
 function DaySummary({ logs }) {
+  const t = useI18n();
   return (
     <span className="day-summary">
       {STATUSES.map(s => {
         const n = logs.filter(l => l.status === s).length;
-        return n > 0 && <span key={s} className={`pill ${statusBgClass(s)}`}>{s}{n > 1 ? ` ${n}` : ''}</span>;
+        return n > 0 && <span key={s} className={`pill ${statusBgClass(s)}`}>{t.status(s)}{n > 1 ? ` ${n}` : ''}</span>;
       })}
     </span>
   );
@@ -28,11 +27,12 @@ function AccordionHeader({ onClick, isOpen, className, children }) {
 }
 
 export default function HistoryView({ logs, courses, expandedSections, onToggle, onEditLog }) {
+  const t = useI18n();
   // 年をまたいでも正しく並ぶよう 'YYYY-MM' をキーにする
   const groupedLogs = useMemo(() => logs.reduce((acc, log) => {
     const d = parseDateStr(log.date); const m = log.date.slice(0, 7); const w = getWeekOfMonth(d);
     if (!acc[m]) acc[m] = {}; if (!acc[m][w]) acc[m][w] = {}; if (!acc[m][w][log.date]) acc[m][w][log.date] = [];
-    acc[m][w][log.date].push({ ...log, dayName: DAYS[d.getDay()] }); return acc;
+    acc[m][w][log.date].push(log); return acc;
   }, {}), [logs]);
   const sortedMonths = useMemo(() => Object.keys(groupedLogs).sort((a, b) => b.localeCompare(a)), [groupedLogs]);
 
@@ -44,14 +44,14 @@ export default function HistoryView({ logs, courses, expandedSections, onToggle,
   }, [sortedMonths]);
   const logCountByYear = useMemo(() => logs.reduce((acc, l) => { const fy = getFiscalYear(l.date); acc[fy] = (acc[fy] ?? 0) + 1; return acc; }, {}), [logs]);
 
-  if (years.length === 0) return <div className="empty">記録はまだありません</div>;
+  if (years.length === 0) return <div className="empty">{t.noRecords}</div>;
 
   const renderMonth = (month) => {
     const mKey = `m-${month}`; const isMOpen = expandedSections[mKey] !== false;
     return (
       <div key={month} className="card accordion">
         <AccordionHeader onClick={() => onToggle(mKey, true)} isOpen={isMOpen} className="acc-month">
-          <span>{month.slice(0, 4)}年{Number(month.slice(5))}月</span>
+          <span>{t.yearMonth(month.slice(0, 4), Number(month.slice(5)))}</span>
         </AccordionHeader>
         {isMOpen && (
           <div className="acc-body">
@@ -60,7 +60,7 @@ export default function HistoryView({ logs, courses, expandedSections, onToggle,
               return (
                 <div key={week} className="acc-week">
                   <AccordionHeader onClick={() => onToggle(wKey, true)} isOpen={isWOpen} className="acc-weekhead">
-                    <span>第{week}週</span>
+                    <span>{t.weekOfMonth(week)}</span>
                   </AccordionHeader>
                   {isWOpen && (
                     <div className="acc-body">
@@ -70,7 +70,7 @@ export default function HistoryView({ logs, courses, expandedSections, onToggle,
                         return (
                           <div key={date} className="acc-day">
                             <AccordionHeader onClick={() => onToggle(dKey, false)} isOpen={isDOpen} className="acc-dayhead">
-                              <span className="day-head-label">{monthDay(date)}（{dayLogs[0].dayName}）<DaySummary logs={dayLogs} /></span>
+                              <span className="day-head-label">{t.dateHeading(Number(date.slice(5, 7)), Number(date.slice(8)), parseDateStr(date).getDay())}<DaySummary logs={dayLogs} /></span>
                             </AccordionHeader>
                             {isDOpen && <div className="pt-8">{dayLogs.map(log => <LogCard key={log.id} log={log} courses={courses} onEdit={onEditLog} />)}</div>}
                           </div>
@@ -94,7 +94,7 @@ export default function HistoryView({ logs, courses, expandedSections, onToggle,
         return (
           <div key={fy}>
             <AccordionHeader onClick={() => onToggle(yKey, i === 0)} isOpen={isYOpen} className="acc-year">
-              <span>{fy}年度 <span className="small muted">（{logCountByYear[fy]}件）</span></span>
+              <span>{t.fiscalYear(fy)} <span className="small muted">{t.yearCount(logCountByYear[fy])}</span></span>
             </AccordionHeader>
             {isYOpen && months.map(renderMonth)}
           </div>

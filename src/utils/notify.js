@@ -1,5 +1,6 @@
 import { getQuarterByDate, parseDateStr, toMinutes } from './date';
 import { isCourseInQuarter, isCourseOnDate } from '../data/status';
+import { ja } from '../i18n/messages';
 
 export const BEFORE_MINUTES = 10; // 授業開始の何分前に知らせるか
 const WINDOW_MINUTES = 5; // バックグラウンドで時計が遅れても、この分数までは遅れて知らせる
@@ -7,7 +8,7 @@ const WINDOW_MINUTES = 5; // バックグラウンドで時計が遅れても、
 // いま知らせるべき通知 [{ key, title, body }]
 // before: 授業開始 BEFORE_MINUTES 分前（休講で記録した授業は除く）
 // after: 授業終了時に、まだ記録していない授業
-export function dueNotifications({ courses, quarters, periods, logs, today, nowMin, notify }) {
+export function dueNotifications({ courses, quarters, periods, logs, today, nowMin, notify, t = ja }) {
   if (!notify.before && !notify.after) return [];
   const quarter = getQuarterByDate(parseDateStr(today), quarters);
   if (quarter === 0) return [];
@@ -19,10 +20,10 @@ export function dueNotifications({ courses, quarters, periods, logs, today, nowM
     if (!p || !isCourseInQuarter(c, quarter) || !isCourseOnDate(c, today, quarters)) continue;
     const log = logOf(c.id);
     if (notify.before && log?.status !== '休講' && inWindow(toMinutes(p.start) - BEFORE_MINUTES)) {
-      result.push({ key: `${today}|${c.id}|before`, title: `まもなく ${c.name}`, body: `${p.start}から ${c.period}限${c.room ? `・${c.room}` : ''}` });
+      result.push({ key: `${today}|${c.id}|before`, title: t.notifySoon(c.name), body: t.notifySoonBody(p.start, c.period, c.room) });
     }
     if (notify.after && !log && inWindow(toMinutes(p.end))) {
-      result.push({ key: `${today}|${c.id}|after`, title: `${c.name} の出欠を記録しましょう`, body: 'タップして記録する' });
+      result.push({ key: `${today}|${c.id}|after`, title: t.notifyRecord(c.name), body: t.notifyRecordBody });
     }
   }
   return result;

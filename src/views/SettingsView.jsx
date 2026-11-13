@@ -8,6 +8,7 @@ import DangerSection from '../components/settings/DangerSection';
 import CsvSection from '../components/settings/CsvSection';
 import InstallSection from '../components/settings/InstallSection';
 import NotifySection from '../components/settings/NotifySection';
+import { LANGS, useI18n } from '../i18n';
 
 const pad = (n) => String(n).padStart(2, '0');
 
@@ -30,16 +31,18 @@ function NumInput({ value, min, max, label, onCommit }) {
 
 // 'MM-DD' の月・日入力
 function MonthDayInput({ value, label, onChange }) {
+  const t = useI18n();
   const [month, day] = value.split('-').map(Number);
   return (
     <>
-      <NumInput value={month} min={1} max={12} label={`${label}の月`} onCommit={(m) => onChange(`${pad(m)}-${pad(Math.min(day, MAX_DAYS[m - 1]))}`)} />月
-      <NumInput value={day} min={1} max={MAX_DAYS[month - 1]} label={`${label}の日`} onCommit={(d) => onChange(`${pad(month)}-${pad(d)}`)} />日
+      <NumInput value={month} min={1} max={12} label={t.monthOf(label)} onCommit={(m) => onChange(`${pad(m)}-${pad(Math.min(day, MAX_DAYS[m - 1]))}`)} />{t.monthUnit}
+      <NumInput value={day} min={1} max={MAX_DAYS[month - 1]} label={t.dayOf(label)} onCommit={(d) => onChange(`${pad(month)}-${pad(d)}`)} />{t.dayUnit}
     </>
   );
 }
 
 export default function SettingsView({ settings, onChange, courses, today, appData, onChangeData, campusImages, onChangeImages, logs, logCount, onResetLogs, onAddCourse, onEditCourse, getBackup, onImportBackup }) {
+  const t = useI18n();
   const setQuarter = (q, patch) => onChange({ quarters: { ...settings.quarters, [q]: { ...settings.quarters[q], ...patch } } });
   const setPeriod = (p, patch) => onChange({ periods: { ...settings.periods, [p]: { ...settings.periods[p], ...patch } } });
   const toggleCourse = (id) => onChange({
@@ -48,42 +51,50 @@ export default function SettingsView({ settings, onChange, courses, today, appDa
 
   return (
     <div className="mb-20">
-      <SettingsGroup title="テーマ">
+      <SettingsGroup title={t.language}>
         <div className="row gap-6">
-          {THEMES.map(t => (
-            <button key={t.id} type="button" aria-pressed={settings.theme === t.id} onClick={() => onChange({ theme: t.id })} className={`btn grow ${settings.theme === t.id ? 'btn-primary' : 'btn-soft'}`}>{t.label}</button>
+          {LANGS.map(l => (
+            <button key={l.id} type="button" lang={l.id} aria-pressed={settings.lang === l.id} onClick={() => onChange({ lang: l.id })} className={`btn grow ${settings.lang === l.id ? 'btn-primary' : 'btn-soft'}`}>{l.label}</button>
+          ))}
+        </div>
+      </SettingsGroup>
+
+      <SettingsGroup title={t.theme}>
+        <div className="row gap-6">
+          {THEMES.map(theme => (
+            <button key={theme.id} type="button" aria-pressed={settings.theme === theme.id} onClick={() => onChange({ theme: theme.id })} className={`btn grow ${settings.theme === theme.id ? 'btn-primary' : 'btn-soft'}`}>{t.themes[theme.id]}</button>
           ))}
         </div>
       </SettingsGroup>
 
       <CoursesSection courses={appData.courses} hiddenCourses={settings.hiddenCourses} onToggle={toggleCourse} onEdit={onEditCourse} onAdd={onAddCourse} />
       <CampusSection campuses={appData.campuses} buildings={appData.buildings} images={campusImages} onChangeData={onChangeData} onChangeImages={onChangeImages} />
-      <SettingsGroup title="出席率の基準">
+      <SettingsGroup title={t.threshold}>
         <div className="row gap-10 align-center">
-          <NumInput value={settings.threshold} min={1} max={100} label="出席率の基準" onCommit={(threshold) => onChange({ threshold })} />
-          <span>% 以上</span>
+          <NumInput value={settings.threshold} min={1} max={100} label={t.threshold} onCommit={(threshold) => onChange({ threshold })} />
+          <span>{t.percentOrMore}</span>
         </div>
-        <p className="small muted mt-8">分析画面の警告と「あと何回欠席できるか」の計算に使います。</p>
+        <p className="small muted mt-8">{t.thresholdNote}</p>
       </SettingsGroup>
 
-      <SettingsGroup title="クォーターの期間">
+      <SettingsGroup title={t.quarterPeriods}>
         {Object.entries(settings.quarters).map(([q, range]) => (
           <div key={q} className="row align-center gap-6 range-row">
-            <span className="range-label">第{q}Q</span>
-            <span className="row align-center gap-6"><MonthDayInput value={range.start} label={`第${q}Q開始`} onChange={(start) => setQuarter(q, { start })} /></span>
-            <span className="row align-center gap-6">〜<MonthDayInput value={range.end} label={`第${q}Q終了`} onChange={(end) => setQuarter(q, { end })} /></span>
+            <span className="range-label">{t.quarter(q)}</span>
+            <span className="row align-center gap-6"><MonthDayInput value={range.start} label={t.quarterStart(q)} onChange={(start) => setQuarter(q, { start })} /></span>
+            <span className="row align-center gap-6">{t.tilde}<MonthDayInput value={range.end} label={t.quarterEnd(q)} onChange={(end) => setQuarter(q, { end })} /></span>
           </div>
         ))}
-        <p className="tiny muted">年をまたぐ期間は、開始を終了より後の日付にします（例: 11月1日〜1月31日）。</p>
+        <p className="tiny muted">{t.crossYearNote}</p>
       </SettingsGroup>
 
-      <SettingsGroup title="時限の時間">
+      <SettingsGroup title={t.periodTimes}>
         {Object.entries(settings.periods).map(([p, time]) => (
           <div key={p} className="row align-center gap-6 range-row">
-            <span className="range-label">{p}限</span>
-            <input type="time" aria-label={`${p}限の開始`} value={time.start} onChange={(e) => e.target.value && setPeriod(p, { start: e.target.value })} className="input grow" />
-            <span>〜</span>
-            <input type="time" aria-label={`${p}限の終了`} value={time.end} onChange={(e) => e.target.value && setPeriod(p, { end: e.target.value })} className="input grow" />
+            <span className="range-label">{t.period(p)}</span>
+            <input type="time" aria-label={t.periodStart(p)} value={time.start} onChange={(e) => e.target.value && setPeriod(p, { start: e.target.value })} className="input grow" />
+            <span>{t.tilde}</span>
+            <input type="time" aria-label={t.periodEnd(p)} value={time.end} onChange={(e) => e.target.value && setPeriod(p, { end: e.target.value })} className="input grow" />
           </div>
         ))}
       </SettingsGroup>

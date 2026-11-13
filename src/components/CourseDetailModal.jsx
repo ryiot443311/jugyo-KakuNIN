@@ -4,8 +4,10 @@ import StatusButtons from './StatusButtons';
 import RecordNotice from './RecordNotice';
 import { weekPatternLabel } from '../data/status';
 import TaskList from './TaskList';
+import { useI18n } from '../i18n';
 
 export default function CourseDetailModal({ course, date, today, tasks, onAddTask, onToggleTask, onDeleteTask, memo, dateMemo, recordState, log, onSaveMemo, onSaveDateMemo, onRecord, onEditLog, onEdit, onClose }) {
+  const t = useI18n();
   const [tempMemo, setTempMemo] = useState(memo || '');
   const [tempDateMemo, setTempDateMemo] = useState(dateMemo || '');
 
@@ -13,25 +15,25 @@ export default function CourseDetailModal({ course, date, today, tasks, onAddTas
 
   return (
     <Modal onClose={saveAndClose}>
-      <h3 className="modal-title">授業詳細</h3>
+      <h3 className="modal-title">{t.courseDetailTitle}</h3>
       <div className="info-box">
-        <p><b>科目:</b> {course.name}</p>
-        <p><b>教室:</b> {course.room}</p>
-        <p><b>担当:</b> {course.teacher}</p>
-        {course.weeks && <p><b>頻度:</b> {weekPatternLabel(course)}</p>}
+        <p><b>{t.subject}:</b> {course.name}</p>
+        <p><b>{t.room}:</b> {course.room}</p>
+        <p><b>{t.teacher}:</b> {course.teacher}</p>
+        {course.weeks && <p><b>{t.frequency}:</b> {weekPatternLabel(course, t)}</p>}
       </div>
 
-      <label className="field-label" htmlFor="course-memo">メモ (自動保存)</label>
+      <label className="field-label" htmlFor="course-memo">{t.memoLabel}</label>
       <textarea
         id="course-memo" value={tempMemo} onChange={(e) => setTempMemo(e.target.value)} onBlur={() => onSaveMemo(tempMemo)}
-        placeholder="課題や持ち物などを入力..."
+        placeholder={t.memoPlaceholder}
         className="textarea"
       />
 
-      <label className="field-label" htmlFor="date-memo">{date} だけのメモ (自動保存)</label>
+      <label className="field-label" htmlFor="date-memo">{t.dateMemoLabel(date)}</label>
       <textarea
         id="date-memo" value={tempDateMemo} onChange={(e) => setTempDateMemo(e.target.value)} onBlur={() => onSaveDateMemo(tempDateMemo)}
-        placeholder="この日だけの教室変更など..."
+        placeholder={t.dateMemoPlaceholder}
         className="textarea"
       />
 
@@ -41,16 +43,16 @@ export default function CourseDetailModal({ course, date, today, tasks, onAddTas
         {recordState.status !== 'ok' ? (
           <RecordNotice status={recordState.status} long />
         ) : log ? (
-          <button type="button" onClick={() => onEditLog(log)} className="btn btn-primary block">記録を修正する</button>
+          <button type="button" onClick={() => onEditLog(log)} className="btn btn-primary block">{t.editRecord}</button>
         ) : (
           <>
-            <p className="field-label center">記録を追加</p>
+            <p className="field-label center">{t.addRecord}</p>
             <StatusButtons onSelect={onRecord} />
           </>
         )}
       </div>
-      <button type="button" onClick={() => { onSaveMemo(tempMemo); onSaveDateMemo(tempDateMemo); onEdit(); }} className="btn btn-soft block mb-6">授業情報を編集</button>
-      <button type="button" onClick={saveAndClose} className="btn btn-ghost block">閉じる</button>
+      <button type="button" onClick={() => { onSaveMemo(tempMemo); onSaveDateMemo(tempDateMemo); onEdit(); }} className="btn btn-soft block mb-6">{t.editCourseInfo}</button>
+      <button type="button" onClick={saveAndClose} className="btn btn-ghost block">{t.close}</button>
     </Modal>
   );
 }

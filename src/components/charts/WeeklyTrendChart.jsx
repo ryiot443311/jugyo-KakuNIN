@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { parseDateStr } from '../../utils/date';
+import { useI18n } from '../../i18n';
 
 const MAX_WEEKS = 12; // 直近この週数を表示
 const W = 320; const H = 170;
@@ -17,6 +18,7 @@ const barPath = (x, top, width, base) => {
 
 // 週ごとの出席率（1系列の棒グラフ）。タップ・ホバーでその週の内訳を表示し、表でも読める
 export default function WeeklyTrendChart({ weeks, threshold }) {
+  const t = useI18n();
   const shown = weeks.slice(-MAX_WEEKS);
   const [selected, setSelected] = useState(null);
   const active = shown.find(w => w.week === selected) ?? shown[shown.length - 1];
@@ -27,7 +29,7 @@ export default function WeeklyTrendChart({ weeks, threshold }) {
 
   return (
     <div>
-      <svg viewBox={`0 0 ${W} ${H}`} className="chart" role="img" aria-label={`週ごとの出席率。直近の週（${md(shown[shown.length - 1].week)}〜）は${shown[shown.length - 1].rate}%`}>
+      <svg viewBox={`0 0 ${W} ${H}`} className="chart" role="img" aria-label={t.chartLabel(md(shown[shown.length - 1].week), shown[shown.length - 1].rate)}>
         {[0, 50, 100].map(v => (
           <g key={v}>
             <line x1={PAD.left} x2={W - PAD.right} y1={y(v)} y2={y(v)} className="chart-grid" />
@@ -35,7 +37,7 @@ export default function WeeklyTrendChart({ weeks, threshold }) {
           </g>
         ))}
         <line x1={PAD.left} x2={W - PAD.right} y1={y(threshold)} y2={y(threshold)} className="chart-ref" />
-        <text x={W - PAD.right} y={y(threshold) - 4} textAnchor="end" className="chart-axis">基準 {threshold}%</text>
+        <text x={W - PAD.right} y={y(threshold) - 4} textAnchor="end" className="chart-axis">{t.chartThreshold(threshold)}</text>
         {shown.map((w, i) => {
           const x = PAD.left + slot * i + (slot - barW) / 2;
           const isActive = w.week === active.week;
@@ -51,20 +53,20 @@ export default function WeeklyTrendChart({ weeks, threshold }) {
               <rect
                 x={PAD.left + slot * i} y={PAD.top} width={slot} height={PLOT_H} className="chart-hit"
                 onMouseEnter={() => setSelected(w.week)} onClick={() => setSelected(w.week)}
-              ><title>{`${md(w.week)}〜の週: ${w.rate}%`}</title></rect>
+              ><title>{`${t.weekOf(md(w.week))}: ${w.rate}%`}</title></rect>
             </g>
           );
         })}
       </svg>
       <p className="small muted mt-8" aria-live="polite">
-        {md(active.week)}〜の週: <span className="strong">{active.rate}%</span>（出席{active.present}・遅刻{active.late}・欠席{active.absent}）
+        {t.weekOf(md(active.week))}: <span className="strong">{active.rate}%</span>{t.breakdown(active.present, active.late, active.absent)}
       </p>
       <details className="chart-table mt-8">
-        <summary className="small muted">数値を表で見る</summary>
+        <summary className="small muted">{t.showTable}</summary>
         <table>
-          <thead><tr><th>週</th><th>出席率</th><th>出席</th><th>遅刻</th><th>欠席</th></tr></thead>
+          <thead><tr><th>{t.thWeek}</th><th>{t.thRate}</th><th>{t.status('出席')}</th><th>{t.status('遅刻')}</th><th>{t.status('欠席')}</th></tr></thead>
           <tbody>
-            {shown.map(w => <tr key={w.week}><td>{md(w.week)}〜</td><td>{w.rate}%</td><td>{w.present}</td><td>{w.late}</td><td>{w.absent}</td></tr>)}
+            {shown.map(w => <tr key={w.week}><td>{t.weekFrom(md(w.week))}</td><td>{w.rate}%</td><td>{w.present}</td><td>{w.late}</td><td>{w.absent}</td></tr>)}
           </tbody>
         </table>
       </details>

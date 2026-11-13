@@ -320,3 +320,37 @@ test('オフラインで起動できる・CSP 違反やエラーがない', asyn
   await context.setOffline(false)
   expect(errors).toEqual([])
 })
+
+test('言語: 設定で英語に切り替えると全画面が英語になり、再読み込み後も保たれる（記録は日本語のまま保存）', async ({ page }) => {
+  await openApp(page)
+  await expect(page.locator('html')).toHaveAttribute('lang', 'ja')
+  await page.click('.tab:text-is("設定")')
+  const group = await openGroup(page, '言語 / Language')
+  await group.locator('button:text-is("English")').click()
+
+  await expect(page.locator('html')).toHaveAttribute('lang', 'en')
+  await expect(page).toHaveTitle('Attendance Tracker')
+  await expect(page.locator('.app-title')).toHaveText('Attendance Tracker')
+  await expect(page.locator('.tab')).toHaveText(['Daily', 'Weekly', 'History', 'Stats', 'Map', 'Settings'])
+  await expect(settingsGroup(page, 'Language / 言語')).toHaveCount(1)
+  expect((await stored(page, 'app_settings')).lang).toBe('en')
+
+  await page.click('.tab:text-is("Daily")')
+  await expect(page.locator('.date-heading')).toHaveText('Wed, Oct 28Today')
+  await page.click('.course-card .status-btn.st-absent')
+  await expect(page.locator('.modal')).toContainText('Record 2026-10-28 as Absent.')
+  await page.click('.modal .btn-primary:text-is("Confirm")')
+  await expect(page.locator('.course-card .notice')).toHaveText('Recorded: Absent')
+  expect((await stored(page, 'attendance_logs'))[0].status).toBe('欠席')
+
+  await page.reload()
+  await expect(page.locator('.app-title')).toHaveText('Attendance Tracker')
+  await page.click('.tab:text-is("Stats")')
+  await expect(page.locator('.summary-label')).toHaveText('Attendance (FY2026 Q3)')
+
+  // 日本語に戻す
+  await page.click('.tab:text-is("Settings")')
+  await (await openGroup(page, 'Language / 言語')).locator('button:text-is("日本語")').click()
+  await expect(page.locator('.app-title')).toHaveText('授業管理アプリ')
+  await expect(page.locator('html')).toHaveAttribute('lang', 'ja')
+})

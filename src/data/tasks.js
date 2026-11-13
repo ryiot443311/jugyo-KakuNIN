@@ -1,4 +1,5 @@
 import { addDays, parseDateStr } from '../utils/date';
+import { ja } from '../i18n/messages';
 
 // 授業ごとの課題 [{ id, courseId, title, due: 'YYYY-MM-DD', done }]
 export const TASKS_KEY = 'course_tasks';
@@ -22,12 +23,12 @@ export const sanitizeTasks = (arr) => {
 // 期限までの日数（今日が期限なら 0、過ぎていれば負）
 export const daysUntil = (due, today) => Math.round((parseDateStr(due) - parseDateStr(today)) / (24 * 60 * 60 * 1000));
 
-export const dueLabel = (due, today) => {
+export const dueLabel = (due, today, t = ja) => {
   const n = daysUntil(due, today);
-  if (n < 0) return `期限切れ（${-n}日前）`;
-  if (n === 0) return '今日まで';
-  if (n === 1) return '明日まで';
-  return `あと${n}日`;
+  if (n < 0) return t.dueOverdue(-n);
+  if (n === 0) return t.dueToday;
+  if (n === 1) return t.dueTomorrow;
+  return t.dueIn(n);
 };
 
 // 期限順（同じ期限は登録順）

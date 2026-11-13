@@ -1,12 +1,14 @@
 import { useState } from 'react';
+import { useI18n } from '../i18n';
 
 export default function MapView({ campuses, buildings, campusImages }) {
+  const t = useI18n();
   const [mapCampus, setMapCampus] = useState(null);
   const [failedSrc, setFailedSrc] = useState(null);
   const campus = campuses.find(c => c.id === mapCampus) ?? campuses[0];
   const mapImage = campus && (campusImages[campus.id] || campus.mapImage);
 
-  if (!campus) return <div className="empty">キャンパスが登録されていません（設定タブから追加できます）</div>;
+  if (!campus) return <div className="empty">{t.noCampus}</div>;
 
   return (
     <div className="mb-20">
@@ -16,10 +18,10 @@ export default function MapView({ campuses, buildings, campusImages }) {
         ))}
       </div>
       {!mapImage || failedSrc === mapImage ? (
-        <div className="empty small">マップ画像がありません（設定タブから追加できます）</div>
+        <div className="empty small">{t.noMapImage}</div>
       ) : (
         <div className="card section">
-          <img src={mapImage} alt="マップ" onError={() => setFailedSrc(mapImage)} className="map-img" />
+          <img src={mapImage} alt={t.mapAlt} onError={() => setFailedSrc(mapImage)} className="map-img" />
         </div>
       )}
       {buildings[campus.id]?.map(b => (

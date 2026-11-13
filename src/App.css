@@ -162,10 +162,11 @@
 .chart-table summary { cursor: pointer; }
 .hbars { display: flex; flex-direction: column; gap: 6px; }
 .hbar-row { display: flex; align-items: center; gap: 8px; }
-.hbar-label { width: 1.5em; color: var(--text-muted); font-size: 0.85rem; font-weight: 700; }
+.hbar-label { width: 1.5em; flex-shrink: 0; color: var(--text-muted); font-size: 0.85rem; font-weight: 700; }
+:lang(en) .hbar-label { width: 2.4em; } /* 英語の曜日（Mon など）は3文字 */
 .hbar-track { flex: 1; height: 12px; }
 .hbar-fill { display: block; height: 100%; border-radius: 0 4px 4px 0; background: var(--chart); }
-.hbar-value { width: 3em; text-align: right; color: var(--text); font-size: 0.8rem; }
+.hbar-value { min-width: 3em; flex-shrink: 0; text-align: right; color: var(--text); font-size: 0.8rem; }
 .slot-list { margin: 0; padding-left: 1.4em; }
 
 /* ===== マップ ===== */

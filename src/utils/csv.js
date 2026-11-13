@@ -1,4 +1,5 @@
-import { DAYS, getFiscalYear, parseDateStr } from './date';
+import { getFiscalYear, parseDateStr } from './date';
+import { ja } from '../i18n/messages';
 
 // 値を CSV のセルにする。先頭が = + - @ の値は、表計算ソフトで式として実行されないよう ' を付ける
 const cell = (value) => {
@@ -17,28 +18,30 @@ export const filterLogs = (logs, { year = 'all', quarter = 0 }) =>
 const rate = (present, late, absent) => (present + late + absent === 0 ? '' : Math.round(((present + late) / (present + late + absent)) * 100));
 
 // 記録1件を1行にした明細
-export function buildDetailCsv(logs, courses) {
+export function buildDetailCsv(logs, courses, t = ja) {
   const byId = new Map(courses.map(c => [c.id, c]));
   const rows = [...logs]
     .sort((a, b) => a.date.localeCompare(b.date) || (byId.get(a.courseId)?.period ?? 0) - (byId.get(b.courseId)?.period ?? 0) || (a.recordedAt ?? '').localeCompare(b.recordedAt ?? ''))
     .map(l => {
       const c = byId.get(l.courseId);
-      return [l.date, DAYS[parseDateStr(l.date).getDay()], c?.period ?? '', c?.name ?? '不明', l.status, l.recordedAt ?? '', `第${l.quarter}Q`, `${getFiscalYear(l.date)}年度`];
+      return [l.date, t.days[parseDateStr(l.date).getDay()], c?.period ?? '', c?.name ?? t.unknown, t.status(l.status), l.recordedAt ?? '', t.quarter(l.quarter), t.fiscalYear(getFiscalYear(l.date))];
     });
-  return toCsv([['日付', '曜日', '時限', '授業名', '状態', '記録時刻', 'クォーター', '年度'], ...rows]);
+  return toCsv([t.csvDetailHeaders, ...rows]);
 }
 
 // 授業ごとの集計（出席率は休講を除いた回数に対する、出席＋遅刻の割合）
-export function buildSummaryCsv(logs, courses) {
+export function buildSummaryCsv(logs, courses, t = ja) {
   const byId = new Map(courses.map(c => [c.id, c]));
   const stats = new Map();
-  const add = (key, status) => {
-    if (!stats.has(key)) stats.set(key, { 出席: 0, 遅刻: 0, 欠席: 0, 休講: 0 });
-    stats.get(key)[status] += 1;
-  };
-  for (const l of logs) { add(byId.get(l.courseId)?.name ?? '不明', l.status); add('全体', l.status); }
+  const empty = () => ({ 出席: 0, 遅刻: 0, 欠席: 0, 休講: 0 });
+  const overall = empty(); // 授業名と重ならないよう、全体は別に数える
+  for (const l of logs) {
+    const name = byId.get(l.courseId)?.name ?? t.unknown;
+    if (!stats.has(name)) stats.set(name, empty());
+    stats.get(name)[l.status] += 1;
+    overall[l.status] += 1;
+  }
   const toRow = (name, s) => [name, s.出席, s.遅刻, s.欠席, s.休講, s.出席 + s.遅刻 + s.欠席, rate(s.出席, s.遅刻, s.欠席)];
-  const overall = stats.get('全体');
-  const rows = [...stats.entries()].filter(([name]) => name !== '全体').sort(([a], [b]) => a.localeCompare(b, 'ja')).map(([name, s]) => toRow(name, s));
-  return toCsv([['授業名', '出席', '遅刻', '欠席', '休講', '授業回数(休講除く)', '出席率(%)'], ...(overall ? [toRow('全体', overall)] : []), ...rows]);
+  const rows = [...stats.entries()].sort(([a], [b]) => a.localeCompare(b, t.lang)).map(([name, s]) => toRow(name, s));
+  return toCsv([t.csvSummaryHeaders, ...(logs.length > 0 ? [toRow(t.overall, overall)] : []), ...rows]);
 }

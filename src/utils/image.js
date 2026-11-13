@@ -1,10 +1,12 @@
 // 画像ファイルを縮小した JPEG の data URL にする（保存容量を節約するため）
+import { ja } from '../i18n/messages';
+
 const MAX_FILE_BYTES = 20 * 1024 * 1024; // 極端に大きなファイルは読み込まない
 
-export async function fileToDataUrl(file, maxSize = 1600, quality = 0.8) {
-  if (!file.type.startsWith('image/')) throw new Error('画像ファイルを選んでください');
-  if (file.size > MAX_FILE_BYTES) throw new Error('画像が大きすぎます（20MBまで）');
-  const bitmap = await createImageBitmap(file).catch(() => { throw new Error('画像を読み込めませんでした'); });
+export async function fileToDataUrl(file, t = ja, maxSize = 1600, quality = 0.8) {
+  if (!file.type.startsWith('image/')) throw new Error(t.notImage);
+  if (file.size > MAX_FILE_BYTES) throw new Error(t.imageTooLarge);
+  const bitmap = await createImageBitmap(file).catch(() => { throw new Error(t.imageLoadFailed); });
   const scale = Math.min(1, maxSize / Math.max(bitmap.width, bitmap.height));
   const canvas = document.createElement('canvas');
   canvas.width = Math.round(bitmap.width * scale);
