@@ -1,5 +1,6 @@
 import WeeklyTrendChart from '../components/charts/WeeklyTrendChart';
 import AbsenceTendency from '../components/charts/AbsenceTendency';
+import { toTally } from '../utils/tally';
 
 export default function AnalyticsView({ selectedQuarter, statusCounts, overallRate, courseAnalytics, threshold, years, year, onYearChange, weekly, absenceWeekdays, absenceSlots }) {
   const low = courseAnalytics.filter((c) => !c.ok);
@@ -23,6 +24,7 @@ export default function AnalyticsView({ selectedQuarter, statusCounts, overallRa
           <p>出席: {statusCounts['出席']}</p>
           <p>遅刻: {statusCounts['遅刻']}</p>
           <p>欠席: {statusCounts['欠席']}</p>
+          <p>休講: {statusCounts['休講']}</p>
         </div>
       </div>
 
@@ -52,12 +54,16 @@ export default function AnalyticsView({ selectedQuarter, statusCounts, overallRa
         <div key={stat.name} className="card stat-card">
           <div className="row between mb-10">
             <div className="grow">
-              <div className="strong">{stat.name}</div>
+              <div className="stat-name">{stat.name}</div>
               <div className="small muted">{stat.total}回の授業 (出席{stat.present}・遅刻{stat.late}・欠席{stat.absent})</div>
             </div>
-            <div className={`strong ${stat.ok ? 'ok-text' : 'ng-text'}`}>{stat.rate}%</div>
+            {stat.absent > 0 && <span className="tally" aria-hidden="true">{toTally(stat.absent)}</span>}
+            <div className={`stat-rate ${stat.ok ? 'ok-text' : 'ng-text'}`}>{stat.rate}%</div>
           </div>
-          <div className="bar"><div className={`bar-fill ${stat.ok ? 'is-ok' : 'is-ng'}`} style={{ width: `${stat.rate}%` }}></div></div>
+          <div className="bar">
+            <div className={`bar-fill ${stat.ok ? 'is-ok' : 'is-ng'}`} style={{ width: `${stat.rate}%` }}></div>
+            <span className="bar-threshold" style={{ left: `${threshold}%` }} aria-hidden="true"></span>
+          </div>
           {stat.total > 0 && (
             <div className={`small mt-8 ${stat.ok ? 'muted' : 'ng-text'}`}>
               {!stat.ok

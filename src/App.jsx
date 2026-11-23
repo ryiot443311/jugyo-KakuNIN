@@ -135,6 +135,7 @@ function App() {
 
   const logIndex = useMemo(() => new Map(logs.map(log => [`${log.courseId}|${log.date}`, log])), [logs]);
   const getLog = useCallback((courseId) => logIndex.get(`${courseId}|${selectedDate}`), [logIndex, selectedDate]);
+  const getLogAt = useCallback((courseId, date) => logIndex.get(`${courseId}|${date}`), [logIndex]);
 
   const saveMemo = useCallback((courseId, text) => setCourseMemos(prev => ({ ...prev, [courseId]: text })), [setCourseMemos]);
 
@@ -251,6 +252,7 @@ function App() {
     [logs, courses, settings.quarters, settings.periods, today, nowMin],
   );
   const unrecordedDates = useMemo(() => new Set(unrecorded.map(u => u.date)), [unrecorded]);
+  const unrecordedKeys = useMemo(() => new Set(unrecorded.map(u => `${u.course.id}|${u.date}`)), [unrecorded]);
   // 期限が近い課題（非表示の授業の課題は出さない）
   const dueTasks = useMemo(() => {
     const ids = new Set(courses.map(c => c.id));
@@ -350,7 +352,8 @@ function App() {
       )}
       {currentView === 'weekly' && (
         // 週間表から開いた授業は、今週のその曜日の日付として扱う
-        <WeeklyView today={today} periods={settings.periods} quarterCourses={quarterCourses} courseMemos={courseMemos} onOpenDetail={(course) => { setSelectedDate(getDateOfWeekday(today, course.dayOfWeek)); setDetailCourse(course); }} onAddCourse={openAddCourse} />
+        <WeeklyView today={today} periods={settings.periods} quarterCourses={quarterCourses} courseMemos={courseMemos} onOpenDetail={(course) => { setSelectedDate(getDateOfWeekday(today, course.dayOfWeek)); setDetailCourse(course); }} onAddCourse={openAddCourse}
+          getLogAt={getLogAt} unrecordedKeys={unrecordedKeys} />
       )}
       {currentView === 'history' && <HistoryView logs={logs} courses={appData.courses} expandedSections={expandedSections} onToggle={toggleAccordion} onEditLog={setEditLog} />}
       {currentView === 'analytics' && (
