@@ -8,7 +8,7 @@ import { TASKS_KEY, sanitizeTasks, upcomingTasks } from './data/tasks';
 import { buildBackup, sanitizeImages } from './data/backup';
 import { mergeBackupData } from './data/merge';
 import { findUnrecorded, LOOKBACK_DAYS } from './utils/unrecorded';
-import { parseDateStr, getQuarterByDate, getNearestQuarter, getWeekOfMonth, getDateOfWeekday, getFiscalYear } from './utils/date';
+import { parseDateStr, getQuarterByDate, getNearestQuarter, getDateOfWeekday, getFiscalYear } from './utils/date';
 import { buildCourseAnalytics, calcRate, countStatuses } from './utils/stats';
 import { absenceByWeekday, topAbsenceSlots, weeklyRates } from './utils/trends';
 import { dateMemoKey } from './utils/memo';
@@ -30,6 +30,7 @@ import HistoryView from './views/HistoryView';
 import AnalyticsView from './views/AnalyticsView';
 import MapView from './views/MapView';
 import SettingsView from './views/SettingsView';
+import TocView from './views/TocView';
 import './App.css';
 
 const UNDO_MS = 6000; // 記録後に「元に戻す」を出しておく時間
@@ -46,7 +47,13 @@ const VIEWS = [
   { id: 'analytics', label: '分析' },
   { id: 'map', label: 'マップ' },
   { id: 'settings', label: '設定' },
+  { id: 'toc', label: '目次' },
 ];
+
+// 画面下のタブ。履歴・マップ・設定は「目次」から開く
+const TABS = ['home', 'weekly', 'analytics', 'toc'];
+const TOC_VIEWS = ['history', 'map', 'settings'];
+const tabOf = (view) => (TOC_VIEWS.includes(view) ? 'toc' : view);
 
 // ホーム画面のショートカット（manifest の shortcuts）から開いたときの画面。?view=weekly など
 const initialView = () => {
@@ -61,7 +68,6 @@ const initialView = () => {
 function App() {
   const today = useToday();
   const nowMin = useNowMinutes();
-  const todayObj = parseDateStr(today);
 
   const [savedSettings, setSavedSettings] = useLocalStorageState(SETTINGS_KEY, {});
   const settings = useMemo(() => resolveSettings(savedSettings), [savedSettings]);
@@ -129,6 +135,7 @@ function App() {
 
   const logIndex = useMemo(() => new Map(logs.map(log => [`${log.courseId}|${log.date}`, log])), [logs]);
   const getLog = useCallback((courseId) => logIndex.get(`${courseId}|${selectedDate}`), [logIndex, selectedDate]);
+  const getLogAt = useCallback((courseId, date) => logIndex.get(`${courseId}|${date}`), [logIndex]);
 
   const saveMemo = useCallback((courseId, text) => setCourseMemos(prev => ({ ...prev, [courseId]: text })), [setCourseMemos]);
 
@@ -152,6 +159,7 @@ function App() {
     setLogs(prev => [...prev, newLog]);
     setUndo({ logId: newLog.id, text: `「${appData.courses.find(c => c.id === newLog.courseId)?.name ?? '授業'}」を${newLog.status}で記録しました` });
     setPendingRecord(null);
+    try { navigator.vibrate?.(15); } catch { /* 振動できない端末は何もしない */ }
   }, [pendingRecord, appData.courses, setLogs]);
 
   // 記録後しばらくしたら「元に戻す」を消す
@@ -243,6 +251,8 @@ function App() {
     () => findUnrecorded({ logs, courses, quarters: settings.quarters, periods: settings.periods, today, nowMin }),
     [logs, courses, settings.quarters, settings.periods, today, nowMin],
   );
+  const unrecordedDates = useMemo(() => new Set(unrecorded.map(u => u.date)), [unrecorded]);
+  const unrecordedKeys = useMemo(() => new Set(unrecorded.map(u => `${u.course.id}|${u.date}`)), [unrecorded]);
   // 期限が近い課題（非表示の授業の課題は出さない）
   const dueTasks = useMemo(() => {
     const ids = new Set(courses.map(c => c.id));
@@ -292,7 +302,14 @@ function App() {
 
       <header className="app-header">
         <h2 className="app-title">授業管理アプリ</h2>
-        <div className="app-sub">{todayObj.getMonth() + 1}月 第{getWeekOfMonth(todayObj)}週</div>
+        {/* クォーターに関係しない画面（目次・マップ・設定）では非表示 */}
+        {!['toc', 'map', 'settings'].includes(currentView) && (
+          <div className="quarters">
+            <select value={selectedQuarter} onChange={(e) => setSelectedQuarter(Number(e.target.value))} aria-label="表示するクォーター" className="quarter-select">
+              {Object.keys(QUARTERS).map(Number).map(q => <option key={q} value={q}>第{q}Q</option>)}
+            </select>
+          </div>
+        )}
       </header>
 
       {saveFailed && !saveErrorDismissed && (
@@ -303,18 +320,20 @@ function App() {
       )}
 
       <nav className="tabs" aria-label="画面切り替え">
-        {VIEWS.map(view => (
-          <button key={view.id} type="button" onClick={() => setCurrentView(view.id)} aria-current={currentView === view.id ? 'page' : undefined} className={`tab${currentView === view.id ? ' is-active' : ''}`}>{view.label}</button>
-        ))}
+        {TABS.map(id => {
+          const active = tabOf(currentView) === id;
+          return <button key={id} type="button" onClick={() => setCurrentView(id)} aria-current={active ? 'page' : undefined} className={`tab${active ? ' is-active' : ''}`}>{VIEWS.find(v => v.id === id).label}</button>;
+        })}
       </nav>
 
-      {/* クォーターに関係しないマップ・設定では非表示 */}
-      {currentView !== 'map' && currentView !== 'settings' && (
-        <div className="quarters">
-          {Object.keys(QUARTERS).map(Number).map(q => (
-            <button key={q} type="button" onClick={() => setSelectedQuarter(q)} aria-pressed={selectedQuarter === q} className={`quarter${selectedQuarter === q ? ' is-active' : ''}`}>第{q}Q</button>
-          ))}
+      {TOC_VIEWS.includes(currentView) && (
+        <div className="subpage-head">
+          <button type="button" onClick={() => setCurrentView('toc')} className="btn btn-ghost btn-small back-link">‹ 目次</button>
+          <h2 className="subpage-title">{VIEWS.find(v => v.id === currentView).label}</h2>
         </div>
+      )}
+      {currentView === 'toc' && (
+        <TocView logCount={logs.length} campusCount={appData.campuses.length} courseCount={appData.courses.length} onOpen={setCurrentView} />
       )}
 
       {currentView === 'home' && (
@@ -325,6 +344,7 @@ function App() {
           onSelectDate={selectDate} onOpenDetail={setDetailCourse} onRecord={requestRecord} onAddCourse={openAddCourse}
           dueTasks={dueTasks} onToggleTask={toggleTask}
           unrecordedCount={unrecorded.length} lookbackDays={LOOKBACK_DAYS} onShowUnrecorded={() => setShowUnrecorded(true)}
+          unrecordedDates={unrecordedDates} recordStyle={settings.recordStyle} justRecordedId={undo?.logId}
         />
       )}
       {showUnrecorded && (
@@ -332,7 +352,8 @@ function App() {
       )}
       {currentView === 'weekly' && (
         // 週間表から開いた授業は、今週のその曜日の日付として扱う
-        <WeeklyView today={today} periods={settings.periods} quarterCourses={quarterCourses} courseMemos={courseMemos} onOpenDetail={(course) => { setSelectedDate(getDateOfWeekday(today, course.dayOfWeek)); setDetailCourse(course); }} onAddCourse={openAddCourse} />
+        <WeeklyView today={today} periods={settings.periods} quarterCourses={quarterCourses} courseMemos={courseMemos} onOpenDetail={(course) => { setSelectedDate(getDateOfWeekday(today, course.dayOfWeek)); setDetailCourse(course); }} onAddCourse={openAddCourse}
+          getLogAt={getLogAt} unrecordedKeys={unrecordedKeys} />
       )}
       {currentView === 'history' && <HistoryView logs={logs} courses={appData.courses} expandedSections={expandedSections} onToggle={toggleAccordion} onEditLog={setEditLog} />}
       {currentView === 'analytics' && (

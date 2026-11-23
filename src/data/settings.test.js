@@ -5,8 +5,12 @@ import { QUARTERS, PERIODS } from './constants';
 describe('resolveSettings', () => {
   it('未保存・不正な値は既定値になる', () => {
     for (const bad of [undefined, null, 5, 'x', []]) {
-      expect(resolveSettings(bad)).toEqual({ theme: 'auto', quarters: QUARTERS, periods: PERIODS, hiddenCourses: [], threshold: 80, notify: { before: false, after: false } });
+      expect(resolveSettings(bad)).toEqual({ theme: 'auto', recordStyle: 'hanko', quarters: QUARTERS, periods: PERIODS, hiddenCourses: [], threshold: 80, notify: { before: false, after: false } });
     }
+  });
+  it('記録の見せ方は hanko / mark だけ採用する（既定は hanko）', () => {
+    expect(resolveSettings({ recordStyle: 'mark' }).recordStyle).toBe('mark');
+    expect(resolveSettings({ recordStyle: 'x' }).recordStyle).toBe('hanko');
   });
   it('通知は true のときだけ有効にする', () => {
     expect(resolveSettings({ notify: { before: true, after: 'yes' } }).notify).toEqual({ before: true, after: false });

@@ -8,6 +8,12 @@ export const THEMES = [
   { id: 'dark', label: 'ダーク' },
 ];
 
+// 記録済みの授業の見せ方（印＝ハンコ風 / 記号＝○△×）
+export const RECORD_STYLES = [
+  { id: 'hanko', label: '印（ハンコ）' },
+  { id: 'mark', label: '記号（○△×）' },
+];
+
 // 月ごとの最大日数（2月は閏年を考慮して 29）
 export const MAX_DAYS = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
 
@@ -42,6 +48,7 @@ export function resolveSettings(saved) {
   const s = saved && typeof saved === 'object' ? saved : {};
   return {
     theme: THEMES.some(t => t.id === s.theme) ? s.theme : 'auto',
+    recordStyle: RECORD_STYLES.some(r => r.id === s.recordStyle) ? s.recordStyle : 'hanko',
     quarters: mergeRanges(QUARTERS, s.quarters ?? legacyQuarters(s.quarterRanges), isMonthDay),
     periods: mergeRanges(PERIODS, s.periods, isTime),
     hiddenCourses: Array.isArray(s.hiddenCourses) ? s.hiddenCourses : [],

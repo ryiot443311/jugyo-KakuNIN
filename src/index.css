@@ -1,43 +1,60 @@
-/* ===== テーマ（ライト/ダーク） ===== */
+/* ===== 書体（手帳風） ===== */
+/* 見出し・数字用の明朝体（しっぽり明朝 Bold を同梱。ライセンスは assets/fonts/OFL.txt）
+   授業名は自由入力なので、かな・英数字とJIS第1水準の漢字を入れている。範囲外の文字は端末の明朝体になる */
+@font-face {
+  font-family: "Techo Mincho"; font-weight: 700; font-display: swap;
+  src: url("./assets/fonts/techo-mincho-kana.woff2") format("woff2");
+  unicode-range: U+0000-33FF, U+FF00-FFEF;
+}
+@font-face {
+  font-family: "Techo Mincho"; font-weight: 700; font-display: swap;
+  src: url("./assets/fonts/techo-mincho-kanji.woff2") format("woff2");
+  unicode-range: U+4E00-9FFF;
+}
+
+/* ===== テーマ（手帳風のライト/ダーク） ===== */
+/* 色は伝統色（出席=藍・遅刻=山吹・欠席=朱・休講=鼠）。色だけに頼らず記号（○△×休）も併記する */
 /* 文字と背景のコントラストは WCAG AA（4.5:1）以上にする（e2e/a11y.spec.js で検査） */
 :root {
-  --bg: #f8fafc; --surface: #fff; --surface-2: #f8fafc; --surface-3: #f1f5f9;
-  --border: #e2e8f0; --border-strong: #cbd5e1;
-  --text: #334155; --text-strong: #0f172a; --text-muted: #556275; --text-faint: #5b6779;
-  --primary: #1e293b; --on-primary: #fff; --accent: #1d4ed8; --on-accent: #fff;
-  --present: #15803d; --late: #b45309; --absent: #dc2626; --canceled: #64748b; --on-status: #fff;
-  --danger: #b91c1c; --ok: #15803d;
-  --memo-bg: #fffbeb; --memo-text: #b45309; --memo-dated-bg: #eff6ff; --memo-dated-text: #1d4ed8;
-  --warn-bg: #fef2f2; --warn-border: #fecaca; --overlay: #0009;
-  --chart: #1d4ed8;
+  --bg: #f6f1e4; --surface: #fbf8f0; --surface-2: #ece4cf; --surface-3: #e8dfc8;
+  --border: #cfc3a4; --border-strong: #b5a77f;
+  --text: #2b3450; --text-strong: #1f2a44; --text-muted: #5a5548; --text-faint: #5c5648;
+  --primary: #1f2a44; --on-primary: #fbf8f0; --accent: #1f4e79; --on-accent: #fbf8f0;
+  --present: #1f4e79; --late: #8a5a00; --absent: #b8321b; --canceled: #5f6368; --on-status: #fbf8f0;
+  --danger: #b8321b; --ok: #1f4e79; --gold: #7d6424;
+  --memo-bg: #f3e3a0; --memo-text: #4a3b00; --memo-dated-bg: #e3ebf3; --memo-dated-text: #1f4e79;
+  --warn-bg: #f7e3dc; --warn-border: #e0a898; --overlay: #1f2a4499;
+  --chart: #1f4e79;
+  --font-serif: "Techo Mincho", "Hiragino Mincho ProN", "Yu Mincho", "Noto Serif JP", serif;
+  --font-sans: system-ui, -apple-system, "Segoe UI", "Hiragino Sans", "Noto Sans JP", sans-serif;
   color-scheme: light;
 }
 
 :root[data-theme="dark"] {
-  --bg: #0b1220; --surface: #151e2f; --surface-2: #1b2639; --surface-3: #263349;
-  --border: #2a374d; --border-strong: #3b4a63;
-  --text: #cbd5e1; --text-strong: #f1f5f9; --text-muted: #94a3b8; --text-faint: #7b8aa3;
-  --primary: #e2e8f0; --on-primary: #0f172a; --accent: #60a5fa; --on-accent: #0b1220;
-  --present: #22c55e; --late: #f59e0b; --absent: #f87171; --canceled: #94a3b8; --on-status: #0b1220;
-  --danger: #f87171; --ok: #4ade80;
-  --memo-bg: #3a2e10; --memo-text: #fbbf24; --memo-dated-bg: #14274a; --memo-dated-text: #93c5fd;
-  --warn-bg: #3b1519; --warn-border: #7f1d1d; --overlay: #000000bf;
-  --chart: #3b82f6;
+  --bg: #1b1812; --surface: #221e17; --surface-2: #26211a; --surface-3: #302a20;
+  --border: #453d2e; --border-strong: #5c523e;
+  --text: #ddd4bd; --text-strong: #ece3cc; --text-muted: #a89f88; --text-faint: #9e957e;
+  --primary: #ece3cc; --on-primary: #1b1812; --accent: #8fb4e0; --on-accent: #1b1812;
+  --present: #8fb4e0; --late: #e0b04a; --absent: #ef7a62; --canceled: #a9adb3; --on-status: #1b1812;
+  --danger: #ef7a62; --ok: #8fb4e0; --gold: #d0ab5a;
+  --memo-bg: #3a3218; --memo-text: #f3e3a0; --memo-dated-bg: #1e2c3d; --memo-dated-text: #a9c7ea;
+  --warn-bg: #3a1a14; --warn-border: #7a3324; --overlay: #000000bf;
+  --chart: #8fb4e0;
   color-scheme: dark;
 }
 
 /* data-theme 未指定（自動）のときは OS の設定に従う */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme]) {
-    --bg: #0b1220; --surface: #151e2f; --surface-2: #1b2639; --surface-3: #263349;
-    --border: #2a374d; --border-strong: #3b4a63;
-    --text: #cbd5e1; --text-strong: #f1f5f9; --text-muted: #94a3b8; --text-faint: #7b8aa3;
-    --primary: #e2e8f0; --on-primary: #0f172a; --accent: #60a5fa; --on-accent: #0b1220;
-    --present: #22c55e; --late: #f59e0b; --absent: #f87171; --canceled: #94a3b8; --on-status: #0b1220;
-    --danger: #f87171; --ok: #4ade80;
-    --memo-bg: #3a2e10; --memo-text: #fbbf24; --memo-dated-bg: #14274a; --memo-dated-text: #93c5fd;
-    --warn-bg: #3b1519; --warn-border: #7f1d1d; --overlay: #000000bf;
-    --chart: #3b82f6;
+    --bg: #1b1812; --surface: #221e17; --surface-2: #26211a; --surface-3: #302a20;
+    --border: #453d2e; --border-strong: #5c523e;
+    --text: #ddd4bd; --text-strong: #ece3cc; --text-muted: #a89f88; --text-faint: #9e957e;
+    --primary: #ece3cc; --on-primary: #1b1812; --accent: #8fb4e0; --on-accent: #1b1812;
+    --present: #8fb4e0; --late: #e0b04a; --absent: #ef7a62; --canceled: #a9adb3; --on-status: #1b1812;
+    --danger: #ef7a62; --ok: #8fb4e0; --gold: #d0ab5a;
+    --memo-bg: #3a3218; --memo-text: #f3e3a0; --memo-dated-bg: #1e2c3d; --memo-dated-text: #a9c7ea;
+    --warn-bg: #3a1a14; --warn-border: #7a3324; --overlay: #000000bf;
+    --chart: #8fb4e0;
     color-scheme: dark;
   }
 }
@@ -49,13 +66,14 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--text);
-  font: 16px / 1.5 system-ui, -apple-system, "Segoe UI", "Hiragino Sans", "Noto Sans JP", sans-serif;
+  font: 16px / 1.6 var(--font-sans);
   -webkit-tap-highlight-color: transparent; /* スマホでタップした時の青いハイライトを消す */
 }
 
 #root { min-height: 100svh; }
 
 h2, h3, p { margin: 0; }
+h2, h3 { font-family: var(--font-serif); font-weight: 700; letter-spacing: 0.04em; }
 
 button, input, select, textarea { font: inherit; color: inherit; }
 button { cursor: pointer; }
