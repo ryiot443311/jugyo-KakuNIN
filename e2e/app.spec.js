@@ -2,7 +2,7 @@ import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import { test, expect } from '@playwright/test'
-import { openApp, log, stored, storedInDb, swipe, download, openGroup, settingsGroup } from './helpers.js'
+import { openApp, log, stored, storedInDb, swipe, download, openGroup, settingsGroup, openView } from './helpers.js'
 
 // サンプルデータ（constants.sample.js）の授業: 水曜3限 英語コミュニケーション(wed-3, 第3・4Q) / 木曜1限 データ構造とアルゴリズム(thu-1, 第3Q)
 
@@ -13,10 +13,10 @@ test.describe('日別画面', () => {
     await expect(page.locator('.warning')).toHaveText('⚠ 直近2回連続で欠席しています')
     await expect(page.locator('.badge-next')).toHaveText('次の授業')
 
-    // 出席ボタンは下の段、遅刻・欠席・休講は上の段
+    // 出席ボタンは左端、遅刻・欠席・休講はその右に並ぶ
     const row = await page.locator('.status-row').boundingBox()
     const present = await page.locator('.status-stack > .st-present').boundingBox()
-    expect(present.y).toBeGreaterThan(row.y + row.height - 1)
+    expect(present.x + present.width).toBeLessThanOrEqual(row.x + 1)
 
     await swipe(page, 300, 80)
     await expect(page.locator('.date-heading')).toHaveText('10月29日（木）')
@@ -25,7 +25,7 @@ test.describe('日別画面', () => {
 
     await page.click('.status-stack > .st-present')
     await page.click('.modal .btn-primary')
-    await expect(page.locator('.course-card .notice')).toHaveText('出席 記録済み')
+    await expect(page.locator('.course-card .notice')).toContainText('出席 記録済み')
     await expect(page.locator('.warning')).toHaveCount(0)
     await page.click('.toast button:text-is("元に戻す")')
     await expect(page.locator('.status-btn')).toHaveCount(4)
@@ -38,8 +38,8 @@ test.describe('日別画面', () => {
     await swipe(page, toast.x + toast.width / 2, toast.x + toast.width / 2 + 150, toast.y + toast.height / 2)
     await expect(page.locator('.toast')).toHaveCount(0)
     await expect(page.locator('.date-heading')).toHaveText('10月28日（水）今日')
-    await expect(page.locator('.course-card .notice')).toHaveText('出席 記録済み') // 消しても記録は残る
-    await page.click('.tab:text-is("履歴")')
+    await expect(page.locator('.course-card .notice')).toContainText('出席 記録済み') // 消しても記録は残る
+    await openView(page, '履歴')
     await page.click('.acc-dayhead >> nth=0')
     await page.locator('.log-card', { hasText: '英語' }).locator('button:text-is("修正")').click()
     await page.click('.modal button:text-is("記録を削除")')
@@ -142,7 +142,7 @@ test('週間・履歴・分析', async ({ page }) => {
   await page.click('button[type=submit]')
   await expect(page.locator('.weekly-name')).toContainText(['実験'])
 
-  await page.click('.tab:text-is("履歴")')
+  await openView(page, '履歴')
   await expect(page.locator('.acc-year').first()).toContainText('2026年度')
   await expect(page.locator('.acc-year').nth(1)).toContainText('2025年度')
   await page.locator('.acc-year').nth(1).click()
@@ -161,7 +161,7 @@ test('週間・履歴・分析', async ({ page }) => {
 
 test('設定（テーマ・期間・基準・授業・マップ・施設・CSV・危険な項目）', async ({ page }) => {
   await openApp(page, { logs: [log('d1', 'wed-3', '2026-10-07'), log('d2', 'thu-1', '2026-01-15', '欠席', 4)] })
-  await page.click('.tab:text-is("設定")')
+  await openView(page, '設定')
   await expect(page.locator('.quarters')).toHaveCount(0)
 
   await (await openGroup(page, 'テーマ')).locator('button:text-is("ダーク")').click()
@@ -230,7 +230,7 @@ test('通知: 授業開始の10分前に知らせる・カレンダーに書き�
     window.Notification = class { static permission = 'granted'; static requestPermission = async () => 'granted'; constructor(title) { record(title) } }
   })
   await openApp(page, { now: '2026-10-28T12:48:30' }) // 英語コミュニケーションは水曜3限（13:00〜）
-  await page.click('.tab:text-is("設定")')
+  await openView(page, '設定')
   const group = await openGroup(page, '通知・カレンダー')
   await group.locator('text=授業開始の10分前に知らせる').click()
   expect((await stored(page, 'app_settings')).notify).toEqual({ before: true, after: false })
@@ -249,7 +249,7 @@ test('通知: 授業開始の10分前に知らせる・カレンダーに書き�
 
 test('バックアップ: 書き出し・置き換え・統合', async ({ page }) => {
   await openApp(page, { logs: [log('e1', 'wed-3', '2026-10-07'), log('e2', 'wed-3', '2026-10-14')] })
-  await page.click('.tab:text-is("設定")')
+  await openView(page, '設定')
   await openGroup(page, 'データ')
   const backup = JSON.parse(await download(page, 'text=バックアップを書き出す'))
   expect(backup).toMatchObject({ app: 'my-attendance-app', version: 1 })
@@ -276,20 +276,20 @@ test('バックアップ: 書き出し・置き換え・統合', async ({ page }
 test('マップ画像: 以前の localStorage の画像を IndexedDB に移し、再読み込み後も表示する', async ({ page }) => {
   const png = `data:image/png;base64,${fs.readFileSync('public/icon-192.png').toString('base64')}`
   await openApp(page, { extra: { campus_images: { north: png } } })
-  await page.click('.tab:text-is("マップ")')
+  await openView(page, 'マップ')
   await expect(page.locator('img.map-img')).toHaveAttribute('src', png)
   await expect.poll(() => page.evaluate(() => localStorage.getItem('campus_images'))).toBeNull()
   expect(await storedInDb(page, 'campus_images')).toEqual({ north: png })
   await page.reload()
-  await page.click('.tab:text-is("マップ")')
+  await openView(page, 'マップ')
   await expect(page.locator('img.map-img')).toHaveAttribute('src', png)
 
   // 設定から削除すると、再読み込み後も消えたまま
-  await page.click('.tab:text-is("設定")')
+  await openView(page, '設定')
   await (await openGroup(page, 'マップ')).locator('text=画像を削除').click()
   await expect.poll(() => storedInDb(page, 'campus_images')).toEqual({})
   await page.reload()
-  await page.click('.tab:text-is("マップ")')
+  await openView(page, 'マップ')
   await expect(page.locator('h2.app-title')).toBeVisible()
   await expect(page.locator(`img[src="${png}"]`)).toHaveCount(0)
 })
@@ -315,7 +315,7 @@ test('オフラインで起動できる・CSP 違反やエラーがない', asyn
   await context.setOffline(true)
   await page.reload()
   await expect(page.locator('.app-title')).toHaveText('授業管理アプリ')
-  await page.click('.tab:text-is("設定")')
+  await openView(page, '設定')
   await expect(page.locator('summary:text-is("危険な項目")')).toBeVisible()
   await context.setOffline(false)
   expect(errors).toEqual([])

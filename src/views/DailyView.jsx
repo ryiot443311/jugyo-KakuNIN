@@ -5,9 +5,10 @@ import { getAbsenceStreak, STREAK_ALERT } from '../utils/streak';
 import { useSwipe } from '../hooks/useSwipe';
 import StatusButtons from '../components/StatusButtons';
 import RecordNotice from '../components/RecordNotice';
+import RecordMark from '../components/RecordMark';
 import { dueLabel, daysUntil, UPCOMING_DAYS } from '../data/tasks';
 
-export default function DailyView({ selectedDate, today, selectedQuarter, courses, periods, quarters, nowMin, logs, courseMemos, dateMemos, recordState, getLog, onSelectDate, onOpenDetail, onRecord, onAddCourse, dueTasks, onToggleTask, unrecordedCount, lookbackDays, onShowUnrecorded }) {
+export default function DailyView({ selectedDate, today, selectedQuarter, courses, periods, quarters, nowMin, logs, courseMemos, dateMemos, recordState, getLog, onSelectDate, onOpenDetail, onRecord, onAddCourse, dueTasks, onToggleTask, unrecordedCount, lookbackDays, onShowUnrecorded, unrecordedDates, recordStyle, justRecordedId }) {
   const swipe = useSwipe((direction) => onSelectDate(addDays(selectedDate, direction))); // 左右スワイプで前後の日へ
   const weekStart = getDateOfWeekday(selectedDate, 0);
   const selectedDateObj = parseDateStr(selectedDate);
@@ -19,6 +20,15 @@ export default function DailyView({ selectedDate, today, selectedQuarter, course
   const trackable = isToday && recordState.status === 'ok' ? dayCourses.filter(c => getLog(c.id)?.status !== '休講') : [];
   const nowId = trackable.find(c => { const p = periods[c.period]; return p && toMinutes(p.start) <= nowMin && nowMin < toMinutes(p.end); })?.id;
   const nextId = trackable.find(c => { const p = periods[c.period]; return p && toMinutes(p.start) > nowMin; })?.id;
+  const nextStart = nextId ? toMinutes(periods[dayCourses.find(c => c.id === nextId).period].start) : 0;
+
+  // 週の行の印: 付け忘れがある日は「!」、記録がそろった過去の日は「✓」
+  const recordedDates = new Set(logs.map(l => l.date));
+  const dayMark = (date) => {
+    if (unrecordedDates.has(date)) return { text: '!', className: 'is-missing', label: '記録し忘れあり' };
+    if (date <= today && recordedDates.has(date)) return { text: '✓', className: 'is-done', label: '記録済み' };
+    return null;
+  };
 
   return (
     <div className="swipe-area" {...swipe}>
@@ -43,22 +53,27 @@ export default function DailyView({ selectedDate, today, selectedQuarter, course
           </ul>
         </section>
       )}
-      <div className="row gap-6 mb-8 week-nav">
-        <button type="button" onClick={() => onSelectDate(addDays(selectedDate, -7))} className="btn btn-soft grow">◀ 前の週</button>
-        <button type="button" onClick={() => onSelectDate(today)} disabled={isToday} className="btn btn-soft grow">今日</button>
-        <button type="button" onClick={() => onSelectDate(addDays(selectedDate, 7))} className="btn btn-soft grow">次の週 ▶</button>
+      <div className="date-heading">
+        <span className="date-month">{selectedDateObj.getMonth() + 1}月</span><span className="date-num">{selectedDateObj.getDate()}</span><span className="date-unit">日（{DAYS[selectedDay]}）</span>
+        {isToday && <span className="badge badge-today">今日</span>}
       </div>
       <div className="day-tabs">
         {DAYS.map((day, index) => {
           const date = addDays(weekStart, index);
+          const mark = dayMark(date);
           return (
-            <button key={day} type="button" onClick={() => onSelectDate(date)} className={`day-tab${selectedDay === index ? ' is-active' : ''}${date === today ? ' is-today' : ''}`}>{day}</button>
+            <button key={day} type="button" onClick={() => onSelectDate(date)} aria-label={`${parseDateStr(date).getDate()}日（${day}）${mark ? `・${mark.label}` : ''}`} aria-pressed={selectedDay === index} className={`day-tab${selectedDay === index ? ' is-active' : ''}${date === today ? ' is-today' : ''}`}>
+              <span className="day-tab-date">{parseDateStr(date).getDate()}</span>
+              <span className="day-tab-day">{day}</span>
+              <span className={`day-tab-mark ${mark?.className ?? ''}`} aria-hidden="true">{mark?.text}</span>
+            </button>
           );
         })}
       </div>
-      <div className="date-heading">
-        {selectedDateObj.getMonth() + 1}月{selectedDateObj.getDate()}日（{DAYS[selectedDay]}）
-        {isToday && <span className="badge badge-today">今日</span>}
+      <div className="week-nav">
+        <button type="button" onClick={() => onSelectDate(addDays(selectedDate, -7))} className="btn btn-ghost btn-small">◀ 前の週</button>
+        <button type="button" onClick={() => onSelectDate(today)} disabled={isToday} className="btn btn-ghost btn-small">今日</button>
+        <button type="button" onClick={() => onSelectDate(addDays(selectedDate, 7))} className="btn btn-ghost btn-small">次の週 ▶</button>
       </div>
 
       {dayCourses.length === 0 ? (
@@ -72,28 +87,39 @@ export default function DailyView({ selectedDate, today, selectedQuarter, course
         const streak = !log && recordState.status === 'ok' ? getAbsenceStreak(logs, course.id, selectedDate) : 0;
         const isNow = course.id === nowId;
         const isNext = course.id === nextId;
+        const canceled = log?.status === '休講';
         return (
-          <div key={course.id} className={`card course-card${isNow ? ' is-now' : isNext ? ' is-next' : ''}`}>
-            <div className="row between align-center small muted strong">
-              <span>{course.room}</span>
-              <div className="row gap-10 align-center">
-                {isNow && <span className="badge badge-now">授業中</span>}
-                {isNext && <span className="badge badge-next">次の授業</span>}
-                <span>{course.period}時限{period && ` (${period.start}〜${period.end})`}</span>
+          <div key={course.id} className={`card course-card${isNow ? ' is-now' : isNext ? ' is-next' : ''}${log ? ' is-recorded' : ''}${canceled ? ' is-canceled' : ''}`}>
+            <div className="course-period" aria-hidden="true">
+              <span className="course-period-num">{course.period}</span>
+              {period && <span className="course-period-time">{period.start}</span>}
+            </div>
+            <div className="course-body">
+              <div className="row between align-center gap-6">
+                <div className="row align-center gap-6 course-tags">
+                  {isNow && <span className="badge badge-now">授業中</span>}
+                  {isNext && <span className="badge badge-next">次の授業</span>}
+                  {isNext && nextStart - nowMin <= 90 && <span className="tiny muted">あと{nextStart - nowMin}分</span>}
+                </div>
                 {recordState.status !== 'outOfQuarter' && <button type="button" onClick={() => onOpenDetail(course)} className="icon-btn" aria-label={`${course.name}の詳細`}>⋯</button>}
               </div>
+              <h3 className="course-name">{course.name}{course.weeks && <span className="badge badge-weeks">{weekPatternLabel(course)}</span>}</h3>
+              <div className="course-meta small muted">{course.room}{period && ` · ${course.period}限 ${period.start}〜${period.end}`}</div>
+              {streak >= STREAK_ALERT && <div className="warning small" role="alert">⚠ 直近{streak}回連続で欠席しています</div>}
+              {hasText(memo) && <div className="memo">{memo}</div>}
+              {hasText(dateMemo) && <div className="memo memo-dated"><b>この日:</b> {dateMemo}</div>}
+              {recordState.status !== 'ok' ? (
+                <RecordNotice status={recordState.status} />
+              ) : log ? (
+                <div className={`notice record-done ${statusTextClass(log.status)}`}>
+                  <RecordMark status={log.status} variant={recordStyle} animate={justRecordedId === log.id} />
+                  <span>{log.status} 記録済み</span>
+                  {isToday && log.recordedAt && <span className="record-time">{log.recordedAt.slice(11)}</span>}
+                </div>
+              ) : (
+                <StatusButtons onSelect={(status) => onRecord(course.id, status)} />
+              )}
             </div>
-            <h3 className="course-name">{course.name}{course.weeks && <span className="badge badge-weeks">{weekPatternLabel(course)}</span>}</h3>
-            {streak >= STREAK_ALERT && <div className="warning small" role="alert">⚠ 直近{streak}回連続で欠席しています</div>}
-            {hasText(memo) && <div className="memo">{memo}</div>}
-            {hasText(dateMemo) && <div className="memo memo-dated"><b>この日:</b> {dateMemo}</div>}
-            {recordState.status !== 'ok' ? (
-              <RecordNotice status={recordState.status} />
-            ) : log ? (
-              <div className={`notice ${statusTextClass(log.status)}`}>{log.status} 記録済み</div>
-            ) : (
-              <StatusButtons onSelect={(status) => onRecord(course.id, status)} />
-            )}
           </div>
         );
       })}

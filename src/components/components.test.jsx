@@ -13,7 +13,7 @@ describe('StatusButtons', () => {
   it('4つの状態を出し、押した状態を返す。exclude の状態は出さない', () => {
     const onSelect = vi.fn();
     const { rerender } = render(<StatusButtons onSelect={onSelect} />);
-    expect(screen.getAllByRole('button').map(b => b.textContent)).toEqual(['遅刻', '欠席', '休講', '出席']);
+    expect(screen.getAllByRole('button').map(b => b.textContent)).toEqual(['出席', '遅刻', '欠席', '休講']);
     fireEvent.click(screen.getByText('欠席'));
     expect(onSelect).toHaveBeenCalledWith('欠席');
     rerender(<StatusButtons onSelect={onSelect} exclude="出席" />);

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { THEMES, MAX_DAYS } from '../data/settings';
+import { THEMES, RECORD_STYLES, MAX_DAYS } from '../data/settings';
 import SettingsGroup from '../components/settings/SettingsGroup';
 import CoursesSection from '../components/settings/CoursesSection';
 import CampusSection from '../components/settings/CampusSection';
@@ -52,6 +52,12 @@ export default function SettingsView({ settings, onChange, courses, today, appDa
         <div className="row gap-6">
           {THEMES.map(t => (
             <button key={t.id} type="button" aria-pressed={settings.theme === t.id} onClick={() => onChange({ theme: t.id })} className={`btn grow ${settings.theme === t.id ? 'btn-primary' : 'btn-soft'}`}>{t.label}</button>
+          ))}
+        </div>
+        <p className="field-label">記録済みの見せ方</p>
+        <div className="row gap-6">
+          {RECORD_STYLES.map(r => (
+            <button key={r.id} type="button" aria-pressed={settings.recordStyle === r.id} onClick={() => onChange({ recordStyle: r.id })} className={`btn grow ${settings.recordStyle === r.id ? 'btn-primary' : 'btn-soft'}`}>{r.label}</button>
           ))}
         </div>
       </SettingsGroup>

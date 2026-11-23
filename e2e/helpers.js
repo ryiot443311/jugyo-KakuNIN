@@ -55,3 +55,13 @@ export async function openGroup(page, title) {
   if (!(await group.evaluate(el => el.open))) await group.locator(':scope > summary').click()
   return group
 }
+
+// 画面を開く。履歴・マップ・設定は下のタブの「目次」から開く
+export async function openView(page, label) {
+  if (['履歴', 'マップ', '設定'].includes(label)) {
+    await page.click('.tab:text-is("目次")')
+    await page.click(`.toc-item:has(.toc-label:text-is("${label}"))`)
+  } else {
+    await page.click(`.tab:text-is("${label}")`)
+  }
+}

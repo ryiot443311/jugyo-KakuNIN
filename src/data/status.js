@@ -8,6 +8,10 @@ const STATUS_KEYS = { '出席': 'present', '遅刻': 'late', '欠席': 'absent',
 export const statusBgClass = (status) => `st-${STATUS_KEYS[status]}`;
 export const statusTextClass = (status) => `st-text-${STATUS_KEYS[status]}`;
 
+// 出席簿の記号（○△×休）と、印（ハンコ）の文字
+export const STATUS_MARKS = { '出席': '○', '遅刻': '△', '欠席': '×', '休講': '休' };
+export const STATUS_STAMPS = { '出席': '出', '遅刻': '遅', '欠席': '欠', '休講': '休' };
+
 // quarter 未指定の授業は全クォーターに表示する
 export const isCourseInQuarter = (course, quarter) => !course.quarter || course.quarter === quarter || (Array.isArray(course.quarter) && course.quarter.includes(quarter));
 

@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test'
 import AxeBuilder from '@axe-core/playwright'
-import { openApp, log, openGroup } from './helpers.js'
+import { openApp, log, openGroup, openView } from './helpers.js'
 
 // 画面ごとに axe でアクセシビリティを検査する（WCAG 2.1 A / AA）
 const check = async (page, name) => {
@@ -31,10 +31,10 @@ for (const theme of ['light', 'dark']) {
     await check(page, '元に戻す')
     await page.click('.toast-close')
     for (const tab of ['週間', '履歴', '分析', 'マップ']) {
-      await page.click(`.tab:text-is("${tab}")`)
+      await openView(page, tab)
       await check(page, tab)
     }
-    await page.click('.tab:text-is("設定")')
+    await openView(page, '設定')
     for (const g of ['テーマ', '授業', 'マップ', '出席率の基準', 'クォーターの期間', '時限の時間', '通知・カレンダー', 'CSV出力', 'アプリとして使う', 'データ', '危険な項目']) await openGroup(page, g)
     await check(page, '設定')
   })
@@ -77,5 +77,5 @@ test('記録の表示は × ボタンでも消せる（スワイプの代わり�
   await page.click('.modal .btn-primary')
   await page.click('.toast-close')
   await expect(page.locator('.toast')).toHaveCount(0)
-  await expect(page.locator('.course-card .notice')).toHaveText('出席 記録済み')
+  await expect(page.locator('.course-card .notice')).toContainText('出席 記録済み')
 })
