@@ -251,7 +251,7 @@ test('バックアップ: 書き出し・置き換え・統合', async ({ page }
   await openApp(page, { logs: [log('e1', 'wed-3', '2026-10-07'), log('e2', 'wed-3', '2026-10-14')] })
   await openView(page, '設定')
   await openGroup(page, 'データ')
-  const backup = JSON.parse(await download(page, 'text=バックアップを書き出す'))
+  const backup = JSON.parse(await download(page, '.settings-group:has(summary:text-is("データ")) button:text-is("バックアップを書き出す")'))
   expect(backup).toMatchObject({ app: 'my-attendance-app', version: 1 })
   expect(backup.data.logs).toHaveLength(2)
 
@@ -320,6 +320,44 @@ test('学年暦: 休校日・補講を登録すると、日別画面と記録し
   await page.click('.day-tab:has(.day-tab-day:text-is("水"))')
   await expect(page.locator('.day-note')).toHaveText('休校日（大学祭）')
   await expect(page.locator('.empty')).toHaveText('休校日のため授業なし')
+})
+
+test('週間表に学年暦を反映し、授業詳細から補講を追加できる・目次から設定の項目を開ける', async ({ page }) => {
+  await openApp(page, {
+    extra: { school_calendar: [
+      { id: 'h1', type: 'holiday', start: '2026-10-29', end: '2026-10-29', name: '' }, // 木
+      { id: 's1', type: 'swap', date: '2026-10-30', dayOfWeek: 3, name: '' }, // 金曜に水曜の授業
+    ] },
+  })
+  // 授業詳細から補講を追加（10/31 土 4限）
+  await page.click('.course-card .icon-btn')
+  const box = page.locator('.modal .makeup-box')
+  await box.locator('summary').click()
+  await box.getByLabel('補講の日付').fill('2026-10-28')
+  await box.getByRole('button', { name: '＋ 補講を登録' }).click()
+  await expect(box.locator('[role=alert]')).toContainText('すでにこの授業があります')
+  await box.getByLabel('補講の日付').fill('2026-10-31')
+  await box.getByLabel('補講の時限').selectOption('4')
+  await box.getByRole('button', { name: '＋ 補講を登録' }).click()
+  await expect(box.locator('[role=status]')).toHaveText('10/31（土） 4限に補講を登録しました。')
+  await expect(box.locator('.calendar-item')).toHaveCount(1)
+  await page.click('.modal button:text-is("閉じる")')
+
+  await openView(page, '週間')
+  const col = (n) => page.locator(`.weekly tbody tr:nth-child(${n})`)
+  await expect(page.locator('.weekly th.is-holiday')).toContainText('休校')
+  await expect(page.locator('.weekly th').nth(5)).toContainText('水曜') // 金曜の列（振替）
+  await expect(col(1).locator('td').nth(4)).toContainText('データ構造とアルゴリズム') // 木1限（休校）
+  await expect(col(1).locator('td').nth(4).locator('.weekly-course.is-off')).toHaveCount(1)
+  await expect(col(3).locator('td').nth(5)).toContainText('英語コミュニケーション') // 金3限（水曜の授業）
+  await expect(col(4).locator('td').nth(6)).toContainText('補講') // 土4限
+
+  // 目次の節から、設定の項目を開いた状態で表示する
+  await openView(page, '目次')
+  await expect(page.locator('.toc-section').first()).toContainText('次の休校日: 10/29（木）')
+  await page.click('.toc-section:has(.toc-label:text-is("バックアップ"))')
+  await expect(page.locator('.settings-group:has(summary:text-is("データ"))')).toHaveAttribute('open', '')
+  await expect(page.locator('.settings-heading')).toHaveText(['時間割', '表示・通知', 'キャンパス', 'データ'])
 })
 
 test('漢字フォントは、画面で使う文字を含むファイルだけを読み込む', async ({ page }) => {

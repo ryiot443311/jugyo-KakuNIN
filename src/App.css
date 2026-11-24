@@ -299,3 +299,17 @@
 .calendar-form { display: grid; gap: 8px; margin-top: 8px; }
 .rollover-step { margin-top: 14px; padding-top: 10px; border-top: 1px dashed var(--border); }
 .rollover-step:first-of-type { border-top: none; padding-top: 0; }
+.weekly th.is-holiday { color: var(--text-faint); }
+.weekly-note { display: block; margin-top: 1px; font-family: var(--font-sans); font-size: 0.6rem; font-weight: 700; color: var(--text-muted); }
+.weekly-note.is-swap { color: var(--accent); }
+.weekly-cell.is-holiday { background: var(--surface-2); }
+.weekly-course.is-off .weekly-name, .weekly-course.is-off .weekly-room { color: var(--text-faint); text-decoration: line-through; } /* 休校日の授業（色は薄くしすぎない: コントラスト AA） */
+.weekly-tag { color: var(--accent); font-weight: 700; }
+.makeup-box > summary { cursor: pointer; }
+
+/* ===== 目次の節・設定の見出し ===== */
+.toc-sections { padding-left: 18px; }
+.toc-section { min-height: 48px; padding: 10px 2px; }
+.toc-section .toc-label { font-size: 0.95rem; }
+.settings-heading { margin: 22px 2px 8px; padding-bottom: 4px; border-bottom: 1px solid var(--border-strong); color: var(--text-muted); font-family: var(--font-serif); font-size: 0.85rem; letter-spacing: 0.15em; }
+.settings-heading:first-child { margin-top: 4px; }

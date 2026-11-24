@@ -50,6 +50,31 @@ export default function SettingsView({ settings, onChange, courses, today, appDa
 
   return (
     <div className="mb-20">
+      <h3 className="settings-heading">時間割</h3>
+      <CoursesSection courses={appData.courses} hiddenCourses={settings.hiddenCourses} onToggle={toggleCourse} onEdit={onEditCourse} onAdd={onAddCourse} />
+      <CalendarSection calendar={calendar} onChange={onChangeCalendar} courses={courses} allCourses={appData.courses} periods={settings.periods} quarters={settings.quarters} today={today} />
+      <SettingsGroup title="クォーターの期間">
+        {Object.entries(settings.quarters).map(([q, range]) => (
+          <div key={q} className="row align-center gap-6 range-row">
+            <span className="range-label">第{q}Q</span>
+            <span className="row align-center gap-6"><MonthDayInput value={range.start} label={`第${q}Q開始`} onChange={(start) => setQuarter(q, { start })} /></span>
+            <span className="row align-center gap-6">〜<MonthDayInput value={range.end} label={`第${q}Q終了`} onChange={(end) => setQuarter(q, { end })} /></span>
+          </div>
+        ))}
+        <p className="tiny muted">年をまたぐ期間は、開始を終了より後の日付にします（例: 11月1日〜1月31日）。</p>
+      </SettingsGroup>
+      <SettingsGroup title="時限の時間">
+        {Object.entries(settings.periods).map(([p, time]) => (
+          <div key={p} className="row align-center gap-6 range-row">
+            <span className="range-label">{p}限</span>
+            <input type="time" aria-label={`${p}限の開始`} value={time.start} onChange={(e) => e.target.value && setPeriod(p, { start: e.target.value })} className="input grow" />
+            <span>〜</span>
+            <input type="time" aria-label={`${p}限の終了`} value={time.end} onChange={(e) => e.target.value && setPeriod(p, { end: e.target.value })} className="input grow" />
+          </div>
+        ))}
+      </SettingsGroup>
+      <RolloverSection courses={courses} quarters={settings.quarters} calendar={calendar} today={today} getBackup={getBackup} onHideCourses={onHideCourses} onChangeCalendar={onChangeCalendar} />
+      <h3 className="settings-heading">表示・通知</h3>
       <SettingsGroup title="テーマ">
         <div className="row gap-6">
           {THEMES.map(t => (
@@ -63,9 +88,6 @@ export default function SettingsView({ settings, onChange, courses, today, appDa
           ))}
         </div>
       </SettingsGroup>
-
-      <CoursesSection courses={appData.courses} hiddenCourses={settings.hiddenCourses} onToggle={toggleCourse} onEdit={onEditCourse} onAdd={onAddCourse} />
-      <CampusSection campuses={appData.campuses} buildings={appData.buildings} images={campusImages} onChangeData={onChangeData} onChangeImages={onChangeImages} />
       <SettingsGroup title="出席率の基準">
         <div className="row gap-10 align-center">
           <NumInput value={settings.threshold} min={1} max={100} label="出席率の基準" onCommit={(threshold) => onChange({ threshold })} />
@@ -73,36 +95,13 @@ export default function SettingsView({ settings, onChange, courses, today, appDa
         </div>
         <p className="small muted mt-8">分析画面の警告と「あと何回欠席できるか」の計算に使います。</p>
       </SettingsGroup>
-
-      <SettingsGroup title="クォーターの期間">
-        {Object.entries(settings.quarters).map(([q, range]) => (
-          <div key={q} className="row align-center gap-6 range-row">
-            <span className="range-label">第{q}Q</span>
-            <span className="row align-center gap-6"><MonthDayInput value={range.start} label={`第${q}Q開始`} onChange={(start) => setQuarter(q, { start })} /></span>
-            <span className="row align-center gap-6">〜<MonthDayInput value={range.end} label={`第${q}Q終了`} onChange={(end) => setQuarter(q, { end })} /></span>
-          </div>
-        ))}
-        <p className="tiny muted">年をまたぐ期間は、開始を終了より後の日付にします（例: 11月1日〜1月31日）。</p>
-      </SettingsGroup>
-
-      <SettingsGroup title="時限の時間">
-        {Object.entries(settings.periods).map(([p, time]) => (
-          <div key={p} className="row align-center gap-6 range-row">
-            <span className="range-label">{p}限</span>
-            <input type="time" aria-label={`${p}限の開始`} value={time.start} onChange={(e) => e.target.value && setPeriod(p, { start: e.target.value })} className="input grow" />
-            <span>〜</span>
-            <input type="time" aria-label={`${p}限の終了`} value={time.end} onChange={(e) => e.target.value && setPeriod(p, { end: e.target.value })} className="input grow" />
-          </div>
-        ))}
-      </SettingsGroup>
-
-      <CalendarSection calendar={calendar} onChange={onChangeCalendar} courses={courses} allCourses={appData.courses} periods={settings.periods} quarters={settings.quarters} today={today} />
-
       <NotifySection settings={settings} onChange={onChange} courses={courses} calendar={calendar} today={today} />
+      <h3 className="settings-heading">キャンパス</h3>
+      <CampusSection campuses={appData.campuses} buildings={appData.buildings} images={campusImages} onChangeData={onChangeData} onChangeImages={onChangeImages} />
+      <h3 className="settings-heading">データ</h3>
+      <DataSection getBackup={getBackup} onImportBackup={onImportBackup} />
       <CsvSection logs={logs} courses={appData.courses} />
       <InstallSection />
-      <DataSection getBackup={getBackup} onImportBackup={onImportBackup} />
-      <RolloverSection courses={courses} quarters={settings.quarters} calendar={calendar} today={today} getBackup={getBackup} onHideCourses={onHideCourses} onChangeCalendar={onChangeCalendar} />
       <DangerSection logCount={logCount} onResetLogs={onResetLogs} getBackup={getBackup} campuses={appData.campuses} buildings={appData.buildings} onChangeData={onChangeData} />
     </div>
   );

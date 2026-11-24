@@ -9,7 +9,7 @@ import { CALENDAR_KEY, sanitizeCalendar } from './data/calendar';
 import { buildBackup, sanitizeImages } from './data/backup';
 import { mergeBackupData } from './data/merge';
 import { findUnrecorded, LOOKBACK_DAYS } from './utils/unrecorded';
-import { parseDateStr, getQuarterByDate, getNearestQuarter, getDateOfWeekday, getFiscalYear } from './utils/date';
+import { parseDateStr, getQuarterByDate, getNearestQuarter, getFiscalYear } from './utils/date';
 import { buildCourseAnalytics, calcRate, countStatuses } from './utils/stats';
 import { absenceByWeekday, topAbsenceSlots, weeklyRates } from './utils/trends';
 import { dateMemoKey } from './utils/memo';
@@ -32,6 +32,7 @@ import AnalyticsView from './views/AnalyticsView';
 import MapView from './views/MapView';
 import SettingsView from './views/SettingsView';
 import TocView from './views/TocView';
+import { SettingsFocus } from './components/settings/settingsFocus';
 import './App.css';
 
 const UNDO_MS = 6000; // 記録後に「元に戻す」を出しておく時間
@@ -95,6 +96,8 @@ function App() {
   const [saveErrorDismissed, setSaveErrorDismissed] = useState(false);
 
   const [currentView, setCurrentView] = useState(initialView);
+  const [settingsFocus, setSettingsFocus] = useState(null); // 目次から開いた設定の項目
+  const openView = useCallback((view, section = null) => { setSettingsFocus(section); setCurrentView(view); }, []);
   const [selectedDate, setSelectedDate] = useState(today);
   const [selectedQuarter, setSelectedQuarter] = useState(() => getNearestQuarter(parseDateStr(today), settings.quarters));
   const [logs, setLogs] = useLocalStorageState('attendance_logs', [], sanitizeLogs);
@@ -297,6 +300,7 @@ function App() {
           onEditLog={(log) => { setDetailCourse(null); setEditLog(log); }}
           onEdit={() => { setCourseForm({ course: detailCourse }); setDetailCourse(null); }}
           onClose={() => setDetailCourse(null)}
+          periods={settings.periods} quarters={settings.quarters} calendar={calendar} onChangeCalendar={setCalendar}
         />
       )}
 
@@ -332,18 +336,18 @@ function App() {
       <nav className="tabs" aria-label="画面切り替え">
         {TABS.map(id => {
           const active = tabOf(currentView) === id;
-          return <button key={id} type="button" onClick={() => setCurrentView(id)} aria-current={active ? 'page' : undefined} className={`tab${active ? ' is-active' : ''}`}>{VIEWS.find(v => v.id === id).label}</button>;
+          return <button key={id} type="button" onClick={() => openView(id)} aria-current={active ? 'page' : undefined} className={`tab${active ? ' is-active' : ''}`}>{VIEWS.find(v => v.id === id).label}</button>;
         })}
       </nav>
 
       {TOC_VIEWS.includes(currentView) && (
         <div className="subpage-head">
-          <button type="button" onClick={() => setCurrentView('toc')} className="btn btn-ghost btn-small back-link">‹ 目次</button>
+          <button type="button" onClick={() => openView('toc')} className="btn btn-ghost btn-small back-link">‹ 目次</button>
           <h2 className="subpage-title">{VIEWS.find(v => v.id === currentView).label}</h2>
         </div>
       )}
       {currentView === 'toc' && (
-        <TocView logCount={logs.length} campusCount={appData.campuses.length} courseCount={appData.courses.length} onOpen={setCurrentView} />
+        <TocView logCount={logs.length} campusCount={appData.campuses.length} courseCount={appData.courses.length} calendar={calendar} courses={appData.courses} today={today} onOpen={openView} />
       )}
 
       {currentView === 'home' && (
@@ -361,8 +365,8 @@ function App() {
         <UnrecordedModal items={unrecorded} onSelect={(date) => { selectDate(date); setShowUnrecorded(false); }} onClose={() => setShowUnrecorded(false)} />
       )}
       {currentView === 'weekly' && (
-        // 週間表から開いた授業は、今週のその曜日の日付として扱う
-        <WeeklyView today={today} periods={settings.periods} quarterCourses={quarterCourses} courseMemos={courseMemos} onOpenDetail={(course) => { setSelectedDate(getDateOfWeekday(today, course.dayOfWeek)); setDetailCourse(course); }} onAddCourse={openAddCourse}
+        // 週間表から開いた授業は、そのマスの日付（今週）として扱う
+        <WeeklyView today={today} periods={settings.periods} quarters={settings.quarters} calendar={calendar} selectedQuarter={selectedQuarter} courses={courses} quarterCourses={quarterCourses} courseMemos={courseMemos} onOpenDetail={(course, date) => { setSelectedDate(date); setDetailCourse(course); }} onAddCourse={openAddCourse}
           getLogAt={getLogAt} unrecordedKeys={unrecordedKeys} />
       )}
       {currentView === 'history' && <HistoryView logs={logs} courses={appData.courses} expandedSections={expandedSections} onToggle={toggleAccordion} onEditLog={setEditLog} />}
@@ -376,6 +380,7 @@ function App() {
       {currentView === 'map' && <MapView campuses={appData.campuses} buildings={appData.buildings} campusImages={campusImages} />}
       {currentView === 'settings' && !imagesLoaded && <div className="empty" role="status">読み込み中…</div>}
       {currentView === 'settings' && imagesLoaded && (
+        <SettingsFocus.Provider value={settingsFocus}>
         <SettingsView
           settings={settings} onChange={updateSettings} courses={courses} today={today}
           appData={appData} onChangeData={updateData} campusImages={campusImages} onChangeImages={setCampusImages}
@@ -385,6 +390,7 @@ function App() {
           calendar={calendar} onChangeCalendar={setCalendar}
           onHideCourses={(ids) => updateSettings({ hiddenCourses: [...new Set([...settings.hiddenCourses, ...ids])] })}
         />
+        </SettingsFocus.Provider>
       )}
 
       {undo && <UndoToast text={undo.text} onUndo={undoRecord} onDismiss={() => setUndo(null)} />}

@@ -8,6 +8,9 @@ export const formatDate = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).
 // 'YYYY-MM-DD' をローカル時刻の Date に変換（new Date('YYYY-MM-DD') は UTC 扱いになるため）
 export const parseDateStr = (str) => { const [y, m, d] = str.split('-').map(Number); return new Date(y, m - 1, d); };
 
+// 'YYYY-MM-DD' を「10/31（土）」に
+export const shortDate = (dateStr) => { const d = parseDateStr(dateStr); return `${d.getMonth() + 1}/${d.getDate()}（${DAYS[d.getDay()]}）`; };
+
 export const addDays = (dateStr, n) => { const d = parseDateStr(dateStr); d.setDate(d.getDate() + n); return formatDate(d); };
 
 // dateStr を含む週（日曜始まり）の、指定曜日の日付
