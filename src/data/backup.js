@@ -2,6 +2,7 @@ import { resolveSettings } from './settings';
 import { sanitizeCourses, sanitizeCampuses, sanitizeBuildings } from './appData';
 import { sanitizeLogs, sanitizeMemos } from './sanitize';
 import { sanitizeTasks } from './tasks';
+import { sanitizeCalendar } from './calendar';
 
 const APP_ID = 'my-attendance-app';
 const BACKUP_VERSION = 1;
@@ -9,11 +10,11 @@ const BACKUP_VERSION = 1;
 const isPlainObject = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
 
 // バックアップ JSON の中身。logs〜settings の形式は、以前のバージョンのバックアップと同じ
-export const buildBackup = ({ logs, courseMemos, datedMemos, tasks, courses, settings, campuses, campusBuildings, campusImages }, now = new Date()) => ({
+export const buildBackup = ({ logs, courseMemos, datedMemos, tasks, calendar, courses, settings, campuses, campusBuildings, campusImages }, now = new Date()) => ({
   app: APP_ID,
   version: BACKUP_VERSION,
   exportedAt: now.toISOString(),
-  data: { logs, courseMemos, datedMemos, tasks, courses, settings, campuses, campusBuildings, campusImages },
+  data: { logs, courseMemos, datedMemos, tasks, calendar, courses, settings, campuses, campusBuildings, campusImages },
 });
 
 export const sanitizeImages = (obj) => {
@@ -42,6 +43,7 @@ export const parseBackup = (text) => {
     take('courseMemos', sanitizeMemos);
     take('datedMemos', sanitizeMemos);
     take('tasks', sanitizeTasks, true);
+    take('calendar', sanitizeCalendar, true);
     take('settings', resolveSettings);
     take('campuses', sanitizeCampuses);
     take('campusBuildings', sanitizeBuildings);

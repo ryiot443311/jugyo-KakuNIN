@@ -1,5 +1,6 @@
-import { addDays, formatDate, parseDateStr } from './date';
+import { addDays, formatDate, getFiscalYear, parseDateStr } from './date';
 import { isCourseInQuarter, isCourseOnDate } from '../data/status';
+import { coursesOnDate } from '../data/calendar';
 
 // 時間割をカレンダー（iCalendar / .ics）にする。授業ごと・クォーターごとに繰り返しの予定を作る
 // 時刻は端末の時刻として扱う（タイムゾーンを付けない）
@@ -36,41 +37,81 @@ const ymd = (dateStr) => dateStr.replace(/-/g, '');
 const hms = (hhmm) => `${hhmm.replace(':', '')}00`;
 const utcStamp = (d) => d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
 
-// 期間内で、最初に授業がある日（なければ null）
-const firstDate = (course, start, end, quarters) => {
-  for (let d = start; d <= end; d = addDays(d, 1)) if (isCourseOnDate(course, d, quarters)) return d;
-  return null;
+// 期間内で、時間割どおり（曜日・隔週）なら授業がある日
+const regularDates = (course, start, end, quarters) => {
+  const dates = [];
+  for (let d = start; d <= end; d = addDays(d, 1)) if (isCourseOnDate(course, d, quarters)) dates.push(d);
+  return dates;
 };
 
+// 学年暦を反映したその日の授業に、時間割の授業として course が入っているか
+const heldAsRegular = (course, date, quarters, calendar, quarter) => coursesOnDate({ courses: [course], date, quarters, calendar, quarter }).some(c => !c.makeupId);
+
 // from 以降に終わるクォーターだけを含める（過去の予定を作らないため）
-export function buildIcs({ courses, quarters, periods, fiscalYear, from, alarmMinutes = 10, now = new Date() }) {
+// 学年暦: 休校日・振替で授業がない日は繰り返しから除き（EXDATE）、振替で授業がある日と補講は1回だけの予定にする
+export function buildIcs({ courses, quarters, periods, fiscalYear, from, calendar = [], alarmMinutes = 10, now = new Date() }) {
   const lines = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//jugyo-kakunin//attendance//JA', 'CALSCALE:GREGORIAN', 'X-WR-CALNAME:授業の時間割'];
   let count = 0;
-  for (const [q, range] of Object.entries(quarters)) {
+  const addEvent = ({ uid, course, date, period, room, summary, extra = [] }) => {
+    lines.push(
+      'BEGIN:VEVENT',
+      `UID:${uid}@jugyo-kakunin`,
+      `DTSTAMP:${utcStamp(now)}`,
+      `DTSTART:${ymd(date)}T${hms(period.start)}`,
+      `DTEND:${ymd(date)}T${hms(period.end)}`,
+      ...extra,
+      `SUMMARY:${esc(summary)}`,
+      ...(room ? [`LOCATION:${esc(room)}`] : []),
+      ...(course.teacher ? [`DESCRIPTION:${esc(`担当: ${course.teacher}`)}`] : []),
+    );
+    if (alarmMinutes > 0) lines.push('BEGIN:VALARM', 'ACTION:DISPLAY', `DESCRIPTION:${esc(summary)}`, `TRIGGER:-PT${alarmMinutes}M`, 'END:VALARM');
+    lines.push('END:VEVENT');
+    count++;
+  };
+
+  for (const [qKey, range] of Object.entries(quarters)) {
+    const q = Number(qKey);
     const { start, end } = quarterDates(range, fiscalYear);
     if (end < from) continue;
+    const rangeStart = start > from ? start : from;
     for (const c of courses) {
       const p = periods[c.period];
-      if (!p || !isCourseInQuarter(c, Number(q))) continue;
-      const first = firstDate(c, start > from ? start : from, end, quarters);
-      if (!first) continue;
+      if (!p || !isCourseInQuarter(c, q)) continue;
+      // 最初の回は、休校日・振替で無くならない日にする（隔週の数え方は変わらない）
+      const dates = regularDates(c, rangeStart, end, quarters);
+      const held = dates.map(d => heldAsRegular(c, d, quarters, calendar, q));
+      const firstIndex = held.indexOf(true);
+      if (firstIndex === -1) continue;
+      const skipped = dates.filter((d, i) => i > firstIndex && !held[i]);
       const interval = c.weeks === 'odd' || c.weeks === 'even' ? 2 : 1;
-      lines.push(
-        'BEGIN:VEVENT',
-        `UID:${c.id}-${fiscalYear}-q${q}@jugyo-kakunin`,
-        `DTSTAMP:${utcStamp(now)}`,
-        `DTSTART:${ymd(first)}T${hms(p.start)}`,
-        `DTEND:${ymd(first)}T${hms(p.end)}`,
-        `RRULE:FREQ=WEEKLY;INTERVAL=${interval};UNTIL=${ymd(end)}T235959`,
-        `SUMMARY:${esc(c.name)}`,
-        ...(c.room ? [`LOCATION:${esc(c.room)}`] : []),
-        ...(c.teacher ? [`DESCRIPTION:${esc(`担当: ${c.teacher}`)}`] : []),
-      );
-      if (alarmMinutes > 0) lines.push('BEGIN:VALARM', 'ACTION:DISPLAY', `DESCRIPTION:${esc(c.name)}`, `TRIGGER:-PT${alarmMinutes}M`, 'END:VALARM');
-      lines.push('END:VEVENT');
-      count++;
+      addEvent({
+        uid: `${c.id}-${fiscalYear}-q${q}`, course: c, date: dates[firstIndex], period: p, room: c.room, summary: c.name,
+        extra: [
+          `RRULE:FREQ=WEEKLY;INTERVAL=${interval};UNTIL=${ymd(end)}T235959`,
+          ...(skipped.length > 0 ? [`EXDATE:${skipped.map(d => `${ymd(d)}T${hms(p.start)}`).join(',')}`] : []),
+        ],
+      });
+    }
+    // 曜日振替の日に、振替先の曜日の授業として行う回
+    for (const swap of calendar) {
+      if (swap.type !== 'swap' || swap.date < rangeStart || swap.date > end) continue;
+      for (const c of coursesOnDate({ courses, date: swap.date, quarters, calendar, quarter: q })) {
+        const p = periods[c.period];
+        if (!p || c.makeupId || isCourseOnDate(c, swap.date, quarters)) continue;
+        addEvent({ uid: `${c.id}-${swap.date}-swap`, course: c, date: swap.date, period: p, room: c.room, summary: `${c.name}（振替）` });
+      }
     }
   }
+
+  // 補講（その年度で from 以降のもの）
+  for (const e of calendar) {
+    if (e.type !== 'makeup' || e.date < from || getFiscalYear(e.date) !== fiscalYear) continue;
+    const c = coursesOnDate({ courses, date: e.date, quarters, calendar }).find(x => x.makeupId === e.id);
+    const p = c && periods[c.period];
+    if (!p) continue;
+    addEvent({ uid: `${c.id}-${e.date}-makeup-${e.id}`, course: c, date: e.date, period: p, room: c.room, summary: `${c.name}（補講）` });
+  }
+
   lines.push('END:VCALENDAR');
   return { text: `${lines.map(fold).join('\r\n')}\r\n`, count };
 }

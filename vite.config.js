@@ -17,6 +17,10 @@ const CSP = [
   "form-action 'self'",
 ].join('; ')
 
+// 漢字フォントの 01 以降（よく使う順に分けたもの）は事前に保存せず、画面で使ったときに読み込んで保存する
+// （初回の通信量を減らすため。00 は画面の文字なので事前に保存する）
+const OPTIONAL_FONT = /^techo-mincho-kanji-(?!00-)\d+-.*\.woff2$/
+
 // 本番ビルドだけの処理: CSP の追加と、Service Worker への「ビルド番号」「保存するファイル一覧」の書き込み
 function productionExtras() {
   let outDir = 'dist'
@@ -32,7 +36,7 @@ function productionExtras() {
       const swPath = path.join(outDir, 'sw.js')
       if (!fs.existsSync(swPath)) return
       const files = fs.readdirSync(outDir, { recursive: true, withFileTypes: true })
-        .filter((e) => e.isFile() && !e.name.startsWith('.') && e.name !== 'sw.js')
+        .filter((e) => e.isFile() && !e.name.startsWith('.') && e.name !== 'sw.js' && !OPTIONAL_FONT.test(e.name))
         .map((e) => path.relative(outDir, path.join(e.parentPath, e.name)).split(path.sep).join('/'))
       const sw = fs.readFileSync(swPath, 'utf8')
         .replace('__BUILD_ID__', Date.now().toString(36))

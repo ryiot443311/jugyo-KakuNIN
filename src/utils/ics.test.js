@@ -54,4 +54,25 @@ describe('buildIcs', () => {
     for (const line of text.split('\r\n')) expect(enc.encode(line).length).toBeLessThanOrEqual(75);
     expect(unfold(text)).toContain(`SUMMARY:${'とても長い授業名'.repeat(10)}`);
   });
+  it('休校日・振替で授業がない日は除き、振替と補講は1回だけの予定にする', () => {
+    const calendar = [
+      { id: 'h', type: 'holiday', start: '2026-09-02', end: '2026-09-02', name: '' }, // 最初の水曜が休校
+      { id: 'h2', type: 'holiday', start: '2026-09-16', end: '2026-09-16', name: '' },
+      { id: 's', type: 'swap', date: '2026-09-24', dayOfWeek: 3, name: '' }, // 木曜に水曜の授業
+      { id: 's2', type: 'swap', date: '2026-09-30', dayOfWeek: 1, name: '' }, // 水曜に月曜の授業
+      { id: 'm', type: 'makeup', date: '2026-10-03', courseId: 'c1', period: 1, room: 'B-2', name: '' },
+      { id: 'm-old', type: 'makeup', date: '2026-07-01', courseId: 'c1', period: 1, room: '', name: '' }, // from より前
+    ];
+    const { text, count } = buildIcs({ courses: [course()], quarters, periods, fiscalYear: 2026, from: '2026-08-01', calendar, now });
+    const t = unfold(text);
+    expect(count).toBe(3);
+    expect(t).toContain('DTSTART:20260909T090000'); // 9/2 は休校なので最初は 9/9
+    expect(t).toContain('EXDATE:20260916T090000,20260930T090000');
+    expect(t).toContain('UID:c1-2026-09-24-swap@jugyo-kakunin');
+    expect(t).toContain('DTSTART:20260924T090000');
+    expect(t).toContain('SUMMARY:線形代数\\, 演習\\;1（振替）');
+    expect(t).toContain('DTSTART:20261003T090000');
+    expect(t).toContain('LOCATION:B-2');
+    expect(t).not.toContain('20260701');
+  });
 });

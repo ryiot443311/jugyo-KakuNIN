@@ -25,8 +25,9 @@ export const weekPatternLabel = (course) => WEEK_PATTERNS.find(w => w.id === cou
 
 // 授業がその日にあるか（曜日と隔週で判定。クォーターは呼び出し側で確認する）
 // 隔週は、その日のクォーターの開始週を第1週として奇数・偶数を数える。クォーター外の日は隔週を考えない
-export const isCourseOnDate = (course, dateStr, quarters) => {
-  if (course.dayOfWeek !== parseDateStr(dateStr).getDay()) return false;
+// dayOfWeek を渡すと、その曜日の授業として判定する（曜日振替の日）
+export const isCourseOnDate = (course, dateStr, quarters, dayOfWeek = parseDateStr(dateStr).getDay()) => {
+  if (course.dayOfWeek !== dayOfWeek) return false;
   if (course.weeks !== 'odd' && course.weeks !== 'even') return true;
   const week = getQuarterWeek(dateStr, quarters);
   return week === 0 || (week % 2 === 1) === (course.weeks === 'odd');

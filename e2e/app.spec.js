@@ -244,7 +244,7 @@ test('通知: 授業開始の10分前に知らせる・カレンダーに書き�
   expect(ics).toContain('BEGIN:VCALENDAR')
   expect(ics).toContain('SUMMARY:英語コミュニケーション')
   expect(ics).toContain('TRIGGER:-PT10M')
-  await expect(group.locator('[role=status]')).toContainText('繰り返し予定を書き出しました')
+  await expect(group.locator('[role=status]')).toContainText('予定を書き出しました')
 })
 
 test('バックアップ: 書き出し・置き換え・統合', async ({ page }) => {
@@ -292,6 +292,43 @@ test('マップ画像: 以前の localStorage の画像を IndexedDB に移し�
   await openView(page, 'マップ')
   await expect(page.locator('h2.app-title')).toBeVisible()
   await expect(page.locator(`img[src="${png}"]`)).toHaveCount(0)
+})
+
+test('学年暦: 休校日・補講を登録すると、日別画面と記録し忘れに反映する', async ({ page }) => {
+  await openApp(page, { logs: [log('a1', 'wed-3', '2026-10-14'), log('a2', 'thu-1', '2026-10-15'), log('a3', 'sat-2', '2026-10-17'), log('a4', 'sat-2', '2026-10-24')] })
+  await expect(page.locator('.unrecorded-banner')).toContainText('2件') // 10/21(水)・10/22(木)
+  await openView(page, '設定')
+  const group = await openGroup(page, '休校日・振替・補講')
+  await group.getByLabel('休校日の始まり').fill('2026-10-21')
+  await group.getByLabel('休校日の終わり').fill('2026-10-22')
+  await group.getByLabel('名前・メモ').fill('大学祭')
+  await group.getByRole('button', { name: '＋ 登録する' }).click()
+  await group.getByRole('button', { name: '補講' }).click()
+  await group.getByLabel('補講の日付').fill('2026-10-30')
+  await group.getByLabel('補講の授業').selectOption('thu-1')
+  await group.getByLabel('補講の時限').selectOption('2')
+  await group.getByRole('button', { name: '＋ 登録する' }).click()
+  await expect(group.locator('.calendar-item')).toHaveCount(2)
+  expect((await stored(page, 'school_calendar')).map(e => e.type)).toEqual(['holiday', 'makeup'])
+
+  await openView(page, '日別')
+  await expect(page.locator('.unrecorded-banner')).toHaveCount(0) // 休校日の授業は数えない
+  await page.click('.day-tab:has(.day-tab-day:text-is("金"))')
+  await expect(page.locator('.course-card .course-name')).toHaveText('データ構造とアルゴリズム補講')
+  await expect(page.locator('.course-card .course-meta')).toContainText('2限')
+  await page.click('button:text-is("◀ 前の週")')
+  await page.click('.day-tab:has(.day-tab-day:text-is("水"))')
+  await expect(page.locator('.day-note')).toHaveText('休校日（大学祭）')
+  await expect(page.locator('.empty')).toHaveText('休校日のため授業なし')
+})
+
+test('漢字フォントは、画面で使う文字を含むファイルだけを読み込む', async ({ page }) => {
+  const fonts = []
+  page.on('request', r => { const m = r.url().match(/techo-mincho-kanji-(\d+)-/); if (m) fonts.push(m[1]) })
+  await openApp(page)
+  await expect(page.locator('.course-card').first()).toBeVisible()
+  await page.evaluate(() => document.fonts.ready)
+  expect([...new Set(fonts)]).toEqual(['00'])
 })
 
 test('ホーム画面のショートカット: ?view= で開く画面を選べる（不正な値は日別）', async ({ page }) => {

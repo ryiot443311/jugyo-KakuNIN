@@ -7,7 +7,7 @@ import SettingsGroup from './SettingsGroup';
 const MAX_BACKUP_BYTES = 30 * 1024 * 1024; // マップ画像を含めても収まる大きさ
 
 const PART_LABELS = {
-  logs: '出席記録', courses: '授業', courseMemos: '授業メモ', datedMemos: '日付別メモ', tasks: '課題', settings: '設定',
+  logs: '出席記録', courses: '授業', courseMemos: '授業メモ', datedMemos: '日付別メモ', tasks: '課題', calendar: '学年暦', settings: '設定',
   campuses: 'キャンパス', campusBuildings: '施設の説明', campusImages: 'マップ画像',
 };
 
@@ -54,7 +54,7 @@ export default function DataSection({ getBackup, onImportBackup }) {
         </label>
       </div>
       {message && <p className={`small mt-8 ${message.ok ? 'ok-text' : 'danger-text'}`} role={message.ok ? 'status' : 'alert'}>{message.text}</p>}
-      <p className="tiny muted mt-8">授業・キャンパス情報、設定、マップ画像、出席記録、メモを JSON で保存・復元できます。</p>
+      <p className="tiny muted mt-8">授業・キャンパス情報、設定、マップ画像、出席記録、メモ、課題、学年暦を JSON で保存・復元できます。</p>
     </SettingsGroup>
   );
 }

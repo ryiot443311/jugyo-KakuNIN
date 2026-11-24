@@ -288,3 +288,14 @@
 /* ダイアログ自体にフォーカスを移したときは枠を出さない（中のボタンなどには出す） */
 .modal:focus { outline: none; }
 .toast-close { flex-shrink: 0; min-width: 32px; min-height: 32px; padding: 0; border: none; background: transparent; color: inherit; font-size: 1.2rem; line-height: 1; }
+
+/* ===== 学年暦（休校日・曜日振替・補講） ===== */
+.day-note { margin: 4px 0 10px; padding: 8px 12px; border-radius: 4px; font-size: 0.85rem; font-weight: 700; border-left: 4px solid; }
+.day-note.is-holiday { background: var(--surface-2); border-color: var(--canceled); color: var(--text-muted); }
+.day-note.is-swap { background: var(--memo-dated-bg); border-color: var(--accent); color: var(--memo-dated-text); }
+.calendar-list { list-style: none; margin: 8px 0 0; padding: 0; }
+.calendar-item { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--border); }
+.calendar-item:last-child { border-bottom: none; }
+.calendar-form { display: grid; gap: 8px; margin-top: 8px; }
+.rollover-step { margin-top: 14px; padding-top: 10px; border-top: 1px dashed var(--border); }
+.rollover-step:first-of-type { border-top: none; padding-top: 0; }

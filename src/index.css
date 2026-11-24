@@ -1,15 +1,12 @@
+@import "./assets/fonts/kanji.css";
 /* ===== 書体（手帳風） ===== */
 /* 見出し・数字用の明朝体（しっぽり明朝 Bold を同梱。ライセンスは assets/fonts/OFL.txt）
-   授業名は自由入力なので、かな・英数字とJIS第1水準の漢字を入れている。範囲外の文字は端末の明朝体になる */
+   授業名は自由入力なので、かな・英数字とJIS第1水準の漢字を入れている。範囲外の文字は端末の明朝体になる
+   漢字は、よく使う順に分けたファイル（kanji.css。scripts/split-font.py で作成）で、画面にある文字のファイルだけを読み込む */
 @font-face {
   font-family: "Techo Mincho"; font-weight: 700; font-display: swap;
   src: url("./assets/fonts/techo-mincho-kana.woff2") format("woff2");
   unicode-range: U+0000-33FF, U+FF00-FFEF;
-}
-@font-face {
-  font-family: "Techo Mincho"; font-weight: 700; font-display: swap;
-  src: url("./assets/fonts/techo-mincho-kanji.woff2") format("woff2");
-  unicode-range: U+4E00-9FFF;
 }
 
 /* ===== テーマ（手帳風のライト/ダーク） ===== */

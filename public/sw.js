@@ -1,6 +1,7 @@
 // オフラインでも開けるようにするための Service Worker
 // ビルド時に BUILD_ID と PRECACHE（配信する全ファイル）が書き込まれる。
 // 初回に全ファイルを端末に保存するので、通信できなくても、まだ開いていない画面を含めてすべて使える。
+// ただし漢字フォントの一部（よく使う順に分けた 01 以降）は、画面で使ったときに読み込んで保存する（PRECACHE に入れない）。
 const BUILD_ID = '__BUILD_ID__';
 const PRECACHE = /*__PRECACHE__*/ [];
 const CACHE = `jugyo-kakunin-${BUILD_ID}`;
@@ -14,11 +15,23 @@ self.addEventListener('install', (event) => {
   );
 });
 
+// あとから保存した漢字フォントは、ファイル名にハッシュが付いていて中身が変わらないので、新しいビルドにも引き継ぐ
+const isFontChunk = (req) => /\/techo-mincho-kanji-\d+-[^/]*\.woff2$/.test(new URL(req.url).pathname);
+const carryOverFonts = async (oldKey) => {
+  const [oldCache, cache] = await Promise.all([caches.open(oldKey), caches.open(CACHE)]);
+  const reqs = (await oldCache.keys()).filter(isFontChunk);
+  await Promise.all(reqs.map(async (req) => {
+    if (await cache.match(req)) return;
+    const res = await oldCache.match(req);
+    if (res) await cache.put(req, res);
+  }));
+};
+
 // 古いビルドの保存データを削除する
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys()
-      .then((keys) => Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k))))
+      .then((keys) => Promise.all(keys.filter((k) => k !== CACHE).map((k) => carryOverFonts(k).catch(() => {}).then(() => caches.delete(k)))))
       .then(() => self.clients.claim()),
   );
 });

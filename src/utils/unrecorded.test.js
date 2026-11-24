@@ -56,4 +56,13 @@ describe('findUnrecorded（隔週の授業）', () => {
     const logs = [log('even', '2026-10-07')];
     expect(run(logs, { courses: biweekly })).toEqual(['2026-10-28 odd', '2026-10-21 even', '2026-10-14 odd']);
   });
+  it('休校日は数えず、曜日振替・補講は学年暦どおりに数える', () => {
+    const logs = [log('wed1', '2026-10-14'), log('wed2', '2026-10-14')];
+    const calendar = [
+      { id: 'h', type: 'holiday', start: '2026-10-21', end: '2026-10-21', name: '' },
+      { id: 's', type: 'swap', date: '2026-10-23', dayOfWeek: 3, name: '' }, // 金曜に水曜の授業
+      { id: 'm', type: 'makeup', date: '2026-10-24', courseId: 'wed2', period: 1, room: '', name: '' },
+    ];
+    expect(run(logs, { calendar, nowMin: 9 * 60 })).toEqual(['2026-10-24 wed2', '2026-10-23 wed1', '2026-10-23 wed2']);
+  });
 });

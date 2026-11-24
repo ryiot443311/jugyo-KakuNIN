@@ -1,3 +1,4 @@
+import { expect } from '@playwright/test'
 import fs from 'node:fs'
 
 // テスト用の初期データを localStorage に入れ、時計を固定してから開く
@@ -50,9 +51,11 @@ export async function download(page, clickTarget) {
 }
 
 export const settingsGroup = (page, title) => page.locator('.settings-group', { has: page.locator(`summary:text-is("${title}")`) })
+// 見出しにフォーカスして Enter で開く（クリックだと、画面下の固定タブや開いた項目と重なって押せないことがあるため）
 export async function openGroup(page, title) {
   const group = settingsGroup(page, title)
-  if (!(await group.evaluate(el => el.open))) await group.locator(':scope > summary').click()
+  if (!(await group.evaluate(el => el.open))) await group.locator(':scope > summary').press('Enter')
+  await expect(group).toHaveAttribute('open', '')
   return group
 }
 

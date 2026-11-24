@@ -14,7 +14,13 @@ for (const theme of ['light', 'dark']) {
     await openApp(page, {
       settings: { theme },
       logs: [log('a1', 'wed-3', '2026-10-07'), log('a2', 'wed-3', '2026-10-14', '欠席'), log('a3', 'wed-3', '2026-10-21', '遅刻'), log('a4', 'thu-1', '2026-10-22', '休講')],
-      extra: { course_tasks: [{ id: 't1', courseId: 'wed-3', title: 'レポート', due: '2026-10-27', done: false }, { id: 't2', courseId: 'wed-3', title: '小テスト', due: '2026-10-30', done: true }] },
+      extra: {
+        course_tasks: [{ id: 't1', courseId: 'wed-3', title: 'レポート', due: '2026-10-27', done: false }, { id: 't2', courseId: 'wed-3', title: '小テスト', due: '2026-10-30', done: true }],
+        school_calendar: [
+          { id: 'h1', type: 'holiday', start: '2026-10-26', end: '2026-10-26', name: '創立記念日' },
+          { id: 's1', type: 'swap', date: '2026-10-27', dayOfWeek: 4, name: '' },
+        ],
+      },
     })
     await check(page, '日別（課題・記録し忘れ・連続欠席）')
     await page.click('.icon-btn')
@@ -30,12 +36,17 @@ for (const theme of ['light', 'dark']) {
     await page.click('.modal .btn-primary')
     await check(page, '元に戻す')
     await page.click('.toast-close')
+    await page.click('.day-tab:has(.day-tab-day:text-is("月"))')
+    await check(page, '休校日')
+    await page.click('.day-tab:has(.day-tab-day:text-is("火"))')
+    await check(page, '曜日振替')
+    await page.click('button:text-is("今日")')
     for (const tab of ['週間', '履歴', '分析', 'マップ']) {
       await openView(page, tab)
       await check(page, tab)
     }
     await openView(page, '設定')
-    for (const g of ['テーマ', '授業', 'マップ', '出席率の基準', 'クォーターの期間', '時限の時間', '通知・カレンダー', 'CSV出力', 'アプリとして使う', 'データ', '危険な項目']) await openGroup(page, g)
+    for (const g of ['テーマ', '授業', 'マップ', '出席率の基準', 'クォーターの期間', '時限の時間', '通知・カレンダー', 'CSV出力', 'アプリとして使う', '休校日・振替・補講', 'データ', '新年度の準備', '危険な項目']) await openGroup(page, g)
     await check(page, '設定')
   })
 }

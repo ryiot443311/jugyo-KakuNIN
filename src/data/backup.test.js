@@ -48,6 +48,13 @@ describe('バックアップ', () => {
     expect(result.dropped).toBe(1);
     expect(buildBackup({ ...base, tasks }).data.tasks).toEqual(tasks);
   });
+  it('学年暦（休校日・振替・補講）を書き出して読み込める', () => {
+    const calendar = [{ id: 'h1', type: 'holiday', start: '2026-10-30', end: '2026-10-31', name: '大学祭' }];
+    const result = parseBackup(write({ calendar: [...calendar, { id: 'bad', type: 'holiday', start: 'x', end: 'y' }] }));
+    expect(result.data.calendar).toEqual(calendar);
+    expect(result.dropped).toBe(1);
+    expect(buildBackup({ ...base, calendar }).data.calendar).toEqual(calendar);
+  });
   it('画像は data:image/ のものだけ受け付ける', () => {
     const result = parseBackup(write({ campusImages: { a: 'data:image/jpeg;base64,AAAA', b: 'http://example.com/x.png', c: 5 } }));
     expect(result.data.campusImages).toEqual({ a: 'data:image/jpeg;base64,AAAA' });

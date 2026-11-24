@@ -43,6 +43,12 @@ describe('mergeBackupData（統合して読み込む）', () => {
       .toEqual([task('t1', true), task('t2', false)]);
     expect(mergeBackupData(current, { tasks: [task('t1', false)] }).stats.tasks).toEqual({ added: 1, skipped: 0 });
   });
+  it('学年暦は同じIDなら手元を優先し、手元になくても足せる', () => {
+    const ev = (id, name) => ({ id, type: 'holiday', start: '2026-10-30', end: '2026-10-30', name });
+    const merged = mergeBackupData({ ...current, calendar: [ev('h1', '手元')] }, { calendar: [ev('h1', '読込'), ev('h2', '読込')] });
+    expect(merged.data.calendar).toEqual([ev('h1', '手元'), ev('h2', '読込')]);
+    expect(mergeBackupData(current, { calendar: [ev('h1', 'x')] }).stats.calendar).toEqual({ added: 1, skipped: 0 });
+  });
   it('含まれていない項目と設定は変更しない', () => {
     const { data } = mergeBackupData(current, { settings: { theme: 'dark' }, logs: [] });
     expect(Object.keys(data)).toEqual(['logs']);
