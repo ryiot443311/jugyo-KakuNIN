@@ -29,4 +29,11 @@ describe('dueNotifications', () => {
     expect(run(10 * 60 + 30, { notify: { before: false, after: true } })).toEqual(['2026-10-28|a|after']);
     expect(run(8 * 60 + 50, { today: '2026-11-04' })).toEqual([]);
   });
+  it('休校日は知らせず、補講は補講の時限で知らせる', () => {
+    const holiday = [{ id: 'h', type: 'holiday', start: '2026-10-28', end: '2026-10-28', name: '' }];
+    expect(run(8 * 60 + 50, { calendar: holiday })).toEqual([]);
+    const makeup = [...holiday, { id: 'm', type: 'makeup', date: '2026-10-28', courseId: 'a', period: 2, room: '', name: '' }];
+    const result = dueNotifications({ courses, quarters, periods, logs: [], today: '2026-10-28', nowMin: 10 * 60 + 30, notify: both, calendar: makeup });
+    expect(result.map(n => [n.key, n.title, n.body])).toEqual([['2026-10-28|a|before', 'まもなく A（補講）', '10:40から 2限・101']]);
+  });
 });

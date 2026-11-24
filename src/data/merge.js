@@ -17,7 +17,7 @@ const mergeMap = (current, incoming) => {
   return { value: { ...current, ...Object.fromEntries(added.map(k => [k, incoming[k]])) }, added: added.length, skipped: Object.keys(incoming).length - added.length };
 };
 
-// current / incoming: { logs, courses, courseMemos, datedMemos, tasks, campuses, campusBuildings, campusImages }
+// current / incoming: { logs, courses, courseMemos, datedMemos, tasks, calendar, campuses, campusBuildings, campusImages }
 // 戻り値: { data（変わった項目だけ）, stats: { 項目名: { added, skipped } } }
 export function mergeBackupData(current, incoming) {
   const data = {};
@@ -27,6 +27,7 @@ export function mergeBackupData(current, incoming) {
   // 記録は「同じ授業・同じ日」か「同じID」なら同じものとみなす
   if (incoming.logs) put('logs', mergeList(current.logs, incoming.logs, l => [`id:${l.id}`, `${l.courseId}|${l.date}`]));
   if (incoming.tasks) put('tasks', mergeList(current.tasks ?? [], incoming.tasks, t => [t.id]));
+  if (incoming.calendar) put('calendar', mergeList(current.calendar ?? [], incoming.calendar, e => [e.id]));
   if (incoming.courses) put('courses', mergeList(current.courses, incoming.courses, c => [c.id]));
   if (incoming.campuses) put('campuses', mergeList(current.campuses, incoming.campuses, c => [c.id]));
   if (incoming.courseMemos) put('courseMemos', mergeMap(current.courseMemos, incoming.courseMemos));

@@ -6,6 +6,8 @@ import TaskList from './TaskList';
 import Modal from './Modal';
 import UndoToast from './UndoToast';
 import CourseFormModal from './CourseFormModal';
+import CalendarSection from './settings/CalendarSection';
+import RolloverSection from './settings/RolloverSection';
 
 afterEach(cleanup);
 
@@ -120,5 +122,70 @@ describe('CourseFormModal', () => {
     expect(save.disabled).toBe(false);
     fireEvent.click(screen.getByLabelText('第3Q'));
     expect(save.disabled).toBe(true);
+  });
+});
+
+describe('CalendarSection', () => {
+  const courses = [{ id: 'wed1', name: '線形代数', dayOfWeek: 3, period: 1, quarter: 3, room: 'A-1' }];
+  const quarters = { 3: { start: '09-01', end: '10-31' } };
+  const periods = { 1: { start: '09:00', end: '10:30' }, 2: { start: '10:40', end: '12:10' } };
+  const props = { courses, allCourses: courses, periods, quarters, today: '2026-10-26' };
+  it('休校日を登録し、一覧から削除できる', () => {
+    const onChange = vi.fn();
+    const { rerender } = render(<CalendarSection calendar={[]} onChange={onChange} {...props} />);
+    fireEvent.change(screen.getByLabelText('休校日の終わり'), { target: { value: '2026-10-28' } });
+    fireEvent.change(screen.getByLabelText('名前・メモ'), { target: { value: ' 大学祭 ' } });
+    fireEvent.click(screen.getByText('＋ 登録する'));
+    const [added] = onChange.mock.calls[0][0];
+    expect(added).toMatchObject({ type: 'holiday', start: '2026-10-26', end: '2026-10-28', name: '大学祭' });
+    rerender(<CalendarSection calendar={[added]} onChange={onChange} {...props} />);
+    fireEvent.click(screen.getByRole('button', { name: /休校日・大学祭 を削除/ }));
+    expect(onChange).toHaveBeenLastCalledWith([]);
+  });
+  it('補講は、時間割どおりに授業がある日には登録できない', () => {
+    const onChange = vi.fn();
+    render(<CalendarSection calendar={[]} onChange={onChange} {...props} />);
+    fireEvent.click(screen.getByRole('button', { name: '補講' }));
+    fireEvent.change(screen.getByLabelText('補講の日付'), { target: { value: '2026-10-28' } }); // 水曜
+    fireEvent.click(screen.getByText('＋ 登録する'));
+    expect(screen.getByRole('alert').textContent).toContain('すでにこの授業があります');
+    fireEvent.change(screen.getByLabelText('補講の日付'), { target: { value: '2026-10-31' } });
+    fireEvent.change(screen.getByLabelText('補講の時限'), { target: { value: '2' } });
+    fireEvent.click(screen.getByText('＋ 登録する'));
+    expect(onChange.mock.calls[0][0][0]).toMatchObject({ type: 'makeup', date: '2026-10-31', courseId: 'wed1', period: 2, room: '' });
+  });
+  it('曜日振替は、その日と同じ曜日を選べない', () => {
+    const onChange = vi.fn();
+    render(<CalendarSection calendar={[]} onChange={onChange} {...props} />);
+    fireEvent.click(screen.getByRole('button', { name: '曜日振替' }));
+    fireEvent.change(screen.getByLabelText('振替の日付'), { target: { value: '2026-10-26' } }); // 月曜
+    fireEvent.click(screen.getByText('＋ 登録する'));
+    expect(onChange).not.toHaveBeenCalled();
+    fireEvent.change(screen.getByLabelText('振替先の曜日'), { target: { value: '3' } });
+    fireEvent.click(screen.getByText('＋ 登録する'));
+    expect(onChange.mock.calls[0][0][0]).toMatchObject({ type: 'swap', date: '2026-10-26', dayOfWeek: 3 });
+  });
+});
+
+describe('RolloverSection', () => {
+  const courses = [
+    { id: 'a', name: 'A', dayOfWeek: 1, period: 1 },
+    { id: 'b', name: 'B', dayOfWeek: 2, period: 1 },
+  ];
+  const calendar = [
+    { id: 'old', type: 'holiday', start: '2026-03-01', end: '2026-03-02', name: '' },
+    { id: 'new', type: 'holiday', start: '2026-05-01', end: '2026-05-01', name: '' },
+  ];
+  const quarters = { 1: { start: '04-01', end: '05-31' } };
+  it('チェックしていない授業を非表示にし、前の年度の学年暦だけを消す', () => {
+    const onHideCourses = vi.fn(); const onChangeCalendar = vi.fn();
+    render(<RolloverSection courses={courses} quarters={quarters} calendar={calendar} today="2026-04-10" getBackup={() => '{}'} onHideCourses={onHideCourses} onChangeCalendar={onChangeCalendar} />);
+    fireEvent.click(screen.getByLabelText('Aを続ける'));
+    fireEvent.click(screen.getByText('チェックしていない授業（1件）を非表示にする'));
+    expect(onHideCourses).toHaveBeenCalledWith(['b']);
+    fireEvent.click(screen.getByText('2026年度より前のもの（1件）を削除…'));
+    fireEvent.click(screen.getByText('1件を削除する'));
+    expect(onChangeCalendar).toHaveBeenCalledWith([calendar[1]]);
+    expect(screen.getByText(/第1Q 4\/1〜5\/31/)).toBeTruthy();
   });
 });

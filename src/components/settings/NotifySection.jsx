@@ -8,7 +8,7 @@ import { getFiscalYear } from '../../utils/date';
 const ALARMS = [0, 5, 10, 15, 30];
 
 // 通知（アプリを開いている間）と、カレンダーへの書き出し（アプリを閉じていても届く）
-export default function NotifySection({ settings, onChange, courses, today }) {
+export default function NotifySection({ settings, onChange, courses, calendar, today }) {
   const supported = notificationSupported();
   const [permission, setPermission] = useState(() => (supported ? Notification.permission : 'unsupported'));
   const [alarm, setAlarm] = useState(10);
@@ -27,10 +27,10 @@ export default function NotifySection({ settings, onChange, courses, today }) {
   };
 
   const exportIcs = () => {
-    const { text, count } = buildIcs({ courses, quarters: settings.quarters, periods: settings.periods, fiscalYear: year, from: today, alarmMinutes: alarm });
+    const { text, count } = buildIcs({ courses, quarters: settings.quarters, periods: settings.periods, fiscalYear: year, from: today, calendar, alarmMinutes: alarm });
     if (count === 0) { setMessage('書き出せる授業がありません（今日以降に授業がある期間のみ書き出します）'); return; }
     downloadText(icsFileName(year), text, 'text/calendar');
-    setMessage(`${count}件の繰り返し予定を書き出しました。ファイルを開いてカレンダーに追加してください。`);
+    setMessage(`${count}件の予定を書き出しました。ファイルを開いてカレンダーに追加してください。`);
   };
 
   return (
@@ -58,7 +58,7 @@ export default function NotifySection({ settings, onChange, courses, today }) {
         <button type="button" onClick={exportIcs} className="btn btn-soft">書き出す</button>
       </div>
       {message && <p className="small mt-8" role="status">{message}</p>}
-      <p className="tiny muted mt-8">非表示にしていない授業を、クォーターの期間に合わせた繰り返し予定にします（隔週の授業は2週ごと）。時間割を変えたら、カレンダーの古い予定を消してから書き出し直してください。</p>
+      <p className="tiny muted mt-8">非表示にしていない授業を、クォーターの期間に合わせた繰り返し予定にします（隔週の授業は2週ごと）。休校日・曜日振替・補講も反映します。時間割を変えたら、カレンダーの古い予定を消してから書き出し直してください。</p>
     </SettingsGroup>
   );
 }

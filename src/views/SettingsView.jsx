@@ -8,6 +8,8 @@ import DangerSection from '../components/settings/DangerSection';
 import CsvSection from '../components/settings/CsvSection';
 import InstallSection from '../components/settings/InstallSection';
 import NotifySection from '../components/settings/NotifySection';
+import CalendarSection from '../components/settings/CalendarSection';
+import RolloverSection from '../components/settings/RolloverSection';
 
 const pad = (n) => String(n).padStart(2, '0');
 
@@ -39,7 +41,7 @@ function MonthDayInput({ value, label, onChange }) {
   );
 }
 
-export default function SettingsView({ settings, onChange, courses, today, appData, onChangeData, campusImages, onChangeImages, logs, logCount, onResetLogs, onAddCourse, onEditCourse, getBackup, onImportBackup }) {
+export default function SettingsView({ settings, onChange, courses, today, appData, onChangeData, campusImages, onChangeImages, logs, logCount, onResetLogs, onAddCourse, onEditCourse, getBackup, onImportBackup, calendar, onChangeCalendar, onHideCourses }) {
   const setQuarter = (q, patch) => onChange({ quarters: { ...settings.quarters, [q]: { ...settings.quarters[q], ...patch } } });
   const setPeriod = (p, patch) => onChange({ periods: { ...settings.periods, [p]: { ...settings.periods[p], ...patch } } });
   const toggleCourse = (id) => onChange({
@@ -94,10 +96,13 @@ export default function SettingsView({ settings, onChange, courses, today, appDa
         ))}
       </SettingsGroup>
 
-      <NotifySection settings={settings} onChange={onChange} courses={courses} today={today} />
+      <CalendarSection calendar={calendar} onChange={onChangeCalendar} courses={courses} allCourses={appData.courses} periods={settings.periods} quarters={settings.quarters} today={today} />
+
+      <NotifySection settings={settings} onChange={onChange} courses={courses} calendar={calendar} today={today} />
       <CsvSection logs={logs} courses={appData.courses} />
       <InstallSection />
       <DataSection getBackup={getBackup} onImportBackup={onImportBackup} />
+      <RolloverSection courses={courses} quarters={settings.quarters} calendar={calendar} today={today} getBackup={getBackup} onHideCourses={onHideCourses} onChangeCalendar={onChangeCalendar} />
       <DangerSection logCount={logCount} onResetLogs={onResetLogs} getBackup={getBackup} campuses={appData.campuses} buildings={appData.buildings} onChangeData={onChangeData} />
     </div>
   );

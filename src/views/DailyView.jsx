@@ -1,5 +1,6 @@
 import { DAYS, addDays, getDateOfWeekday, parseDateStr, toMinutes } from '../utils/date';
-import { isCourseInQuarter, isCourseOnDate, statusTextClass, weekPatternLabel } from '../data/status';
+import { statusTextClass, weekPatternLabel } from '../data/status';
+import { coursesOnDate, dayNote } from '../data/calendar';
 import { dateMemoKey, hasText } from '../utils/memo';
 import { getAbsenceStreak, STREAK_ALERT } from '../utils/streak';
 import { useSwipe } from '../hooks/useSwipe';
@@ -8,13 +9,15 @@ import RecordNotice from '../components/RecordNotice';
 import RecordMark from '../components/RecordMark';
 import { dueLabel, daysUntil, UPCOMING_DAYS } from '../data/tasks';
 
-export default function DailyView({ selectedDate, today, selectedQuarter, courses, periods, quarters, nowMin, logs, courseMemos, dateMemos, recordState, getLog, onSelectDate, onOpenDetail, onRecord, onAddCourse, dueTasks, onToggleTask, unrecordedCount, lookbackDays, onShowUnrecorded, unrecordedDates, recordStyle, justRecordedId }) {
+export default function DailyView({ selectedDate, today, selectedQuarter, courses, periods, quarters, calendar, nowMin, logs, courseMemos, dateMemos, recordState, getLog, onSelectDate, onOpenDetail, onRecord, onAddCourse, dueTasks, onToggleTask, unrecordedCount, lookbackDays, onShowUnrecorded, unrecordedDates, recordStyle, justRecordedId }) {
   const swipe = useSwipe((direction) => onSelectDate(addDays(selectedDate, direction))); // 左右スワイプで前後の日へ
   const weekStart = getDateOfWeekday(selectedDate, 0);
   const selectedDateObj = parseDateStr(selectedDate);
   const selectedDay = selectedDateObj.getDay();
   const isToday = selectedDate === today;
-  const dayCourses = courses.filter(c => isCourseOnDate(c, selectedDate, quarters) && isCourseInQuarter(c, selectedQuarter)).sort((a, b) => a.period - b.period);
+  // 学年暦（休校日・曜日振替・補講）を反映したその日の授業
+  const dayCourses = coursesOnDate({ courses, date: selectedDate, quarters, calendar, quarter: selectedQuarter });
+  const note = dayNote(calendar, selectedDate);
 
   // 今日（記録できる状態）のときだけ、授業中・次の授業を強調する。休講の授業は対象外
   const trackable = isToday && recordState.status === 'ok' ? dayCourses.filter(c => getLog(c.id)?.status !== '休講') : [];
@@ -57,6 +60,11 @@ export default function DailyView({ selectedDate, today, selectedQuarter, course
         <span className="date-month">{selectedDateObj.getMonth() + 1}月</span><span className="date-num">{selectedDateObj.getDate()}</span><span className="date-unit">日（{DAYS[selectedDay]}）</span>
         {isToday && <span className="badge badge-today">今日</span>}
       </div>
+      {note && (
+        <p className={`day-note ${note.type === 'holiday' ? 'is-holiday' : 'is-swap'}`} role="note">
+          {note.type === 'holiday' ? note.text : `曜日振替: この日は${DAYS[note.dayOfWeek]}曜日の授業${note.name ? `（${note.name}）` : ''}`}
+        </p>
+      )}
       <div className="day-tabs">
         {DAYS.map((day, index) => {
           const date = addDays(weekStart, index);
@@ -77,7 +85,7 @@ export default function DailyView({ selectedDate, today, selectedQuarter, course
       </div>
 
       {dayCourses.length === 0 ? (
-        <div className="empty">{isToday ? '本日' : 'この日'}の授業なし</div>
+        <div className="empty">{note?.type === 'holiday' ? '休校日のため授業なし' : `${isToday ? '本日' : 'この日'}の授業なし`}</div>
       ) : dayCourses.map(course => {
         const log = getLog(course.id);
         const memo = courseMemos[course.id];
@@ -89,7 +97,7 @@ export default function DailyView({ selectedDate, today, selectedQuarter, course
         const isNext = course.id === nextId;
         const canceled = log?.status === '休講';
         return (
-          <div key={course.id} className={`card course-card${isNow ? ' is-now' : isNext ? ' is-next' : ''}${log ? ' is-recorded' : ''}${canceled ? ' is-canceled' : ''}`}>
+          <div key={course.makeupId ?? course.id} className={`card course-card${isNow ? ' is-now' : isNext ? ' is-next' : ''}${log ? ' is-recorded' : ''}${canceled ? ' is-canceled' : ''}`}>
             <div className="course-period" aria-hidden="true">
               <span className="course-period-num">{course.period}</span>
               {period && <span className="course-period-time">{period.start}</span>}
@@ -101,9 +109,9 @@ export default function DailyView({ selectedDate, today, selectedQuarter, course
                   {isNext && <span className="badge badge-next">次の授業</span>}
                   {isNext && nextStart - nowMin <= 90 && <span className="tiny muted">あと{nextStart - nowMin}分</span>}
                 </div>
-                {recordState.status !== 'outOfQuarter' && <button type="button" onClick={() => onOpenDetail(course)} className="icon-btn" aria-label={`${course.name}の詳細`}>⋯</button>}
+                {recordState.status !== 'outOfQuarter' && <button type="button" onClick={() => onOpenDetail(courses.find(c => c.id === course.id) ?? course)} className="icon-btn" aria-label={`${course.name}の詳細`}>⋯</button>}
               </div>
-              <h3 className="course-name">{course.name}{course.weeks && <span className="badge badge-weeks">{weekPatternLabel(course)}</span>}</h3>
+              <h3 className="course-name">{course.name}{course.makeupId ? <span className="badge badge-weeks">補講</span> : course.weeks && <span className="badge badge-weeks">{weekPatternLabel(course)}</span>}</h3>
               <div className="course-meta small muted">{course.room}{period && ` · ${course.period}限 ${period.start}〜${period.end}`}</div>
               {streak >= STREAK_ALERT && <div className="warning small" role="alert">⚠ 直近{streak}回連続で欠席しています</div>}
               {hasText(memo) && <div className="memo">{memo}</div>}
