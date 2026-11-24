@@ -1,12 +1,11 @@
 import { useState } from 'react';
 import SettingsGroup from './SettingsGroup';
-import { DAYS, parseDateStr } from '../../utils/date';
+import { DAYS, parseDateStr, shortDate } from '../../utils/date';
 import { newId } from '../../data/appData';
-import { CALENDAR_TYPES, coursesOnDate, sortCalendar } from '../../data/calendar';
+import { CALENDAR_TYPES, makeupError, sortCalendar } from '../../data/calendar';
 
 const WEEK_ORDER = [1, 2, 3, 4, 5, 6, 0]; // 月曜始まり
 
-const shortDate = (date) => { const d = parseDateStr(date); return `${d.getMonth() + 1}/${d.getDate()}（${DAYS[d.getDay()]}）`; };
 
 // 一覧に出す説明
 const describe = (e, courses) => {
@@ -41,9 +40,8 @@ export default function CalendarSection({ calendar, onChange, courses, allCourse
     } else {
       if (!form.date) return setError('日付を入れてください。');
       if (!courseId) return setError('授業を選んでください。');
-      const course = courses.find(c => c.id === courseId);
-      // 同じ日に同じ授業が二つあると、記録が1件しか付けられないため
-      if (coursesOnDate({ courses: [course], date: form.date, quarters, calendar }).length > 0) return setError('この日は、すでにこの授業があります（時間割どおり、または補講）。');
+      const message = makeupError({ course: courses.find(c => c.id === courseId), date: form.date, quarters, calendar });
+      if (message) return setError(message);
       event = { ...base, type: 'makeup', date: form.date, courseId, period: form.period, room: form.room.trim() };
     }
     onChange([...calendar, event]);

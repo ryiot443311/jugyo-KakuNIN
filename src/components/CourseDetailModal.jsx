@@ -4,8 +4,9 @@ import StatusButtons from './StatusButtons';
 import RecordNotice from './RecordNotice';
 import { weekPatternLabel } from '../data/status';
 import TaskList from './TaskList';
+import MakeupForm from './MakeupForm';
 
-export default function CourseDetailModal({ course, date, today, tasks, onAddTask, onToggleTask, onDeleteTask, memo, dateMemo, recordState, log, onSaveMemo, onSaveDateMemo, onRecord, onEditLog, onEdit, onClose }) {
+export default function CourseDetailModal({ course, date, today, tasks, onAddTask, onToggleTask, onDeleteTask, memo, dateMemo, recordState, log, onSaveMemo, onSaveDateMemo, onRecord, onEditLog, onEdit, onClose, periods, quarters, calendar, onChangeCalendar }) {
   const [tempMemo, setTempMemo] = useState(memo || '');
   const [tempDateMemo, setTempDateMemo] = useState(dateMemo || '');
 
@@ -36,6 +37,7 @@ export default function CourseDetailModal({ course, date, today, tasks, onAddTas
       />
 
       <TaskList tasks={tasks} today={today} onAdd={onAddTask} onToggle={onToggleTask} onDelete={onDeleteTask} />
+      <MakeupForm course={course} periods={periods} quarters={quarters} calendar={calendar} today={today} onChangeCalendar={onChangeCalendar} />
 
       <div className="mt-20 mb-10">
         {recordState.status !== 'ok' ? (

@@ -70,6 +70,13 @@ export function coursesOnDate({ courses, date, quarters, calendar = [], quarter 
   return [...regular, ...makeups].sort((a, b) => a.period - b.period);
 }
 
+// 補講を登録できない理由（登録できるなら null）。同じ日に同じ授業が二つあると、記録が1件しか付けられないため
+export const makeupError = ({ course, date, quarters, calendar }) => {
+  if (!date || !DATE_RE.test(date)) return '日付を入れてください。';
+  if (coursesOnDate({ courses: [course], date, quarters, calendar }).length > 0) return 'この日は、すでにこの授業があります（時間割どおり、または補講）。';
+  return null;
+};
+
 // その日の説明（日別画面の上に出す）。無ければ null
 export function dayNote(calendar, date) {
   const holiday = holidayOn(calendar, date);

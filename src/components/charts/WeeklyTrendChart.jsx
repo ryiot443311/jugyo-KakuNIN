@@ -3,7 +3,7 @@ import { parseDateStr } from '../../utils/date';
 
 const MAX_WEEKS = 12; // 直近この週数を表示
 const W = 320; const H = 170;
-const PAD = { top: 18, right: 8, bottom: 22, left: 30 };
+const PAD = { top: 18, right: 48, bottom: 22, left: 30 }; // 右は基準線のラベルの場所（棒の値と重ならないように）
 const PLOT_W = W - PAD.left - PAD.right;
 const PLOT_H = H - PAD.top - PAD.bottom;
 const y = (rate) => PAD.top + PLOT_H * (1 - rate / 100);
@@ -35,7 +35,7 @@ export default function WeeklyTrendChart({ weeks, threshold }) {
           </g>
         ))}
         <line x1={PAD.left} x2={W - PAD.right} y1={y(threshold)} y2={y(threshold)} className="chart-ref" />
-        <text x={W - PAD.right} y={y(threshold) - 4} textAnchor="end" className="chart-axis">基準 {threshold}%</text>
+        <text x={W - PAD.right + 4} y={y(threshold) + 4} textAnchor="start" className="chart-axis chart-ref-label">基準{threshold}%</text>
         {shown.map((w, i) => {
           const x = PAD.left + slot * i + (slot - barW) / 2;
           const isActive = w.week === active.week;
