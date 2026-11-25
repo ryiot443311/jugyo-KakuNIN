@@ -3,6 +3,7 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, screen, fireEvent, cleanup, act } from '@testing-library/react';
 import StatusButtons from './StatusButtons';
 import TaskList from './TaskList';
+import DueTaskBanner from './DueTaskBanner';
 import Modal from './Modal';
 import UndoToast from './UndoToast';
 import CourseFormModal from './CourseFormModal';
@@ -187,5 +188,31 @@ describe('RolloverSection', () => {
     fireEvent.click(screen.getByText('1件を削除する'));
     expect(onChangeCalendar).toHaveBeenCalledWith([calendar[1]]);
     expect(screen.getByText(/第1Q 4\/1〜5\/31/)).toBeTruthy();
+  });
+});
+
+describe('DueTaskBanner', () => {
+  const courses = [{ id: 'c', name: '数学' }];
+  const make = (n) => Array.from({ length: n }, (_, i) => ({ id: `t${i}`, courseId: 'c', title: `課題${i}`, due: '2026-10-29', done: false }));
+  it('課題がなければ何も出さない', () => {
+    const { container } = render(<DueTaskBanner tasks={[]} courses={courses} today="2026-10-28" baseDate="2026-10-28" onToggle={() => {}} />);
+    expect(container.innerHTML).toBe('');
+  });
+  it('4件までは全部出し、5件以上は3件に畳んで開閉できる', () => {
+    const { container, rerender } = render(<DueTaskBanner tasks={make(4)} courses={courses} today="2026-10-28" baseDate="2026-10-28" onToggle={() => {}} />);
+    expect(container.querySelectorAll('.task-item')).toHaveLength(4);
+    expect(screen.queryByRole('button', { name: /ほか/ })).toBeNull();
+    rerender(<DueTaskBanner tasks={make(6)} courses={courses} today="2026-10-28" baseDate="2026-10-28" onToggle={() => {}} />);
+    expect(container.querySelectorAll('.task-item')).toHaveLength(3);
+    fireEvent.click(screen.getByRole('button', { name: 'ほか 3件を表示 ▼' }));
+    expect(container.querySelectorAll('.task-item')).toHaveLength(6);
+    expect(screen.getByRole('button', { name: '折りたたむ ▲' }).getAttribute('aria-expanded')).toBe('true');
+  });
+  it('選んだ日が今日でなければ見出しに日付を出し、完了で ID を返す', () => {
+    const onToggle = vi.fn();
+    render(<DueTaskBanner tasks={make(1)} courses={courses} today="2026-10-28" baseDate="2026-11-02" onToggle={onToggle} />);
+    expect(screen.getByRole('heading', { level: 3 }).textContent).toBe('11/2（月）から7日以内・期限切れの課題1件');
+    fireEvent.click(screen.getByLabelText('「課題0」を完了にする'));
+    expect(onToggle).toHaveBeenCalledWith('t0');
   });
 });

@@ -266,11 +266,11 @@ function App() {
   );
   const unrecordedDates = useMemo(() => new Set(unrecorded.map(u => u.date)), [unrecorded]);
   const unrecordedKeys = useMemo(() => new Set(unrecorded.map(u => `${u.course.id}|${u.date}`)), [unrecorded]);
-  // 期限が近い課題（非表示の授業の課題は出さない）
+  // 期限が近い課題。日別画面で選んだ日を基準にする（非表示の授業の課題は出さない）
   const dueTasks = useMemo(() => {
     const ids = new Set(courses.map(c => c.id));
-    return upcomingTasks(tasks.filter(t => ids.has(t.courseId)), today);
-  }, [tasks, courses, today]);
+    return upcomingTasks(tasks.filter(t => ids.has(t.courseId)), selectedDate);
+  }, [tasks, courses, selectedDate]);
   useCourseNotifications({ courses, quarters: settings.quarters, periods: settings.periods, logs, today, nowMin, notify: settings.notify, calendar });
   const weekly = useMemo(() => weeklyRates(quarterLogs), [quarterLogs]);
   const absenceWeekdays = useMemo(() => absenceByWeekday(quarterLogs), [quarterLogs]);
