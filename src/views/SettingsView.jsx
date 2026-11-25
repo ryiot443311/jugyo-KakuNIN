@@ -42,6 +42,7 @@ function MonthDayInput({ value, label, onChange }) {
 }
 
 export default function SettingsView({ settings, onChange, courses, today, appData, onChangeData, campusImages, onChangeImages, logs, logCount, onResetLogs, onAddCourse, onEditCourse, getBackup, onImportBackup, calendar, onChangeCalendar, onHideCourses }) {
+  const showCourses = (ids) => onChange({ hiddenCourses: settings.hiddenCourses.filter(h => !ids.includes(h)) });
   const setQuarter = (q, patch) => onChange({ quarters: { ...settings.quarters, [q]: { ...settings.quarters[q], ...patch } } });
   const setPeriod = (p, patch) => onChange({ periods: { ...settings.periods, [p]: { ...settings.periods[p], ...patch } } });
   const toggleCourse = (id) => onChange({
@@ -51,7 +52,7 @@ export default function SettingsView({ settings, onChange, courses, today, appDa
   return (
     <div className="mb-20">
       <h3 className="settings-heading">時間割</h3>
-      <CoursesSection courses={appData.courses} hiddenCourses={settings.hiddenCourses} onToggle={toggleCourse} onEdit={onEditCourse} onAdd={onAddCourse} />
+      <CoursesSection courses={appData.courses} hiddenCourses={settings.hiddenCourses} onToggle={toggleCourse} onShowAll={() => onChange({ hiddenCourses: [] })} onEdit={onEditCourse} onAdd={onAddCourse} />
       <CalendarSection calendar={calendar} onChange={onChangeCalendar} courses={courses} allCourses={appData.courses} periods={settings.periods} quarters={settings.quarters} today={today} />
       <SettingsGroup title="クォーターの期間">
         {Object.entries(settings.quarters).map(([q, range]) => (
@@ -73,7 +74,7 @@ export default function SettingsView({ settings, onChange, courses, today, appDa
           </div>
         ))}
       </SettingsGroup>
-      <RolloverSection courses={courses} quarters={settings.quarters} calendar={calendar} today={today} getBackup={getBackup} onHideCourses={onHideCourses} onChangeCalendar={onChangeCalendar} />
+      <RolloverSection courses={courses} quarters={settings.quarters} calendar={calendar} today={today} getBackup={getBackup} onHideCourses={onHideCourses} onShowCourses={showCourses} onChangeCalendar={onChangeCalendar} />
       <h3 className="settings-heading">表示・通知</h3>
       <SettingsGroup title="テーマ">
         <div className="row gap-6">

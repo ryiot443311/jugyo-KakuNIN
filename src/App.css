@@ -27,6 +27,7 @@
 .mt-10 { margin-top: 10px; }
 .mt-20 { margin-top: 20px; }
 .mb-6 { margin-bottom: 6px; }
+.mt-6 { margin-top: 6px; }
 .mb-8 { margin-bottom: 8px; }
 .mb-10 { margin-bottom: 10px; }
 .mb-15 { margin-bottom: 15px; }
@@ -276,6 +277,15 @@
 .task-banner .task-banner-title, .task-banner .muted { color: var(--memo-text); }
 .task-banner .task-item { border-bottom-color: color-mix(in srgb, var(--memo-text) 25%, transparent); }
 .task-banner-title { margin: 0 0 4px; font-size: 0.85rem; color: var(--text-strong); }
+.task-count { margin-left: 6px; font-weight: 400; font-size: 0.75rem; }
+.task-group + .task-group { margin-top: 6px; }
+.task-group-title { display: flex; align-items: center; gap: 6px; margin: 2px 0 0; font-size: 0.75rem; font-weight: 700; color: var(--memo-text); }
+.task-group-title::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: currentColor; opacity: 0.5; }
+.task-group.tone-overdue .task-group-title { color: var(--danger); }
+.task-group.tone-overdue .task-group-title::before, .task-group.tone-today .task-group-title::before { opacity: 1; }
+.task-group.tone-today .task-group-title { color: var(--late); }
+.task-group-note { padding: 0 6px; border: 1px solid currentColor; border-radius: 8px; font-size: 0.65rem; font-weight: 400; }
+.task-more { display: block; width: 100%; margin-top: 4px; padding: 6px 0; border: none; border-top: 1px dashed color-mix(in srgb, var(--memo-text) 35%, transparent); background: transparent; color: var(--memo-text); font-size: 0.8rem; font-weight: 700; }
 .task-list { margin: 0; padding: 0; list-style: none; }
 .task-item { display: flex; align-items: center; gap: 8px; padding: 4px 0; border-bottom: 1px solid var(--border); }
 .task-item:last-child { border-bottom: none; }
@@ -313,3 +323,12 @@
 .toc-section .toc-label { font-size: 0.95rem; }
 .settings-heading { margin: 22px 2px 8px; padding-bottom: 4px; border-bottom: 1px solid var(--border-strong); color: var(--text-muted); font-family: var(--font-serif); font-size: 0.85rem; letter-spacing: 0.15em; }
 .settings-heading:first-child { margin-top: 4px; }
+
+/* 非表示の授業: 一括で非表示にするときの確認と、授業がない日の知らせ */
+.confirm-box { padding: 10px 12px; border: 1px solid var(--border); border-radius: 4px; background: var(--surface); }
+.confirm-box > p { margin: 0 0 6px; }
+.confirm-list { margin: 0 0 8px; padding-left: 1.2em; max-height: 10em; overflow-y: auto; }
+.hidden-summary { margin-bottom: 8px; padding: 6px 10px; border: 1px dashed var(--border); border-radius: 4px; }
+.is-hidden-course > span { color: var(--text-muted); }
+.hidden-note { margin: 8px 0 0; color: var(--text-muted); text-align: center; }
+.link-btn { display: inline; margin-left: 4px; padding: 4px 0; border: none; background: none; color: var(--accent); font: inherit; font-weight: 700; text-decoration: underline; }

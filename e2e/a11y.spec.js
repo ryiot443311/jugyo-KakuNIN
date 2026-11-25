@@ -15,7 +15,9 @@ for (const theme of ['light', 'dark']) {
       settings: { theme },
       logs: [log('a1', 'wed-3', '2026-10-07'), log('a2', 'wed-3', '2026-10-14', '欠席'), log('a3', 'wed-3', '2026-10-21', '遅刻'), log('a4', 'thu-1', '2026-10-22', '休講')],
       extra: {
-        course_tasks: [{ id: 't1', courseId: 'wed-3', title: 'レポート', due: '2026-10-27', done: false }, { id: 't2', courseId: 'wed-3', title: '小テスト', due: '2026-10-30', done: true }],
+        course_tasks: [{ id: 't1', courseId: 'wed-3', title: 'レポート', due: '2026-10-27', done: false }, { id: 't2', courseId: 'wed-3', title: '小テスト', due: '2026-10-30', done: true },
+          { id: 't3', courseId: 'wed-3', title: '発表', due: '2026-10-28', done: false }, { id: 't4', courseId: 'wed-3', title: '予習', due: '2026-10-29', done: false },
+          { id: 't5', courseId: 'wed-3', title: '課題A', due: '2026-11-02', done: false }, { id: 't6', courseId: 'wed-3', title: '課題B', due: '2026-11-03', done: false }],
         school_calendar: [
           { id: 'h1', type: 'holiday', start: '2026-10-26', end: '2026-10-26', name: '創立記念日' },
           { id: 's1', type: 'swap', date: '2026-10-27', dayOfWeek: 4, name: '' },
@@ -23,6 +25,8 @@ for (const theme of ['light', 'dark']) {
       },
     })
     await check(page, '日別（課題・記録し忘れ・連続欠席）')
+    await page.click('.task-more')
+    await check(page, '日別（課題を開いたとき）')
     await page.click('.icon-btn')
     await check(page, '授業詳細')
     await page.click('.modal button:text-is("授業情報を編集")')

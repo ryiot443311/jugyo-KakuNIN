@@ -121,6 +121,12 @@ test('課題: 授業詳細で登録し、期限が近いものを日別画面に
   // 7日以内のものだけ日別画面に出る。完了にすると消える
   await expect(page.locator('.task-banner .task-item')).toHaveCount(1)
   await expect(page.locator('.task-banner')).toContainText('英語コミュニケーション')
+  await expect(page.locator('.task-banner .task-group-title')).toHaveText(['11/4（水）まで'])
+  // 先の日を選ぶと、その日を基準に出す
+  for (let i = 0; i < 3; i++) await page.click('text=次の週 ▶')
+  await expect(page.locator('.task-banner .task-group-title')).toHaveText(['11/18（水）まで選んだ日', '11/25（水）まで'])
+  await expect(page.locator('.task-banner .task-item')).toHaveText([/レポート/, /期末課題.*あと23日/])
+  await page.click('button:text-is("今日")')
   await page.click('.task-banner input[type=checkbox]')
   await expect(page.locator('.task-banner')).toHaveCount(0)
   expect((await stored(page, 'course_tasks')).map(t => `${t.title}:${t.done}`)).toEqual(['レポート:true', '期末課題:false'])
@@ -394,4 +400,15 @@ test('オフラインで起動できる・CSP 違反やエラーがない', asyn
   await expect(page.locator('summary:text-is("危険な項目")')).toBeVisible()
   await context.setOffline(false)
   expect(errors).toEqual([])
+})
+
+test('非表示の授業: 授業がない日に知らせ、設定の「授業」からすべて表示に戻せる', async ({ page }) => {
+  await openApp(page, { settings: { hiddenCourses: ['wed-3'] } })
+  await expect(page.locator('.empty')).toHaveText('本日の授業なし')
+  await expect(page.locator('.hidden-note')).toContainText('非表示にしている授業が1件あります（英語コミュニケーション）')
+  await page.click('.hidden-note button')
+  await page.click('button:text-is("すべて表示に戻す")')
+  await page.click('.tab:text-is("日別")')
+  await expect(page.locator('.course-name')).toContainText(['英語コミュニケーション'])
+  await expect(page.locator('.hidden-note')).toHaveCount(0)
 })
