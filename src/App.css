@@ -27,6 +27,7 @@
 .mt-10 { margin-top: 10px; }
 .mt-20 { margin-top: 20px; }
 .mb-6 { margin-bottom: 6px; }
+.mt-6 { margin-top: 6px; }
 .mb-8 { margin-bottom: 8px; }
 .mb-10 { margin-bottom: 10px; }
 .mb-15 { margin-bottom: 15px; }
@@ -322,3 +323,12 @@
 .toc-section .toc-label { font-size: 0.95rem; }
 .settings-heading { margin: 22px 2px 8px; padding-bottom: 4px; border-bottom: 1px solid var(--border-strong); color: var(--text-muted); font-family: var(--font-serif); font-size: 0.85rem; letter-spacing: 0.15em; }
 .settings-heading:first-child { margin-top: 4px; }
+
+/* 非表示の授業: 一括で非表示にするときの確認と、授業がない日の知らせ */
+.confirm-box { padding: 10px 12px; border: 1px solid var(--border); border-radius: 4px; background: var(--surface); }
+.confirm-box > p { margin: 0 0 6px; }
+.confirm-list { margin: 0 0 8px; padding-left: 1.2em; max-height: 10em; overflow-y: auto; }
+.hidden-summary { margin-bottom: 8px; padding: 6px 10px; border: 1px dashed var(--border); border-radius: 4px; }
+.is-hidden-course > span { color: var(--text-muted); }
+.hidden-note { margin: 8px 0 0; color: var(--text-muted); text-align: center; }
+.link-btn { display: inline; margin-left: 4px; padding: 4px 0; border: none; background: none; color: var(--accent); font: inherit; font-weight: 700; text-decoration: underline; }

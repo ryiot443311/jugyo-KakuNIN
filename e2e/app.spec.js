@@ -401,3 +401,14 @@ test('オフラインで起動できる・CSP 違反やエラーがない', asyn
   await context.setOffline(false)
   expect(errors).toEqual([])
 })
+
+test('非表示の授業: 授業がない日に知らせ、設定の「授業」からすべて表示に戻せる', async ({ page }) => {
+  await openApp(page, { settings: { hiddenCourses: ['wed-3'] } })
+  await expect(page.locator('.empty')).toHaveText('本日の授業なし')
+  await expect(page.locator('.hidden-note')).toContainText('非表示にしている授業が1件あります（英語コミュニケーション）')
+  await page.click('.hidden-note button')
+  await page.click('button:text-is("すべて表示に戻す")')
+  await page.click('.tab:text-is("日別")')
+  await expect(page.locator('.course-name')).toContainText(['英語コミュニケーション'])
+  await expect(page.locator('.hidden-note')).toHaveCount(0)
+})

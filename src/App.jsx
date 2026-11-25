@@ -244,6 +244,7 @@ function App() {
 
   // 設定で非表示にした授業は日別・週間・分析から外す（履歴には記録が残る）
   const courses = useMemo(() => appData.courses.filter(c => !settings.hiddenCourses.includes(c.id)), [appData.courses, settings.hiddenCourses]);
+  const hiddenCourseList = useMemo(() => appData.courses.filter(c => settings.hiddenCourses.includes(c.id)), [appData.courses, settings.hiddenCourses]);
   const quarterCourses = useMemo(() => courses.filter(c => isCourseInQuarter(c, selectedQuarter)), [courses, selectedQuarter]);
   // 分析の年度の選択肢（記録のある年度と今年度）。選択中の年度が無くなったら新しい年度に寄せる
   const fiscalYears = useMemo(() => [...new Set([getFiscalYear(today), ...logs.map(l => getFiscalYear(l.date))])].sort((a, b) => b - a), [logs, today]);
@@ -359,6 +360,7 @@ function App() {
           dueTasks={dueTasks} onToggleTask={toggleTask}
           unrecordedCount={unrecorded.length} lookbackDays={LOOKBACK_DAYS} onShowUnrecorded={() => setShowUnrecorded(true)}
           unrecordedDates={unrecordedDates} recordStyle={settings.recordStyle} justRecordedId={undo?.logId}
+          hiddenCourses={hiddenCourseList} onOpenCourseSettings={() => openView('settings', '授業')}
         />
       )}
       {showUnrecorded && (

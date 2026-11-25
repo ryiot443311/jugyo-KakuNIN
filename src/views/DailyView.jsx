@@ -9,7 +9,7 @@ import RecordNotice from '../components/RecordNotice';
 import RecordMark from '../components/RecordMark';
 import DueTaskBanner from '../components/DueTaskBanner';
 
-export default function DailyView({ selectedDate, today, selectedQuarter, courses, periods, quarters, calendar, nowMin, logs, courseMemos, dateMemos, recordState, getLog, onSelectDate, onOpenDetail, onRecord, onAddCourse, dueTasks, onToggleTask, unrecordedCount, lookbackDays, onShowUnrecorded, unrecordedDates, recordStyle, justRecordedId }) {
+export default function DailyView({ selectedDate, today, selectedQuarter, courses, periods, quarters, calendar, nowMin, logs, courseMemos, dateMemos, recordState, getLog, onSelectDate, onOpenDetail, onRecord, onAddCourse, dueTasks, onToggleTask, unrecordedCount, lookbackDays, onShowUnrecorded, unrecordedDates, recordStyle, justRecordedId, hiddenCourses = [], onOpenCourseSettings }) {
   const swipe = useSwipe((direction) => onSelectDate(addDays(selectedDate, direction))); // 左右スワイプで前後の日へ
   const weekStart = getDateOfWeekday(selectedDate, 0);
   const selectedDateObj = parseDateStr(selectedDate);
@@ -18,6 +18,9 @@ export default function DailyView({ selectedDate, today, selectedQuarter, course
   // 学年暦（休校日・曜日振替・補講）を反映したその日の授業
   const dayCourses = coursesOnDate({ courses, date: selectedDate, quarters, calendar, quarter: selectedQuarter });
   const note = dayNote(calendar, selectedDate);
+  // 非表示にした授業のうち、この日にあるもの（授業がない日に、非表示が原因かもしれないと知らせる）
+  const hiddenOnDay = dayCourses.length === 0 && hiddenCourses.length > 0
+    ? coursesOnDate({ courses: hiddenCourses, date: selectedDate, quarters, calendar, quarter: selectedQuarter }) : [];
 
   // 今日（記録できる状態）のときだけ、授業中・次の授業を強調する。休講の授業は対象外
   const trackable = isToday && recordState.status === 'ok' ? dayCourses.filter(c => getLog(c.id)?.status !== '休講') : [];
@@ -70,7 +73,15 @@ export default function DailyView({ selectedDate, today, selectedQuarter, course
       </div>
 
       {dayCourses.length === 0 ? (
-        <div className="empty">{note?.type === 'holiday' ? '休校日のため授業なし' : `${isToday ? '本日' : 'この日'}の授業なし`}</div>
+        <>
+          <div className="empty">{note?.type === 'holiday' ? '休校日のため授業なし' : `${isToday ? '本日' : 'この日'}の授業なし`}</div>
+          {hiddenOnDay.length > 0 && (
+            <p className="hidden-note small" role="note">
+              非表示にしている授業が{hiddenOnDay.length}件あります（{hiddenOnDay.map(c => c.name).join('、')}）。
+              <button type="button" onClick={onOpenCourseSettings} className="link-btn">設定の「授業」で確認する ›</button>
+            </p>
+          )}
+        </>
       ) : dayCourses.map(course => {
         const log = getLog(course.id);
         const memo = courseMemos[course.id];
