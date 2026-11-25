@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import Message from '../Message';
 import SettingsGroup from './SettingsGroup';
 import { BEFORE_MINUTES, notificationSupported } from '../../utils/notify';
 import { buildIcs, icsFileName } from '../../utils/ics';
@@ -13,7 +14,7 @@ export default function NotifySection({ settings, onChange, courses, calendar, t
   const [permission, setPermission] = useState(() => (supported ? Notification.permission : 'unsupported'));
   const [alarm, setAlarm] = useState(10);
   const [year, setYear] = useState(() => getFiscalYear(today));
-  const [message, setMessage] = useState('');
+  const [message, setMessage] = useState(null); // { ok, text }
   const thisYear = getFiscalYear(today);
 
   const toggle = async (key) => {
@@ -28,9 +29,9 @@ export default function NotifySection({ settings, onChange, courses, calendar, t
 
   const exportIcs = () => {
     const { text, count } = buildIcs({ courses, quarters: settings.quarters, periods: settings.periods, fiscalYear: year, from: today, calendar, alarmMinutes: alarm });
-    if (count === 0) { setMessage('書き出せる授業がありません（今日以降に授業がある期間のみ書き出します）'); return; }
+    if (count === 0) { setMessage({ ok: false, text: '書き出せる授業がありません（今日以降に授業がある期間のみ書き出します）' }); return; }
     downloadText(icsFileName(year), text, 'text/calendar');
-    setMessage(`${count}件の予定を書き出しました。ファイルを開いてカレンダーに追加してください。`);
+    setMessage({ ok: true, text: `${count}件の予定を書き出しました。ファイルを開いてカレンダーに追加してください。` });
   };
 
   return (
@@ -57,7 +58,7 @@ export default function NotifySection({ settings, onChange, courses, calendar, t
         </select>
         <button type="button" onClick={exportIcs} className="btn btn-soft">書き出す</button>
       </div>
-      {message && <p className="small mt-8" role="status">{message}</p>}
+      <Message message={message} className="mt-8" />
       <p className="tiny muted mt-8">非表示にしていない授業を、クォーターの期間に合わせた繰り返し予定にします（隔週の授業は2週ごと）。休校日・曜日振替・補講も反映します。時間割を変えたら、カレンダーの古い予定を消してから書き出し直してください。</p>
     </SettingsGroup>
   );

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import Message from '../Message';
 import SettingsGroup from './SettingsGroup';
 import { DAYS, parseDateStr, shortDate } from '../../utils/date';
 import { newId } from '../../data/appData';
@@ -98,7 +99,7 @@ export default function CalendarSection({ calendar, onChange, courses, allCourse
         ))}
         <input className="input" value={form.name} onChange={(e) => set({ name: e.target.value })} placeholder={form.type === 'holiday' ? '名前（例: 大学祭）' : 'メモ（任意）'} aria-label="名前・メモ" maxLength={40} />
         <button type="button" onClick={add} disabled={form.type === 'makeup' && courses.length === 0} className="btn btn-accent block">＋ 登録する</button>
-        {error && <p className="small danger-text" role="alert">{error}</p>}
+        <Message message={error && { ok: false, text: error }} />
       </div>
 
       {sorted.length === 0 ? (

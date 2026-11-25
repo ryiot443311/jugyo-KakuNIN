@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import Modal from './Modal';
+import ConfirmDialog from './ConfirmDialog';
 import { DAYS, formatDate } from '../utils/date';
 import { newId } from '../data/appData';
 import { WEEK_PATTERNS } from '../data/status';
@@ -40,14 +41,9 @@ export default function CourseFormModal({ course, preset, periods, logCount, onS
 
   if (confirmDelete) {
     return (
-      <Modal onClose={() => setConfirmDelete(false)}>
-        <p className="center strong">「{course.name}」を削除しますか？</p>
-        {logCount > 0 && <p className="center small muted mt-10">この授業の出席記録 {logCount}件 は残り、履歴では「不明」と表示されます。</p>}
-        <div className="row gap-10 mt-20">
-          <button type="button" onClick={() => setConfirmDelete(false)} className="btn btn-soft grow">戻る</button>
-          <button type="button" onClick={() => onDelete(course.id)} className="btn btn-danger grow">削除</button>
-        </div>
-      </Modal>
+      <ConfirmDialog title={`「${course.name}」を削除しますか？`} tone="danger" confirmLabel="削除する" onConfirm={() => onDelete(course.id)} onCancel={() => setConfirmDelete(false)}>
+        {logCount > 0 && <p className="center small muted">この授業の出席記録 {logCount}件 は残り、履歴では「不明」と表示されます。</p>}
+      </ConfirmDialog>
     );
   }
 

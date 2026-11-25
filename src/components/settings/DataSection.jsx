@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import Message from '../Message';
 import Modal from '../Modal';
 import { parseBackup } from '../../data/backup';
 import { downloadBackup } from '../../utils/download';
@@ -53,7 +54,7 @@ export default function DataSection({ getBackup, onImportBackup }) {
           <input type="file" accept="application/json,.json" onChange={chooseFile} hidden />
         </label>
       </div>
-      {message && <p className={`small mt-8 ${message.ok ? 'ok-text' : 'danger-text'}`} role={message.ok ? 'status' : 'alert'}>{message.text}</p>}
+      <Message message={message} className="mt-8" />
       <p className="tiny muted mt-8">授業・キャンパス情報、設定、マップ画像、出席記録、メモ、課題、学年暦を JSON で保存・復元できます。</p>
     </SettingsGroup>
   );

@@ -39,8 +39,13 @@ export default function DailyView({ selectedDate, today, selectedQuarter, course
   return (
     <div className="swipe-area" {...swipe}>
       {unrecordedCount > 0 && (
-        <button type="button" onClick={onShowUnrecorded} className="unrecorded-banner">
-          ⚠ 記録していない授業が {unrecordedCount}件 あります（直近{lookbackDays / 7}週間）<span className="unrecorded-banner-link">確認する ›</span>
+        <button type="button" onClick={onShowUnrecorded} className="notice-banner is-warn unrecorded-banner">
+          <span>⚠ 記録していない授業が {unrecordedCount}件 あります（直近{lookbackDays / 7}週間）</span><span className="notice-banner-link">確認する ›</span>
+        </button>
+      )}
+      {hiddenOnDay.length > 0 && (
+        <button type="button" onClick={onOpenCourseSettings} className="notice-banner is-info hidden-note">
+          <span>ⓘ この日の授業 {hiddenOnDay.length}件 を非表示にしています（{hiddenOnDay.map(c => c.name).join('、')}）</span><span className="notice-banner-link">設定で確認する ›</span>
         </button>
       )}
       <DueTaskBanner tasks={dueTasks} courses={courses} today={today} baseDate={selectedDate} onToggle={onToggleTask} />
@@ -73,15 +78,7 @@ export default function DailyView({ selectedDate, today, selectedQuarter, course
       </div>
 
       {dayCourses.length === 0 ? (
-        <>
-          <div className="empty">{note?.type === 'holiday' ? '休校日のため授業なし' : `${isToday ? '本日' : 'この日'}の授業なし`}</div>
-          {hiddenOnDay.length > 0 && (
-            <p className="hidden-note small" role="note">
-              非表示にしている授業が{hiddenOnDay.length}件あります（{hiddenOnDay.map(c => c.name).join('、')}）。
-              <button type="button" onClick={onOpenCourseSettings} className="link-btn">設定の「授業」で確認する ›</button>
-            </p>
-          )}
-        </>
+        <div className="empty">{note?.type === 'holiday' ? '休校日のため授業なし' : `${isToday ? '本日' : 'この日'}の授業なし`}</div>
       ) : dayCourses.map(course => {
         const log = getLog(course.id);
         const memo = courseMemos[course.id];

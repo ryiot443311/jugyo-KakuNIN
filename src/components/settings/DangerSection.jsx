@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import Modal from '../Modal';
+import ConfirmDialog from '../ConfirmDialog';
 import SettingsGroup from './SettingsGroup';
 import { downloadBackup } from '../../utils/download';
 
@@ -26,17 +26,12 @@ export default function DangerSection({ logCount, onResetLogs, getBackup, campus
   return (
     <SettingsGroup title="危険な項目" className="danger-zone">
       {pending && (
-        <Modal onClose={close}>
-          <h3 className="modal-title danger-text">{pending.title}</h3>
+        <ConfirmDialog title={pending.title} tone="danger" confirmLabel="削除する" onConfirm={confirm} onCancel={close} confirmDisabled={typed.trim() !== CONFIRM_WORD}>
           <p className="center strong">{pending.message}<br />この操作は取り消せません。</p>
           <button type="button" onClick={() => downloadBackup(getBackup())} className="btn btn-soft block mt-10">先にバックアップを書き出す</button>
           <label className="field-label" htmlFor="danger-confirm">確認のため「{CONFIRM_WORD}」と入力してください</label>
           <input id="danger-confirm" className="input" value={typed} onChange={(e) => setTyped(e.target.value)} autoComplete="off" />
-          <div className="row gap-10 mt-20">
-            <button type="button" onClick={close} className="btn btn-soft grow">キャンセル</button>
-            <button type="button" disabled={typed.trim() !== CONFIRM_WORD} onClick={confirm} className="btn btn-danger grow">削除する</button>
-          </div>
-        </Modal>
+        </ConfirmDialog>
       )}
 
       <p className="small muted mb-10">ここの操作は元に戻せません。実行前にバックアップの書き出しをおすすめします。</p>

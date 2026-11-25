@@ -184,10 +184,10 @@ describe('RolloverSection', () => {
     fireEvent.click(screen.getByLabelText('Aを続ける'));
     fireEvent.click(screen.getByText('チェックしていない授業（1件）を非表示にする…'));
     expect(onHideCourses).not.toHaveBeenCalled();
-    fireEvent.click(screen.getByText('1件を非表示にする'));
+    fireEvent.click(screen.getByText('非表示にする'));
     expect(onHideCourses).toHaveBeenCalledWith(['b']);
     fireEvent.click(screen.getByText('2026年度より前のもの（1件）を削除…'));
-    fireEvent.click(screen.getByText('1件を削除する'));
+    fireEvent.click(screen.getByText('削除する'));
     expect(onChangeCalendar).toHaveBeenCalledWith([calendar[1]]);
     expect(screen.getByText(/第1Q 4\/1〜5\/31/)).toBeTruthy();
   });
@@ -196,10 +196,10 @@ describe('RolloverSection', () => {
     render(<RolloverSection courses={courses} quarters={quarters} calendar={[]} today="2026-04-10" getBackup={() => '{}'} onHideCourses={onHideCourses} onShowCourses={onShowCourses} onChangeCalendar={() => {}} />);
     fireEvent.click(screen.getByText('チェックしていない授業（2件）を非表示にする…'));
     expect(screen.getByText(/すべての授業が非表示になり/)).toBeTruthy();
-    fireEvent.click(screen.getByText('やめる'));
+    fireEvent.click(screen.getByText('キャンセル'));
     expect(onHideCourses).not.toHaveBeenCalled();
     fireEvent.click(screen.getByText('チェックしていない授業（2件）を非表示にする…'));
-    fireEvent.click(screen.getByText('2件を非表示にする'));
+    fireEvent.click(screen.getByText('非表示にする'));
     expect(screen.getByText('2件の授業を非表示にしました: A、B')).toBeTruthy();
     fireEvent.click(screen.getByText('元に戻す（2件を表示に戻す）'));
     expect(onShowCourses).toHaveBeenCalledWith(['a', 'b']);
