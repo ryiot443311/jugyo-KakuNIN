@@ -1,22 +1,25 @@
 import { useState } from 'react';
 import Modal from './Modal';
 import StatusButtons from './StatusButtons';
+import ConfirmDialog from './ConfirmDialog';
 
 export default function EditLogModal({ log, onChangeStatus, onDelete, onClose }) {
   const [pendingStatus, setPendingStatus] = useState(null);
   const [pendingDelete, setPendingDelete] = useState(false);
 
-  if (pendingStatus || pendingDelete) {
+  const back = () => { setPendingStatus(null); setPendingDelete(false); };
+  if (pendingDelete) {
     return (
-      <Modal onClose={() => { setPendingStatus(null); setPendingDelete(false); }}>
-        <p className="center strong">{pendingDelete ? `${log.date} の記録を削除しますか？` : `【 ${pendingStatus} 】に変更しますか？`}</p>
-        <div className="row gap-10 mt-20">
-          <button type="button" onClick={() => { setPendingStatus(null); setPendingDelete(false); }} className="btn btn-soft grow">戻る</button>
-          {pendingDelete
-            ? <button type="button" onClick={onDelete} className="btn btn-danger grow">削除</button>
-            : <button type="button" onClick={() => onChangeStatus(pendingStatus)} className="btn btn-primary grow">確定</button>}
-        </div>
-      </Modal>
+      <ConfirmDialog title="記録を削除しますか？" tone="danger" confirmLabel="削除する" onConfirm={onDelete} onCancel={back}>
+        <p className="center">{log.date} の記録を削除します。</p>
+      </ConfirmDialog>
+    );
+  }
+  if (pendingStatus) {
+    return (
+      <ConfirmDialog title="状態を変更しますか？" confirmLabel="変更する" onConfirm={() => onChangeStatus(pendingStatus)} onCancel={back}>
+        <p className="center">{log.date} の記録を【 {pendingStatus} 】に変更します。</p>
+      </ConfirmDialog>
     );
   }
 

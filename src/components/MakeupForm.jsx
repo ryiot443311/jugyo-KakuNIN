@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import Message from './Message';
 import { shortDate } from '../utils/date';
 import { newId } from '../data/appData';
 import { makeupError } from '../data/calendar';
@@ -31,7 +32,7 @@ export default function MakeupForm({ course, periods, quarters, calendar, today,
           <input className="input grow" value={room} onChange={(e) => setRoom(e.target.value)} placeholder={course.room || '教室'} aria-label="補講の教室（空欄ならいつもの教室）" />
         </div>
         <button type="button" onClick={add} className="btn btn-soft block">＋ 補講を登録</button>
-        {message && <p className={`small ${message.ok ? 'ok-text' : 'danger-text'}`} role={message.ok ? 'status' : 'alert'}>{message.text}</p>}
+        <Message message={message} />
       </div>
       {upcoming.length > 0 && (
         <ul className="calendar-list" aria-label="この授業の今後の補講">

@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import Modal from '../Modal';
+import ConfirmDialog from '../ConfirmDialog';
+import Message from '../Message';
 import SettingsGroup from './SettingsGroup';
 import { newId } from '../../data/appData';
 import { fileToDataUrl } from '../../utils/image';
@@ -58,13 +59,9 @@ export default function CampusSection({ campuses, buildings, images, onChangeDat
     <>
       <SettingsGroup title="マップ">
         {confirmDelete && (
-          <Modal onClose={() => setConfirmDelete(false)}>
-            <p className="center strong">「{campus.name}」と、その施設の説明・アップロード画像を削除しますか？</p>
-            <div className="row gap-10 mt-20">
-              <button type="button" onClick={() => setConfirmDelete(false)} className="btn btn-soft grow">キャンセル</button>
-              <button type="button" onClick={deleteCampus} className="btn btn-danger grow">削除</button>
-            </div>
-          </Modal>
+          <ConfirmDialog title={`「${campus.name}」を削除しますか？`} tone="danger" confirmLabel="削除する" onConfirm={deleteCampus} onCancel={() => setConfirmDelete(false)}>
+            <p className="center small muted">施設の説明とアップロードした画像も削除します。</p>
+          </ConfirmDialog>
         )}
 
         {campusTabs}
@@ -86,7 +83,7 @@ export default function CampusSection({ campuses, buildings, images, onChangeDat
               {images[campus.id] && <button type="button" onClick={removeImage} className="btn btn-ghost danger-text btn-small">画像を削除</button>}
               <span className="tiny muted">{images[campus.id] ? 'アップロード済み' : campus.mapImage ? `既定: ${campus.mapImage}` : '未設定'}</span>
             </div>
-            {message && <p className="small danger-text mt-8" role="alert">{message}</p>}
+            <Message message={message && { ok: false, text: message }} className="mt-8" />
             <button type="button" onClick={() => setConfirmDelete(true)} className="btn btn-ghost danger-text block mt-10">このキャンパスを削除</button>
           </>
         )}
